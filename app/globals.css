@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mindelo-dark: #003366;
+  --color-mindelo-blue: #0066FF;
+  --color-mindelo-red: #DC2626;
+  --color-mindelo-gold: #FFD700;
+  --color-mindelo-cream: #F5F1E8;
+  
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-serif: "Playfair Display", serif;
+}
+
+body {
+  @apply bg-[#FFFFFF] text-gray-900 font-sans;
+}
