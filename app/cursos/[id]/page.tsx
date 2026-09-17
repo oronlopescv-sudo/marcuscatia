@@ -15,9 +15,12 @@ import Link from 'next/link';
 import { useAdminStore, INITIAL_COURSES } from '@/lib/store';
 
 const reservationSchema = z.object({
-  name: z.string().min(2, 'Name must have at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(8, 'Invalid phone number'),
+  name: z.string().min(2, 'Name must have at least 2 characters').trim(),
+  email: z.string().email('Invalid email address').trim(),
+  phone: z.string()
+    .min(8, 'Phone number must have at least 8 digits')
+    .regex(/^[\d\s+().-]+$/, 'Phone number contains invalid characters')
+    .trim(),
   guests: z.number().min(1, 'Minimum 1 person').max(8, 'Maximum 8 people'),
   notes: z.string().optional(),
 });
@@ -55,32 +58,41 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     }
     setDateError(null);
     setIsSubmitting(true);
-    
+
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     const unitPrice = course.priceNumber || parseInt(course.price.replace(/[^0-9]/g, '')) || 45;
     const totalPrice = unitPrice * Number(data.guests);
 
+    // Trim data and validate
+    const trimmedData = {
+      name: data.name.trim(),
+      email: data.email.trim(),
+      phone: data.phone.trim(),
+      notes: (data.notes || '').trim(),
+      guests: Number(data.guests),
+    };
+
     // Save real reservation to Admin store
     addReservation({
-      studentName: data.name,
-      email: data.email,
-      phone: data.phone,
+      studentName: trimmedData.name,
+      email: trimmedData.email,
+      phone: trimmedData.phone,
       courseId: course.id,
       courseTitle: course.title,
       date: formattedDate,
       time: course.timeSlot || '09:30 - 13:30',
-      guests: Number(data.guests),
+      guests: trimmedData.guests,
       totalPrice,
       currency: 'EUR',
       status: 'pending',
       paymentStatus: 'on_arrival',
-      notes: data.notes || '',
+      notes: trimmedData.notes,
     });
 
     setSubmittedData({
-      name: data.name,
+      name: trimmedData.name,
       date: formattedDate,
-      guests: Number(data.guests),
+      guests: trimmedData.guests,
     });
 
     setTimeout(() => {

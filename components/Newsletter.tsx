@@ -9,9 +9,18 @@ export function Newsletter() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const trimmedEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3000);
+      return;
+    }
+
     setStatus('loading');
-    
-    // Simulate API call
+
     setTimeout(() => {
       setStatus('success');
       setEmail('');
@@ -63,6 +72,11 @@ export function Newsletter() {
           {status === 'success' && (
             <p className="absolute -bottom-8 left-0 right-0 text-mindelo-gold text-sm font-medium">
               Thank you for subscribing! Please check your inbox.
+            </p>
+          )}
+          {status === 'error' && (
+            <p className="absolute -bottom-8 left-0 right-0 text-red-400 text-sm font-medium">
+              Please enter a valid email address.
             </p>
           )}
         </form>

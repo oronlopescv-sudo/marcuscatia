@@ -317,8 +317,18 @@ export const useAdminStore = create<AdminStoreState>()(
       blockedDates: ['2026-09-21'], // e.g. Segunda-feira de descanso
 
       addReservation: (res) => {
-        const newRes: Reservation = {
+        // Trim all string fields
+        const trimmedRes = {
           ...res,
+          studentName: res.studentName.trim(),
+          email: res.email.trim(),
+          phone: res.phone.trim(),
+          courseTitle: res.courseTitle.trim(),
+          notes: (res.notes || '').trim(),
+        };
+
+        const newRes: Reservation = {
+          ...trimmedRes,
           id: `res-${Date.now()}`,
           createdAt: new Date().toISOString(),
         };
@@ -394,8 +404,17 @@ export const useAdminStore = create<AdminStoreState>()(
       },
 
       addMessage: (msg) => {
-        const newMsg: Message = {
+        const trimmedMsg = {
           ...msg,
+          name: msg.name.trim(),
+          email: msg.email.trim(),
+          phone: (msg.phone || '').trim(),
+          subject: (msg.subject || '').trim(),
+          message: msg.message.trim(),
+        };
+
+        const newMsg: Message = {
+          ...trimmedMsg,
           id: `msg-${Date.now()}`,
           read: false,
           createdAt: new Date().toISOString(),

@@ -10,9 +10,9 @@ import * as z from 'zod';
 import { useAdminStore } from '@/lib/store';
 
 const contactSchema = z.object({
-  name: z.string().min(2, 'Name must have at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  message: z.string().min(10, 'Message must have at least 10 characters'),
+  name: z.string().min(2, 'Name must have at least 2 characters').trim(),
+  email: z.string().email('Invalid email address').trim(),
+  message: z.string().min(10, 'Message must have at least 10 characters').trim(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -28,12 +28,19 @@ export default function ContactoPage() {
 
   const onSubmit = (data: ContactFormValues) => {
     setIsSubmitting(true);
-    
+
+    // Trim and validate data
+    const trimmedData = {
+      name: data.name.trim(),
+      email: data.email.trim(),
+      message: data.message.trim(),
+    };
+
     // Save to admin inbox
     addMessage({
-      name: data.name,
-      email: data.email,
-      message: data.message,
+      name: trimmedData.name,
+      email: trimmedData.email,
+      message: trimmedData.message,
       subject: 'Message from Contact Form'
     });
 
