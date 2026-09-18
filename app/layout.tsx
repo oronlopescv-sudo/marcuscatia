@@ -10,13 +10,17 @@ export const metadata: Metadata = {
     title: 'Catia Cooking Mindelo | Authentic Cape Verdean Cooking Classes',
     description: 'Authentic Cape Verdean cooking classes and market tours in Mindelo, São Vicente, Cape Verde. Learn traditional recipes with Chef Cátia.',
     type: 'website',
-    images: [{ url: '/logo.png' }]
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Catia Cooking Mindelo' }]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Catia Cooking Mindelo | Authentic Cape Verdean Cooking Classes',
     description: 'Authentic Cape Verdean cooking classes and market tours in Mindelo, São Vicente, Cape Verde. Learn traditional recipes with Chef Cátia.',
-    images: ['/logo.png']
+    images: ['/og-image.png']
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png'
   },
 };
 
