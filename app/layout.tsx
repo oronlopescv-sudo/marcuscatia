@@ -1,17 +1,6 @@
 import type {Metadata} from 'next';
-import { Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google';
 import './globals.css'; // Global styles
 import { WhatsAppButton } from '@/components/WhatsAppButton';
-
-const plusJakartaSans = Plus_Jakarta_Sans({ 
-  subsets: ['latin'],
-  variable: '--font-sans',
-});
-
-const playfairDisplay = Playfair_Display({ 
-  subsets: ['latin'],
-  variable: '--font-serif',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
@@ -33,7 +22,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en" className={`${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
+    <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+      </head>
       <body className="antialiased font-sans" suppressHydrationWarning>
         {children}
         <WhatsAppButton />
