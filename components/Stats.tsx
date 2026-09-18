@@ -31,7 +31,7 @@ export function Stats() {
   return (
     <section className="py-12 bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.id} className="text-center group">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 group-hover:bg-mindelo-blue transition-colors duration-300 mb-4">

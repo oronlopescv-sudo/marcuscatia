@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] overflow-hidden py-10 lg:py-16">
+    <section className="relative bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] overflow-hidden py-8 sm:py-12 lg:py-16">
       {/* Decorative top line */}
       <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-mindelo-dark via-mindelo-blue to-mindelo-dark opacity-90"></div>
       
@@ -16,7 +16,7 @@ export function Hero() {
       <div className="absolute top-20 right-10 w-80 h-80 bg-sky-100/60 rounded-full blur-3xl pointer-events-none -z-0"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-6 sm:gap-8 lg:gap-6 sm:gap-8 items-center">
           
           {/* Left Column: Professional Logo */}
           <motion.div 
@@ -51,15 +51,15 @@ export function Hero() {
             </h1>
 
             {/* Decorative line */}
-            <div className="w-12 h-1 bg-mindelo-red rounded-full mb-6"></div>
+            <div className="w-12 h-1 bg-mindelo-red rounded-full mb-4 sm:mb-6"></div>
 
             {/* Tagline */}
-            <p className="text-lg md:text-xl text-mindelo-blue font-semibold mb-6">
+            <p className="text-lg md:text-xl text-mindelo-blue font-semibold mb-4 sm:mb-6">
               Where flavor meets style
             </p>
 
             {/* Description */}
-            <p className="text-base md:text-lg text-gray-700 leading-relaxed mb-6 max-w-lg">
+            <p className="text-base md:text-lg text-gray-700 leading-relaxed mb-4 sm:mb-6 max-w-lg">
               Join Cátia for an authentic culinary journey through the heart of Mindelo. From the vibrant local markets to our kitchen overlooking the Atlantic, discover the true essence of Cape Verdean cuisine.
             </p>
 

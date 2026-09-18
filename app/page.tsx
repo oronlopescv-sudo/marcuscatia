@@ -28,7 +28,7 @@ export default function Home() {
         <Stats />
         
         {/* Featured Courses Section */}
-        <section className="py-24 bg-white">
+        <section className="py-16 sm:py-20 md:py-24 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
               <div className="max-w-2xl">
@@ -48,7 +48,7 @@ export default function Home() {
               </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {featuredCourses.map((course, index) => (
                 <CourseCard key={course.id} course={course} index={index} />
               ))}
@@ -59,7 +59,7 @@ export default function Home() {
         <HowItWorks />
         
         {/* Final CTA Section */}
-        <section className="py-20 bg-mindelo-blue relative overflow-hidden">
+        <section className="py-16 sm:py-20 md:py-24 bg-mindelo-blue relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://picsum.photos/id/493/1920/1080')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
           <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
             <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-6">

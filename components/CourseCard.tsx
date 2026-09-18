@@ -39,7 +39,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
       className="flex h-full"
     >
       <div className="flex-1 group flex flex-col bg-white rounded-xl border border-blue-50 overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 transform hover:-translate-y-1">
-        <div className="relative h-56 w-full overflow-hidden bg-gray-100">
+        <div className="relative h-40 sm:h-48 md:h-56 w-full overflow-hidden bg-gray-100">
           <Image
             src={course.image}
             alt={course.title}
@@ -57,8 +57,8 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
           </div>
         </div>
         
-        <div className="flex flex-col flex-1 p-6">
-          <h3 className="text-xl font-serif font-bold text-mindelo-dark mb-3 group-hover:text-mindelo-blue transition-colors">
+        <div className="flex flex-col flex-1 p-4 sm:p-5 md:p-6">
+          <h3 className="text-lg sm:text-xl font-serif font-bold text-mindelo-dark mb-2 sm:mb-3 group-hover:text-mindelo-blue transition-colors line-clamp-2">
             {course.title}
           </h3>
           
@@ -66,7 +66,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             {course.description}
           </p>
           
-          <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 pb-6 border-b border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-100">
             <div className="flex items-center gap-1.5">
               <Clock size={16} className="text-mindelo-blue" />
               <span>{course.duration}</span>

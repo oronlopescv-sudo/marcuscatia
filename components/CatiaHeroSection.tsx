@@ -10,7 +10,7 @@ export function CatiaHeroSection() {
       <div className="absolute bottom-0 left-0 w-72 h-72 bg-mindelo-gold/5 rounded-full blur-3xl -ml-36 -mb-36"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 items-center">
           
           {/* Logo Professional */}
           <div className="flex justify-center md:justify-start">

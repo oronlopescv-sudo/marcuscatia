@@ -184,7 +184,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
               <section>
                 <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">What&apos;s Included</h2>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {course.includes.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
