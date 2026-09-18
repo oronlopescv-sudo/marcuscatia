@@ -186,25 +186,73 @@ export default function AdminPage() {
 
   const handleCreateReservation = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation: Check required fields
+    if (!newRes.studentName.trim() || !newRes.email.trim() || !newRes.phone.trim()) {
+      alert('Please fill in all required fields: Name, Email, and Phone');
+      return;
+    }
+
+    // Validation: Check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newRes.email.trim())) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    // Validation: Check phone has at least 8 digits
+    const phoneDigits = newRes.phone.replace(/[^0-9]/g, '');
+    if (phoneDigits.length < 8) {
+      alert('Phone number must contain at least 8 digits');
+      return;
+    }
+
+    // Validation: Check guests is valid
+    const guestNum = Number(newRes.guests);
+    if (guestNum < 1 || guestNum > 12 || isNaN(guestNum)) {
+      alert('Please select a valid number of guests (1-12)');
+      return;
+    }
+
+    // Validation: Check date is not in the past
+    const selectedDateObj = new Date(newRes.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDateObj < today) {
+      alert('Please select a future date for the booking');
+      return;
+    }
+
     const selectedCourse = courses.find(c => c.id === newRes.courseId);
-    const unitPrice = selectedCourse ? selectedCourse.priceNumber : 45;
-    const totalPrice = unitPrice * Number(newRes.guests);
+    
+    // Safe price parsing
+    let unitPrice = 45;
+    if (selectedCourse?.priceNumber && !isNaN(selectedCourse.priceNumber) && selectedCourse.priceNumber > 0) {
+      unitPrice = selectedCourse.priceNumber;
+    } else if (selectedCourse?.price) {
+      const parsed = parseInt(selectedCourse.price.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        unitPrice = parsed;
+      }
+    }
+    
+    const totalPrice = unitPrice * guestNum;
 
     addReservation({
-      studentName: newRes.studentName,
-      email: newRes.email,
-      phone: newRes.phone,
+      studentName: newRes.studentName.trim(),
+      email: newRes.email.trim(),
+      phone: newRes.phone.trim(),
       courseId: newRes.courseId,
       courseTitle: selectedCourse?.title || 'Cooking Class',
       date: newRes.date,
       time: newRes.time,
-      guests: Number(newRes.guests),
+      guests: guestNum,
       totalPrice,
       currency: 'EUR',
       status: newRes.status,
       paymentStatus: newRes.paymentStatus,
-      notes: newRes.notes,
-      dietaryRestrictions: newRes.dietaryRestrictions
+      notes: (newRes.notes || '').trim(),
+      dietaryRestrictions: (newRes.dietaryRestrictions || '').trim()
     });
 
     setShowAddResModal(false);
@@ -1650,34 +1698,92 @@ function EditReservationModal({
     const found = courses.find(c => c.id === newCourseId);
     if (found) {
       if (found.timeSlot) setTime(found.timeSlot);
-      setTotalPrice(found.priceNumber * guests);
+      
+      // Safe price parsing
+      let unit = 45;
+      if (found.priceNumber && !isNaN(found.priceNumber) && found.priceNumber > 0) {
+        unit = found.priceNumber;
+      } else if (found.price) {
+        const parsed = parseInt(found.price.replace(/[^0-9]/g, ''), 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          unit = parsed;
+        }
+      }
+      
+      setTotalPrice(unit * guests);
     }
   };
 
   const handleGuestsChange = (newGuests: number) => {
     setGuests(newGuests);
     const found = courses.find(c => c.id === courseId);
-    const unit = found ? found.priceNumber : 45;
+    
+    // Safe price parsing
+    let unit = 45;
+    if (found?.priceNumber && !isNaN(found.priceNumber) && found.priceNumber > 0) {
+      unit = found.priceNumber;
+    } else if (found?.price) {
+      const parsed = parseInt(found.price.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        unit = parsed;
+      }
+    }
+    
     setTotalPrice(unit * newGuests);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation: Check required fields
+    if (!studentName.trim() || !email.trim() || !phone.trim()) {
+      alert('Please fill in all required fields: Name, Email, and Phone');
+      return;
+    }
+
+    // Validation: Check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    // Validation: Check phone has at least 8 digits
+    const phoneDigits = phone.replace(/[^0-9]/g, '');
+    if (phoneDigits.length < 8) {
+      alert('Phone number must contain at least 8 digits');
+      return;
+    }
+
+    // Validation: Check guests is valid
+    const guestNum = Number(guests);
+    if (guestNum < 1 || guestNum > 12 || isNaN(guestNum)) {
+      alert('Please select a valid number of guests (1-12)');
+      return;
+    }
+
+    // Validation: Check totalPrice is positive
+    const priceNum = Number(totalPrice);
+    if (priceNum <= 0 || isNaN(priceNum)) {
+      alert('Total price must be greater than 0');
+      return;
+    }
+
     const selectedCourse = courses.find(c => c.id === courseId);
     onSave({
-      studentName,
-      email,
-      phone,
+      studentName: studentName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
       courseId,
       courseTitle: selectedCourse ? selectedCourse.title : reservation.courseTitle,
       date,
       time,
-      guests: Number(guests),
-      totalPrice: Number(totalPrice),
+      guests: guestNum,
+      totalPrice: priceNum,
       status,
       paymentStatus,
-      dietaryRestrictions,
-      notes,
+      dietaryRestrictions: (dietaryRestrictions || '').trim(),
+      notes: (notes || '').trim(),
     });
   };
 
@@ -1967,18 +2073,63 @@ function CourseFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation: Check required fields
+    if (!title.trim() || !description.trim()) {
+      alert('Please fill in all required fields: Title and Description');
+      return;
+    }
+
+    // Validation: Check price is positive
+    const priceNum = Number(priceNumber);
+    if (priceNum <= 0 || isNaN(priceNum)) {
+      alert('Price must be greater than 0');
+      return;
+    }
+
+    // Validation: Check capacity is valid
+    const capacityNum = Number(maxCapacity);
+    if (capacityNum < 1 || capacityNum > 20 || isNaN(capacityNum)) {
+      alert('Maximum capacity must be between 1 and 20');
+      return;
+    }
+
+    // Validation: Check includes are not empty
+    if (includes.length === 0) {
+      alert('Please add at least one item to the "Includes" list');
+      return;
+    }
+
+    // Validation: Check image URL format
+    if (!image.trim().startsWith('http')) {
+      alert('Image must be a valid HTTP URL');
+      return;
+    }
+
+    // Validation: Check duration format
+    if (!duration.trim()) {
+      alert('Please enter a duration (e.g. "2h 30min")');
+      return;
+    }
+
+    // Validation: Check timeSlot format
+    if (!timeSlot.trim() || !timeSlot.includes('-')) {
+      alert('Please enter a valid time slot (e.g. "09:30 - 12:00")');
+      return;
+    }
+
     onSave({
-      title,
-      description,
-      image,
-      duration,
-      timeSlot,
-      maxCapacity: Number(maxCapacity),
-      priceNumber: Number(priceNumber),
-      price: `€${priceNumber}`,
+      title: title.trim(),
+      description: description.trim(),
+      image: image.trim(),
+      duration: duration.trim(),
+      timeSlot: timeSlot.trim(),
+      maxCapacity: capacityNum,
+      priceNumber: priceNum,
+      price: `€${priceNum}`,
       level,
       active,
-      includes
+      includes: includes.map(inc => inc.trim()).filter(inc => inc.length > 0)
     });
   };
 

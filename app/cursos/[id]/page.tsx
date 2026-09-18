@@ -43,6 +43,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submittedData, setSubmittedData] = useState<{ name: string; date: string; guests: number } | null>(null);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  
+  // Rate limit: max 1 submission per 30 seconds
+  const RATE_LIMIT_MS = 30000;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
@@ -52,15 +56,35 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   });
 
   const onSubmit = (data: ReservationFormValues) => {
+    // Rate limiting check
+    const now = Date.now();
+    if (now - lastSubmitTime < RATE_LIMIT_MS) {
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 3000);
+      return;
+    }
+
     if (!selectedDate) {
       setDateError('Please select a date on the calendar for your class.');
       return;
     }
     setDateError(null);
     setIsSubmitting(true);
+    setLastSubmitTime(now);
 
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-    const unitPrice = course.priceNumber || parseInt(course.price.replace(/[^0-9]/g, '')) || 45;
+    
+    // Safe price parsing: course.priceNumber → parse price string → fallback to 45
+    let unitPrice = 45;
+    if (course.priceNumber && !isNaN(course.priceNumber) && course.priceNumber > 0) {
+      unitPrice = course.priceNumber;
+    } else if (course.price) {
+      const parsed = parseInt(course.price.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        unitPrice = parsed;
+      }
+    }
+    
     const totalPrice = unitPrice * Number(data.guests);
 
     // Trim data and validate
@@ -181,7 +205,25 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                   </div>
                 </div>
 
-                {submitStatus === 'success' ? (
+                {submitStatus === 'error' ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertCircle size={32} className="text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-mindelo-dark mb-2">Booking Error</h3>
+                    <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                      Please wait 30 seconds before submitting another booking request. You can also contact Cátia directly via WhatsApp for faster confirmation.
+                    </p>
+                    <Link
+                      href="https://wa.me/2385953973"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md"
+                    >
+                      Contact via WhatsApp
+                    </Link>
+                  </div>
+                ) : submitStatus === 'success' ? (
                   <div className="text-center py-6">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <CheckCircle2 size={32} className="text-green-600" />

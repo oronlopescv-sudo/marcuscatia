@@ -20,14 +20,27 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 export default function ContactoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const addMessage = useAdminStore((state) => state.addMessage);
+  
+  // Rate limit: max 1 submission per 30 seconds
+  const RATE_LIMIT_MS = 30000;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
   });
 
   const onSubmit = (data: ContactFormValues) => {
+    // Rate limiting check
+    const now = Date.now();
+    if (now - lastSubmitTime < RATE_LIMIT_MS) {
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 3000);
+      return;
+    }
+
     setIsSubmitting(true);
+    setLastSubmitTime(now);
 
     // Trim and validate data
     const trimmedData = {
@@ -35,6 +48,14 @@ export default function ContactoPage() {
       email: data.email.trim(),
       message: data.message.trim(),
     };
+
+    // Validate trimmed data is not empty
+    if (!trimmedData.name || !trimmedData.email || !trimmedData.message) {
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 3000);
+      return;
+    }
 
     // Save to admin inbox
     addMessage({
@@ -166,6 +187,11 @@ export default function ContactoPage() {
                   <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-6 text-center">
                     <p className="font-bold text-lg mb-2">Message sent successfully!</p>
                     <p>Cátia will reply as soon as possible.</p>
+                  </div>
+                ) : submitStatus === 'error' ? (
+                  <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-6 text-center">
+                    <p className="font-bold text-lg mb-2">Error sending message</p>
+                    <p>Please wait 30 seconds before trying again, or use WhatsApp for faster contact.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
