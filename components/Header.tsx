@@ -46,19 +46,6 @@ export function Header() {
               </div>
             </Link>
 
-            {/* Vertical divider & Cape Verde Flag badge */}
-            <div className="hidden lg:flex items-center gap-2.5 pl-3 border-l border-blue-200">
-              {/* Cape Verde Flag mini badge */}
-              <div className="w-6 h-4 bg-[#003893] relative rounded-xs shadow-xs overflow-hidden flex flex-col justify-center shrink-0 border border-black/10" title="Cape Verde">
-                <div className="h-0.5 bg-white w-full"></div>
-                <div className="h-0.5 bg-[#CF2027] w-full"></div>
-                <div className="h-0.5 bg-white w-full"></div>
-                <div className="absolute left-1 w-2 h-2 rounded-full border border-[#FFD100] border-dotted opacity-90"></div>
-              </div>
-              <span className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                Cape Verde flavors on your plate
-              </span>
-            </div>
           </div>
           
           {/* Navigation Links */}

@@ -15,14 +15,9 @@ export function BrandFeatureCards() {
         
         {/* Brand Ribbon Divider (from the design) */}
         <div className="text-center mb-14">
-          <span className="font-serif italic text-3xl sm:text-4xl text-[#0A3D78] tracking-tight block mb-2">
+          <span className="font-serif italic text-3xl sm:text-4xl text-[#0A3D78] tracking-tight block">
             catiacookingmindelo
           </span>
-          <div className="flex items-center justify-center gap-3 text-xs sm:text-sm font-bold tracking-[0.2em] text-[#0A3D78] uppercase">
-            <span className="text-mindelo-red font-black text-base">▶</span>
-            <span>Cape Verde Flavors on Your Plate</span>
-            <span className="text-mindelo-red font-black text-base">◀</span>
-          </div>
         </div>
 
         {/* 3 Pillar Cards with Painterly Blue Rings */}

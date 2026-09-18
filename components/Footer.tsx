@@ -99,17 +99,6 @@ export function Footer() {
 
         {/* Coastal Brand Strip from the reference design */}
         <div className="border-t border-blue-900/80 mt-12 pt-8">
-          
-          {/* Crossed Utensils and Cape Verde Flag Colors Accent */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="h-0.5 w-12 bg-mindelo-blue rounded-full"></span>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-blue-400/30 text-xs font-serif tracking-widest text-blue-200">
-              <span>🍴</span>
-              <span>CAPE VERDE FLAVORS</span>
-            </div>
-            <span className="h-0.5 w-12 bg-mindelo-red rounded-full"></span>
-          </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-blue-200/80">
             <div className="flex items-center gap-2">
               <Mail size={14} className="text-blue-300" />
