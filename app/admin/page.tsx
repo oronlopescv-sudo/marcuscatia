@@ -224,6 +224,12 @@ export default function AdminPage() {
     }
 
     const selectedCourse = courses.find(c => c.id === newRes.courseId);
+
+    // Validation: Check capacity not exceeded
+    if (selectedCourse && guestNum > selectedCourse.maxCapacity) {
+      alert(`Max capacity for this course is ${selectedCourse.maxCapacity} guests. You selected ${guestNum}.`);
+      return;
+    }
     
     // Safe price parsing
     let unitPrice = 45;
@@ -959,8 +965,24 @@ export default function AdminPage() {
                             <div className="font-medium text-slate-800">{res.date}</div>
                             <div className="text-xs text-slate-500">{res.time}</div>
                           </td>
-                          <td className="py-3.5 px-4 font-semibold text-slate-800">
-                            {res.guests} {res.guests > 1 ? 'guests' : 'guest'}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-800">
+                                {res.guests} {res.guests > 1 ? 'guests' : 'guest'}
+                              </span>
+                              {(() => {
+                                const course = courses.find(c => c.id === res.courseId);
+                                if (course && res.guests > course.maxCapacity) {
+                                  return (
+                                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200 whitespace-nowrap">
+                                      <XCircle size={12} />
+                                      {res.guests}/{course.maxCapacity} OVER
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900">€{res.totalPrice}</div>
@@ -1755,10 +1777,26 @@ function EditReservationModal({
       return;
     }
 
+    // Validation: Check date is not in the past
+    const selectedDateObj = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDateObj < today) {
+      alert('Please select a future date for the booking');
+      return;
+    }
+
     // Validation: Check guests is valid
     const guestNum = Number(guests);
     if (guestNum < 1 || guestNum > 12 || isNaN(guestNum)) {
       alert('Please select a valid number of guests (1-12)');
+      return;
+    }
+
+    // Validation: Check capacity not exceeded
+    const selectedCourseObj = courses.find(c => c.id === courseId);
+    if (selectedCourseObj && guestNum > selectedCourseObj.maxCapacity) {
+      alert(`Max capacity for this course is ${selectedCourseObj.maxCapacity} guests. You selected ${guestNum}.`);
       return;
     }
 
