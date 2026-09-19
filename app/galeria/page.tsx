@@ -138,14 +138,31 @@ export default function GaleriaPage() {
       
       <main className="flex-grow">
         {/* Header */}
-        <div className="bg-mindelo-dark py-16 text-white text-center">
+        <div className="bg-mindelo-dark py-12 md:py-16 text-white">
           <div className="max-w-4xl mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-              Photo Gallery
-            </h1>
-            <p className="text-lg text-gray-300">
-              Take a peek at our previous classes and experience the joy of cooking together in Mindelo.
-            </p>
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+              {/* Logo */}
+              <div className="flex-shrink-0 w-20 h-20 md:w-28 md:h-28">
+                <div className="relative w-full h-full rounded-full overflow-hidden shadow-lg border-4 border-mindelo-gold bg-white">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Catia Cooking Mindelo Logo" 
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              
+              {/* Text */}
+              <div className="text-center md:text-left flex-1">
+                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
+                  Photo Gallery
+                </h1>
+                <p className="text-base md:text-lg text-gray-300">
+                  Take a peek at our previous classes and experience the joy of cooking together in Mindelo.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
