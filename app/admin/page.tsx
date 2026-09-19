@@ -34,6 +34,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useAdminStore, Reservation, Course, Message } from '@/lib/store';
+import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -46,7 +47,7 @@ export default function AdminPage() {
   });
   const [pinInput, setPinInput] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery'>('overview');
 
   // Store hooks
   const { 
@@ -575,6 +576,14 @@ export default function AdminPage() {
             }`}
           >
             Calendar
+          </button>
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+              activeTab === 'gallery' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
+            }`}
+          >
+            Gallery
           </button>
         </div>
       </header>
@@ -1381,6 +1390,15 @@ export default function AdminPage() {
 
             </div>
 
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 6: GALLERY MANAGEMENT                                   */}
+        {/* ============================================================ */}
+        {activeTab === 'gallery' && (
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+            <AdminGalleryManager />
           </div>
         )}
 
