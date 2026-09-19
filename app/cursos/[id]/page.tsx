@@ -21,7 +21,7 @@ const reservationSchema = z.object({
     .min(8, 'Phone number must have at least 8 digits')
     .regex(/^[\d\s+().-]+$/, 'Phone number contains invalid characters')
     .trim(),
-  guests: z.number().min(1, 'Minimum 1 person').max(8, 'Maximum 8 people'),
+  guests: z.number().min(1, 'Minimum 1 person').max(12, 'Maximum 12 people'),
   notes: z.string().optional(),
 });
 
@@ -68,11 +68,23 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       setDateError('Please select a date on the calendar for your class.');
       return;
     }
+
+    // FIX #2: Validate capacity
+    if (data.guests > course.maxCapacity) {
+      setDateError(`Max capacity for this course is ${course.maxCapacity} guests. You selected ${data.guests}.`);
+      return;
+    }
+
+    // FIX #3: Validate blocked dates
+    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+    if (blockedDates.includes(formattedDate)) {
+      setDateError('This date is not available for bookings. Please select another date.');
+      return;
+    }
+
     setDateError(null);
     setIsSubmitting(true);
     setLastSubmitTime(now);
-
-    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     
     // Safe price parsing: course.priceNumber → parse price string → fallback to 45
     let unitPrice = 45;
