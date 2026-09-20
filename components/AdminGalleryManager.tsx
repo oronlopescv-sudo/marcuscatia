@@ -26,23 +26,10 @@ export function AdminGalleryManager() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Carregar items do localStorage
+  // Galeria usa itens padrão (sem localStorage)
   useEffect(() => {
-    const stored = localStorage.getItem('catia-cooking-gallery-items');
-    if (stored) {
-      try {
-        setGalleryItems(JSON.parse(stored));
-      } catch (e) {
-        console.error('Erro ao carregar galeria:', e);
-      }
-    }
     setIsLoading(false);
   }, []);
-
-  // Salvar items no localStorage
-  const saveToStorage = (items: GalleryItem[]) => {
-    localStorage.setItem('catia-cooking-gallery-items', JSON.stringify(items));
-  };
 
   // Extrair YouTube ID de URL
   const extractYoutubeId = (url: string): string | null => {
@@ -89,7 +76,6 @@ export function AdminGalleryManager() {
 
       const updated = [...galleryItems, newItem];
       setGalleryItems(updated);
-      saveToStorage(updated);
       setSuccess('Photo added successfully!');
     } else {
       // Validar YouTube URL/ID
@@ -109,7 +95,6 @@ export function AdminGalleryManager() {
 
       const updated = [...galleryItems, newItem];
       setGalleryItems(updated);
-      saveToStorage(updated);
       setSuccess('Video added successfully!');
     }
 
@@ -122,7 +107,6 @@ export function AdminGalleryManager() {
   const handleRemoveItem = (index: number) => {
     const updated = galleryItems.filter((_, i) => i !== index);
     setGalleryItems(updated);
-    saveToStorage(updated);
     setSuccess('Item removed successfully!');
   };
 

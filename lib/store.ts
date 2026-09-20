@@ -1,7 +1,6 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export interface Reservation {
   id: string;
@@ -308,33 +307,45 @@ export const INITIAL_MESSAGES: Message[] = [
   }
 ];
 
-export const useAdminStore = create<AdminStoreState>()(
-  persist(
-    (set, get) => ({
-      reservations: INITIAL_RESERVATIONS,
-      courses: INITIAL_COURSES,
-      messages: INITIAL_MESSAGES,
-      blockedDates: ['2026-09-21'], // e.g. Segunda-feira de descanso
+export const useAdminStore = create<AdminStoreState>((set, get) => ({
+  reservations: INITIAL_RESERVATIONS,
+  courses: INITIAL_COURSES,
+  messages: INITIAL_MESSAGES,
+  blockedDates: [],
 
-      addReservation: (res) => {
-        // Trim all string fields
-        const trimmedRes = {
-          ...res,
-          studentName: res.studentName.trim(),
-          email: res.email.trim(),
-          phone: res.phone.trim(),
-          courseTitle: res.courseTitle.trim(),
-          notes: (res.notes || '').trim(),
-        };
+  addReservation: async (res) => {
+    const trimmedRes = {
+      ...res,
+      studentName: res.studentName.trim(),
+      email: res.email.trim(),
+      phone: res.phone.trim(),
+      courseTitle: res.courseTitle.trim(),
+      notes: (res.notes || '').trim(),
+    };
 
+    try {
+      const response = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(trimmedRes),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
         const newRes: Reservation = {
           ...trimmedRes,
-          id: `res-${Date.now()}`,
+          id: result.id,
           createdAt: new Date().toISOString(),
         };
         set({ reservations: [newRes, ...get().reservations] });
         return newRes;
-      },
+      }
+    } catch (error) {
+      console.error('Erro ao salvar reservação:', error);
+    }
+
+    return null as any;
+  },
 
       updateReservation: (id, updates) => {
         set({
@@ -403,7 +414,7 @@ export const useAdminStore = create<AdminStoreState>()(
         });
       },
 
-      addMessage: (msg) => {
+      addMessage: async (msg) => {
         const trimmedMsg = {
           ...msg,
           name: msg.name.trim(),
@@ -413,13 +424,26 @@ export const useAdminStore = create<AdminStoreState>()(
           message: msg.message.trim(),
         };
 
-        const newMsg: Message = {
-          ...trimmedMsg,
-          id: `msg-${Date.now()}`,
-          read: false,
-          createdAt: new Date().toISOString(),
-        };
-        set({ messages: [newMsg, ...get().messages] });
+        try {
+          const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(trimmedMsg),
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            const newMsg: Message = {
+              ...trimmedMsg,
+              id: result.id,
+              read: false,
+              createdAt: new Date().toISOString(),
+            };
+            set({ messages: [newMsg, ...get().messages] });
+          }
+        } catch (error) {
+          console.error('Erro ao salvar mensagem:', error);
+        }
       },
 
       markMessageRead: (id) => {
@@ -450,12 +474,8 @@ export const useAdminStore = create<AdminStoreState>()(
           reservations: INITIAL_RESERVATIONS,
           courses: INITIAL_COURSES,
           messages: INITIAL_MESSAGES,
-          blockedDates: ['2026-09-21'],
+          blockedDates: [],
         });
       },
-    }),
-    {
-      name: 'catia-cooking-mindelo-admin-storage-v4',
-    }
-  )
+    })
 );

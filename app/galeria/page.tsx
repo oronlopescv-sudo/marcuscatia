@@ -77,18 +77,9 @@ export default function GaleriaPage() {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(DEFAULT_GALLERY_ITEMS);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
-  // Carregar items da galeria do localStorage ao montar
+  // Galeria usa itens padrão (sem localStorage)
   useEffect(() => {
-    const stored = localStorage.getItem('catia-cooking-gallery-items');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setGalleryItems(parsed);
-      } catch (e) {
-        console.error('Erro ao carregar galeria do localStorage:', e);
-        setGalleryItems(DEFAULT_GALLERY_ITEMS);
-      }
-    }
+    setGalleryItems(DEFAULT_GALLERY_ITEMS);
   }, []);
 
   const handlePrev = useCallback(() => {
