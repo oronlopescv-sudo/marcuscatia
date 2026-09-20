@@ -22,7 +22,6 @@ import {
   Trash2, 
   LogOut, 
   ShieldCheck, 
-  RefreshCw, 
   Printer, 
   Download,
   ChevronRight,
@@ -68,8 +67,7 @@ export default function AdminPage() {
     deleteCourse,
     markMessageRead,
     deleteMessage,
-    toggleBlockedDate,
-    resetToDefaults
+    toggleBlockedDate
   } = useAdminStore();
 
   // Search & Filters for Reservations
@@ -843,28 +841,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Data Reset & Demo Assistance */}
-                <div className="bg-blue-50/70 rounded-2xl border border-blue-100 p-5">
-                  <h4 className="font-serif font-bold text-sm text-[#0A2240] mb-1">
-                    Demo Mode & Data Reset
-                  </h4>
-                  <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-                    You can test adding bookings, modifying courses, or restore the default demonstration data at any moment.
-                  </p>
-                  <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to reset the admin dashboard to initial demo data?')) {
-                        resetToDefaults();
-                      }
-                    }}
-                    className="w-full py-2 px-3 rounded-xl bg-white border border-blue-200 text-[#0A3D78] hover:bg-blue-100/50 text-xs font-bold transition-colors flex items-center justify-center gap-2"
-                  >
-                    <RefreshCw size={13} />
-                    <span>Restore Demo Data</span>
-                  </button>
-                </div>
 
-              </div>
 
             </div>
 
