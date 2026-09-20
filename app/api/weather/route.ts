@@ -46,7 +46,7 @@ export async function GET() {
       apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build',
+          'User-Agent': 'Mozilla/5.0 (CatiaCooking/1.0)',
         },
       },
     });

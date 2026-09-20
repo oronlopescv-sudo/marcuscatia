@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
@@ -78,6 +79,19 @@ export default function ContactoPage() {
       <Header />
       
       <main className="flex-grow">
+        {/* Logo Section */}
+        <div className="bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] py-8 sm:py-12">
+          <div className="max-w-2xl mx-auto px-4 text-center">
+            <Image
+              src="/logo.png"
+              alt="Catia Cooking Mindelo - Sabores de Cabo Verde"
+              width={180}
+              height={180}
+              className="w-44 h-44 sm:w-52 sm:h-52 mx-auto drop-shadow-lg"
+            />
+          </div>
+        </div>
+
         {/* Header Section */}
         <div className="bg-mindelo-dark py-16 text-white text-center">
           <div className="max-w-4xl mx-auto px-4">

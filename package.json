@@ -1,6 +1,7 @@
 {
-  "name": "ai-studio-applet",
-  "version": "0.1.0",
+  "name": "catia-cooking-mindelo",
+  "version": "1.0.0",
+  "description": "Aulas de Culinária Cabo-Verdiana em Mindelo",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -149,6 +149,19 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       <Header />
       
       <main className="flex-grow">
+        {/* Logo Section */}
+        <div className="bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] py-8 sm:py-12">
+          <div className="max-w-2xl mx-auto px-4 text-center">
+            <Image
+              src="/logo.png"
+              alt="Catia Cooking Mindelo - Sabores de Cabo Verde"
+              width={180}
+              height={180}
+              className="w-44 h-44 sm:w-52 sm:h-52 mx-auto drop-shadow-lg"
+            />
+          </div>
+        </div>
+
         {/* Hero Image */}
         <div className="relative h-[40vh] md:h-[50vh] w-full bg-mindelo-dark">
           <Image
