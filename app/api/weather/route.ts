@@ -4,9 +4,15 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+interface WeatherData {
+  condition: string;
+  temperature: number;
+  description: string;
+}
+
 // In-memory cache to prevent excessive API calls while keeping weather fresh
 let cachedData: {
-  weather: any;
+  weather: WeatherData;
   sources: Array<{ title: string; url: string }>;
   timestamp: number;
 } | null = null;
@@ -116,12 +122,12 @@ Only output the JSON object without any backticks, markdown, or extra prose.`;
       ...result,
       cached: false,
     });
-  } catch (error: any) {
-    console.error('Weather API error:', error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error fetching weather';
     return NextResponse.json({
       weather: getFallbackWeather(),
       sources: [],
-      error: error.message || 'Error fetching weather',
+      error: message,
       cached: false,
     });
   }

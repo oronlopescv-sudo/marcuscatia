@@ -8,9 +8,9 @@ export async function GET(req: NextRequest) {
       'SELECT * FROM gallery_items ORDER BY created_at DESC'
     );
     return NextResponse.json(results);
-  } catch (error: any) {
-    console.error('GET /api/gallery error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({ success: true, result }, { status: 201 });
-  } catch (error: any) {
-    console.error('POST /api/gallery error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -52,8 +52,8 @@ export async function DELETE(req: NextRequest) {
 
     const result = await query('DELETE FROM gallery_items WHERE id = ?', [id]);
     return NextResponse.json({ success: true, result });
-  } catch (error: any) {
-    console.error('DELETE /api/gallery error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
