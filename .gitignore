@@ -5,3 +5,8 @@ coverage/
 *.log
 .env*
 !.env.example
+gallery/
+*.jpg
+*.jpeg
+*.png
+*.webp

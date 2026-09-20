@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const unreadOnly = searchParams.get('unread') === 'true';
 
     let sql = 'SELECT * FROM notifications';
-    const params: unknown[] = [];
+    const params: (string | number | boolean | null)[] = [];
 
     if (unreadOnly) {
       sql += ' WHERE `read` = false';

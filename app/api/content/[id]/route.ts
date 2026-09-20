@@ -10,17 +10,17 @@ interface ContentItem {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     const data: ContentItem = await request.json();
 
     const now = new Date().toISOString();
 
     await query(
       `UPDATE site_content
-       SET title = ?, description = ?, content = ?, category = ?, updatedAt = ?
+       SET title = ?, description = ?, content = ?, category = ?, updated_at = ?
        WHERE id = ?`,
       [
         data.title || null,
@@ -32,7 +32,7 @@ export async function PUT(
       ]
     );
 
-    return NextResponse.json({ id, ...data, updatedAt: now });
+    return NextResponse.json({ id, ...data, updated_at: now });
   } catch (error) {
     console.error('Content PUT error:', error);
     return NextResponse.json(
@@ -44,10 +44,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
 
     await query('DELETE FROM site_content WHERE id = ?', [id]);
 
