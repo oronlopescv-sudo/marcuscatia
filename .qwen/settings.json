@@ -6,7 +6,20 @@
       "Bash(which *)",
       "Bash(npm install *)",
       "Bash(npx *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(cd *)",
+      "Bash(git status *)",
+      "Bash(echo *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(ls *)",
+      "Bash(do *)",
+      "Bash(then *)",
+      "Bash(sed *)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(node *)",
+      "Bash(rm *)"
     ]
   },
   "$version": 4
