@@ -132,14 +132,8 @@ export default function AdminPage() {
       sessionStorage.setItem('catia_admin_authenticated', 'true');
       setAuthError('');
     } else {
-      setAuthError('Incorrect PIN. Try 1234 for demo access.');
+      setAuthError('Incorrect PIN. Please try again.');
     }
-  };
-
-  const handleQuickLogin = () => {
-    setIsAuthenticated(true);
-    sessionStorage.setItem('catia_admin_authenticated', 'true');
-    setAuthError('');
   };
 
   const handleLogout = () => {
@@ -390,14 +384,6 @@ export default function AdminPage() {
           </form>
 
           <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col gap-3">
-            <button
-              onClick={handleQuickLogin}
-              className="text-xs text-mindelo-blue hover:text-mindelo-dark font-semibold inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg hover:bg-blue-50 transition-colors"
-            >
-              <Sparkles size={14} className="text-mindelo-gold" />
-              <span>Quick Demo Access (No PIN)</span>
-            </button>
-
             <Link 
               href="/"
               className="text-xs text-gray-500 hover:text-gray-800 inline-flex items-center justify-center gap-1"
