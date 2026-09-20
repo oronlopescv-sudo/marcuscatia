@@ -35,6 +35,8 @@ import {
 } from 'lucide-react';
 import { useAdminStore, Reservation, Course, Message } from '@/lib/store';
 import { AdminGalleryManager } from '@/components/AdminGalleryManager';
+import { LogoUploadManager } from '@/components/LogoUploadManager';
+import { ContentEditor } from '@/components/ContentEditor';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -47,7 +49,7 @@ export default function AdminPage() {
   });
   const [pinInput, setPinInput] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings'>('overview');
 
   // Store hooks
   const { 
@@ -584,6 +586,22 @@ export default function AdminPage() {
             }`}
           >
             Gallery
+          </button>
+          <button
+            onClick={() => setActiveTab('content')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+              activeTab === 'content' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
+            }`}
+          >
+            Content
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+              activeTab === 'settings' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
+            }`}
+          >
+            Settings
           </button>
         </div>
       </header>
@@ -1399,6 +1417,60 @@ export default function AdminPage() {
         {activeTab === 'gallery' && (
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
             <AdminGalleryManager />
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 7: CONTENT EDITOR (FAQ, TESTIMONIALS, ETC)               */}
+        {/* ============================================================ */}
+        {activeTab === 'content' && (
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <ContentEditor category="faq" title="FAQ Management" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <ContentEditor category="testimonial" title="Testimonials" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <ContentEditor category="hero" title="Hero Section" />
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 8: SETTINGS (LOGO, BRANDING, ETC)                        */}
+        {/* ============================================================ */}
+        {activeTab === 'settings' && (
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <LogoUploadManager currentLogoUrl="/logo.png" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-mindelo-dark">Site Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Site Title</label>
+                    <input type="text" defaultValue="Cátia Cooking Mindelo" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Site Email</label>
+                    <input type="email" defaultValue="info@catiamindelo.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
+                    <input type="tel" defaultValue="+238 595 3973" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                    <input type="text" defaultValue="Mindelo, Cape Verde" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+                </div>
+                <button className="px-6 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+                  Save Settings
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
