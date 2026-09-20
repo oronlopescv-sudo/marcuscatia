@@ -52,20 +52,20 @@ interface AdminStoreState {
   courses: Course[];
   messages: Message[];
   blockedDates: string[]; // ['2026-09-20', ...]
-  
+
   // Actions
-  addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Reservation;
+  addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<Reservation | null>;
   updateReservation: (id: string, updates: Partial<Reservation>) => void;
   updateReservationStatus: (id: string, status: Reservation['status']) => void;
   updateReservationPayment: (id: string, status: Reservation['paymentStatus']) => void;
   deleteReservation: (id: string) => void;
-  
+
   addCourse: (course: Omit<Course, 'id'>) => Course;
   updateCourse: (id: string, updates: Partial<Course>) => void;
   toggleCourseActive: (id: string) => void;
   deleteCourse: (id: string) => void;
 
-  addMessage: (msg: Omit<Message, 'id' | 'createdAt' | 'read'>) => void;
+  addMessage: (msg: Omit<Message, 'id' | 'createdAt' | 'read'>) => Promise<void>;
   markMessageRead: (id: string) => void;
   deleteMessage: (id: string) => void;
 
