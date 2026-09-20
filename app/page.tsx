@@ -44,7 +44,7 @@ export default function Home() {
                 </p>
               </div>
               <Link 
-                href="/cursos" 
+                href="/courses" 
                 className="inline-flex items-center gap-2 text-mindelo-blue font-bold hover:text-mindelo-dark transition-colors group"
               >
                 <span>View all classes</span>
@@ -73,7 +73,7 @@ export default function Home() {
               Classes are limited to 8 guests per session to guarantee the most authentic, personal experience.
             </p>
             <Link 
-              href="/cursos" 
+              href="/courses" 
               className="inline-block bg-mindelo-red hover:bg-red-700 text-white px-10 py-5 rounded-full font-bold text-lg transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               Book My Spot Now

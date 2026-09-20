@@ -54,7 +54,7 @@ export function SplashScreen() {
 
         {/* Tagline */}
         <p className="text-sm text-gray-500 font-medium text-center">
-          Sabores de Cabo Verde no seu prato
+          Flavors of Cape Verde on Your Plate
         </p>
       </div>
 

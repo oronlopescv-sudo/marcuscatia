@@ -12,10 +12,10 @@ export function Header() {
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Classes & Courses', href: '/cursos' },
-    { name: 'About Cátia', href: '/sobre' },
-    { name: 'Gallery', href: '/galeria' },
-    { name: 'Contact', href: '/contacto' },
+    { name: 'Classes', href: '/courses' },
+    { name: 'About', href: '/about' },
+    { name: 'Gallery', href: '/gallery' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   return (
@@ -95,7 +95,7 @@ export function Header() {
               </a>
 
               <Link 
-                href="/cursos" 
+                href="/courses" 
                 className="bg-mindelo-red hover:bg-red-700 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 whitespace-nowrap"
               >
                 Book a Class
@@ -144,7 +144,7 @@ export function Header() {
               </Link>
               <div className="pt-2">
                 <Link
-                  href="/cursos"
+                  href="/courses"
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-mindelo-red hover:bg-red-700 text-white px-6 py-3 rounded-md font-bold transition-colors"
                 >

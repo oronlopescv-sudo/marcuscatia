@@ -57,7 +57,7 @@ export function CatiaHeroSection() {
 
             <div className="flex gap-4 pt-4">
               <a
-                href="/cursos"
+                href="/courses"
                 className="px-8 py-3 bg-mindelo-blue hover:bg-mindelo-dark text-white rounded-xl font-bold transition-all shadow-lg"
               >
                 Explore Classes

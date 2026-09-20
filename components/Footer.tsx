@@ -44,10 +44,10 @@ export function Footer() {
             <h3 className="text-xs sm:text-base font-serif font-bold mb-3 sm:mb-4 text-mindelo-gold uppercase tracking-wider">Navigation</h3>
             <ul className="space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
               <li><Link href="/" className="text-blue-100 hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/cursos" className="text-blue-100 hover:text-white transition-colors">Classes</Link></li>
-              <li><Link href="/sobre" className="text-blue-100 hover:text-white transition-colors">About</Link></li>
-              <li><Link href="/galeria" className="text-blue-100 hover:text-white transition-colors">Gallery</Link></li>
-              <li><Link href="/contacto" className="text-blue-100 hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/courses" className="text-blue-100 hover:text-white transition-colors">Classes</Link></li>
+              <li><Link href="/about" className="text-blue-100 hover:text-white transition-colors">About</Link></li>
+              <li><Link href="/gallery" className="text-blue-100 hover:text-white transition-colors">Gallery</Link></li>
+              <li><Link href="/contact" className="text-blue-100 hover:text-white transition-colors">Contact</Link></li>
               <li>
                 <Link href="/admin" className="text-mindelo-gold hover:text-white font-medium transition-colors inline-flex items-center gap-1.5">
                   🔒 Admin

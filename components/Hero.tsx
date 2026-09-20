@@ -28,7 +28,7 @@ export function Hero() {
             <div className="relative w-72 sm:w-96 md:w-[420px]">
               <Image
                 src="/logo.png"
-                alt="Catia Cooking Mindelo - Sabores de Cabo Verde"
+                alt="Catia Cooking Mindelo - Flavors of Cape Verde"
                 width={420}
                 height={420}
                 className="w-full h-auto drop-shadow-2xl"
@@ -71,7 +71,7 @@ export function Hero() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center lg:justify-start">
               <Link
-                href="/cursos"
+                href="/courses"
                 className="group inline-flex items-center justify-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-mindelo-blue hover:bg-mindelo-dark text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Explore Classes

@@ -54,7 +54,7 @@ export function AdminContentManager() {
           c.id === id ? { ...c, content: editText } : c
         ));
         setEditingId(null);
-        alert('✅ Conteúdo atualizado!');
+        alert('✅ Content updated!');
       }
     } catch (error) {
       console.error('Error saving content:', error);
@@ -69,7 +69,7 @@ export function AdminContentManager() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-6 text-mindelo-dark">Gerenciar Conteúdo do Site</h2>
+      <h2 className="text-2xl font-bold mb-6 text-mindelo-dark">Manage Site Content</h2>
 
       {/* Section Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
@@ -92,7 +92,7 @@ export function AdminContentManager() {
       {loading ? (
         <p className="text-gray-600">Carregando...</p>
       ) : content.length === 0 ? (
-        <p className="text-gray-600">Nenhum conteúdo encontrado</p>
+        <p className="text-gray-600">No content found</p>
       ) : (
         <div className="space-y-6">
           {content.map(item => (
@@ -110,7 +110,7 @@ export function AdminContentManager() {
                     onClick={() => handleEdit(item)}
                     className="text-mindelo-blue hover:text-mindelo-dark font-medium"
                   >
-                    ✏️ Editar
+                    ✏️ Edit
                   </button>
                 )}
               </div>
@@ -137,13 +137,13 @@ export function AdminContentManager() {
                       onClick={() => handleSave(item.id)}
                       className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
                     >
-                      💾 Guardar
+                      💾 Save
                     </button>
                     <button
                       onClick={handleCancel}
                       className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 font-medium"
                     >
-                      ✕ Cancelar
+                      ✕ Cancel
                     </button>
                   </div>
                 </div>

@@ -18,7 +18,7 @@ const contactSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
-export default function ContactoPage() {
+export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
@@ -84,7 +84,7 @@ export default function ContactoPage() {
           <div className="max-w-2xl mx-auto px-4 text-center">
             <Image
               src="/logo.png"
-              alt="Catia Cooking Mindelo - Sabores de Cabo Verde"
+              alt="Catia Cooking Mindelo - Flavors of Cape Verde"
               width={180}
               height={180}
               className="w-44 h-44 sm:w-52 sm:h-52 mx-auto drop-shadow-lg"

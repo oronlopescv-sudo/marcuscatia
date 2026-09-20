@@ -195,13 +195,13 @@ export function AdminGalleryManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-mindelo-dark">📷 Galeria de Fotos</h2>
+        <h2 className="text-2xl font-bold text-mindelo-dark">📷 Photo Gallery</h2>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center gap-2 px-4 py-2 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition font-medium"
         >
           <Plus size={20} />
-          Adicionar Foto
+          Add Photo
         </button>
       </div>
 
@@ -222,7 +222,7 @@ export function AdminGalleryManager() {
         <div className="bg-gray-50 p-6 rounded-lg border-2 border-mindelo-blue">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-mindelo-dark">
-              ➕ Adicionar Nova Foto
+              ➕ Add New Photo
             </h3>
             <button
               onClick={() => setShowAddForm(false)}
@@ -235,7 +235,7 @@ export function AdminGalleryManager() {
           {/* Type Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo
+              Type
             </label>
             <select
               value={formData.type}
@@ -355,7 +355,7 @@ export function AdminGalleryManager() {
               }}
               className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium"
             >
-              Cancelar
+              Cancel
             </button>
           </div>
         </div>

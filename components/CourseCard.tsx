@@ -78,7 +78,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
           </div>
           
           <Link 
-            href={`/cursos/${course.id}`}
+            href={`/courses/${course.id}`}
             className="inline-flex items-center justify-between w-full font-bold text-mindelo-dark group-hover:text-mindelo-blue transition-colors"
           >
             <span>View Details</span>

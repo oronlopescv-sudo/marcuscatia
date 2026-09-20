@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Phone, Images } from 'lucide-react';
 
-export default function SobrePage() {
+export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50">
       <Header />
@@ -85,7 +85,7 @@ export default function SobrePage() {
               {/* Action Buttons */}
               <div className="pt-4 flex flex-col sm:flex-row gap-3">
                 <Link
-                  href="/cursos"
+                  href="/courses"
                   className="inline-flex items-center justify-center gap-2 bg-[#0A3D78] hover:bg-mindelo-blue text-white px-6 py-3.5 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   <span>View Available Classes</span>
@@ -116,7 +116,7 @@ export default function SobrePage() {
               </p>
             </div>
             <Link
-              href="/galeria"
+              href="/gallery"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-mindelo-blue hover:text-white text-[#0A3D78] font-bold text-sm transition-colors border border-blue-200 shrink-0 shadow-xs"
             >
               <Images size={16} />
