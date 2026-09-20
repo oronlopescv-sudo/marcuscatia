@@ -10,6 +10,7 @@ import { HowItWorks } from '@/components/HowItWorks';
 import { Testimonials } from '@/components/Testimonials';
 import { FAQ } from '@/components/FAQ';
 import { Newsletter } from '@/components/Newsletter';
+import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -19,7 +20,8 @@ export default function Home() {
   const featuredCourses = storeCourses.filter((c) => c.active !== false).slice(0, 3);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans relative">
+      <Watermark position="top-right" opacity={0.08} size="medium" />
       <Header />
       
       <main className="flex-grow">

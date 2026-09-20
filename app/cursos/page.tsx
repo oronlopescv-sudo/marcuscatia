@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { CourseCard } from '@/components/CourseCard';
+import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
 
 export default function CursosPage() {
@@ -15,12 +16,13 @@ export default function CursosPage() {
 
   const activeCourses = allCourses.filter(c => c.active !== false);
 
-  const filteredCourses = filter === 'All' 
-    ? activeCourses 
+  const filteredCourses = filter === 'All'
+    ? activeCourses
     : activeCourses.filter(c => c.level === filter);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-gray-50">
+    <div className="min-h-screen flex flex-col font-sans bg-gray-50 relative">
+      <Watermark position="bottom-right" opacity={0.08} size="medium" />
       <Header />
       
       <main className="flex-grow">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { Watermark } from '@/components/Watermark';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ArrowRight, Utensils, MessageCircle, Play } from 'lucide-react';
@@ -124,7 +125,8 @@ export default function GaleriaPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-gray-50">
+    <div className="min-h-screen flex flex-col font-sans bg-gray-50 relative">
+      <Watermark position="bottom-left" opacity={0.08} size="medium" />
       <Header />
       
       <main className="flex-grow">
