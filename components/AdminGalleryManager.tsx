@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Trash2, Upload } from 'lucide-react';
+import { Plus, Trash2, Upload, X } from 'lucide-react';
 
 interface GalleryItem {
   id: number;
@@ -20,6 +20,7 @@ export function AdminGalleryManager() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     category: 'Cooking Class',
@@ -52,7 +53,7 @@ export function AdminGalleryManager() {
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
       /youtube\.com\/embed\/([^&\n?#]+)/,
-      /^([a-zA-Z0-9_-]{11})$/, // ID direto
+      /^([a-zA-Z0-9_-]{11})$/,
     ];
     for (const pattern of patterns) {
       const match = url.match(pattern);
@@ -66,14 +67,12 @@ export function AdminGalleryManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setError('Apenas JPEG, PNG e WebP são permitidos');
       return;
     }
 
-    // Validar tamanho (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       setError('Ficheiro não pode ter mais de 10MB');
       return;
@@ -82,7 +81,6 @@ export function AdminGalleryManager() {
     setFormData({ ...formData, file });
     setError('');
 
-    // Preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target?.result as string);
@@ -122,7 +120,6 @@ export function AdminGalleryManager() {
         }
       }
 
-      // Fazer POST com FormData (para upload de ficheiro)
       const data = new FormData();
       data.append('title', formData.title);
       data.append('category', formData.category);
@@ -145,7 +142,6 @@ export function AdminGalleryManager() {
 
       const result = await response.json();
       
-      // Adicionar novo item à lista
       const newItem: GalleryItem = {
         id: result.id,
         src: result.src,
@@ -158,7 +154,6 @@ export function AdminGalleryManager() {
       setGalleryItems([newItem, ...galleryItems]);
       setSuccess('✅ Item adicionado com sucesso!');
       
-      // Reset form
       setFormData({
         title: '',
         category: 'Cooking Class',
@@ -177,42 +172,65 @@ export function AdminGalleryManager() {
 
   // Delete item
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza?')) return;
+    if (!confirm('Tem certeza que quer apagar?')) return;
 
     try {
+      setDeletingId(id);
       const response = await fetch(`/api/gallery?id=${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         setGalleryItems(galleryItems.filter(item => item.id !== id));
-        setSuccess('✅ Item removido!');
+        setSuccess('✅ Foto apagada!');
       }
     } catch (err) {
       console.error('Error deleting item:', err);
-      setError('Erro ao remover');
+      setError('Erro ao apagar');
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-mindelo-dark">Galeria</h2>
+        <h2 className="text-2xl font-bold text-mindelo-dark">📷 Galeria de Fotos</h2>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition"
+          className="flex items-center gap-2 px-4 py-2 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition font-medium"
         >
           <Plus size={20} />
-          Adicionar
+          Adicionar Foto
         </button>
       </div>
 
+      {/* Success/Error Messages */}
+      {success && (
+        <div className="p-4 bg-green-100 text-green-700 rounded-lg">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="p-4 bg-red-100 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
       {/* Add Form */}
       {showAddForm && (
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-mindelo-dark">
-            Adicionar Foto ou Vídeo
-          </h3>
+        <div className="bg-gray-50 p-6 rounded-lg border-2 border-mindelo-blue">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-mindelo-dark">
+              ➕ Adicionar Nova Foto
+            </h3>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
           {/* Type Selection */}
           <div className="mb-4">
@@ -229,7 +247,7 @@ export function AdminGalleryManager() {
                 setPreviewUrl('');
                 setFormData({ ...formData, file: null, youtubeId: '' });
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             >
               <option value="photo">📷 Foto</option>
               <option value="video">🎥 Vídeo YouTube</option>
@@ -248,7 +266,7 @@ export function AdminGalleryManager() {
                 setFormData({ ...formData, title: e.target.value })
               }
               placeholder="ex: Cachupa de Mindelo"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
           </div>
 
@@ -264,7 +282,7 @@ export function AdminGalleryManager() {
                 setFormData({ ...formData, category: e.target.value })
               }
               placeholder="ex: Cooking Class"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
           </div>
 
@@ -279,7 +297,7 @@ export function AdminGalleryManager() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-mindelo-blue"
               />
 
               {/* Preview */}
@@ -309,20 +327,8 @@ export function AdminGalleryManager() {
                   setFormData({ ...formData, youtubeId: e.target.value })
                 }
                 placeholder="ex: https://youtube.com/watch?v=... ou dQw4w9WgXcQ"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               />
-            </div>
-          )}
-
-          {/* Messages */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
-              {success}
             </div>
           )}
 
@@ -331,9 +337,9 @@ export function AdminGalleryManager() {
             <button
               onClick={handleAddItem}
               disabled={uploading}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition font-medium"
+              className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition font-medium"
             >
-              {uploading ? 'Enviando...' : '✅ Adicionar'}
+              {uploading ? '⏳ Enviando...' : '✅ Adicionar'}
             </button>
             <button
               onClick={() => {
@@ -347,9 +353,9 @@ export function AdminGalleryManager() {
                 });
                 setPreviewUrl('');
               }}
-              className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
+              className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium"
             >
-              ✕ Cancelar
+              Cancelar
             </button>
           </div>
         </div>
@@ -357,15 +363,24 @@ export function AdminGalleryManager() {
 
       {/* Gallery Grid */}
       {isLoading ? (
-        <p className="text-gray-600">Carregando galeria...</p>
+        <p className="text-gray-600 text-center py-8">Carregando galeria...</p>
       ) : galleryItems.length === 0 ? (
-        <p className="text-gray-600">Nenhum item na galeria</p>
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-gray-600 mb-4">Nenhuma foto na galeria ainda</p>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition font-medium"
+          >
+            <Plus size={20} />
+            Adicionar Primeira Foto
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {galleryItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition"
+              className="group relative bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition"
             >
               {/* Image */}
               <div className="relative w-full h-48 bg-gray-200">
@@ -377,24 +392,37 @@ export function AdminGalleryManager() {
                 />
               </div>
 
-              {/* Info */}
-              <div className="p-4">
-                <h3 className="font-semibold text-mindelo-dark mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  {item.category}{' '}
-                  {item.type === 'video' && '🎥'}
-                  {item.type === 'photo' && '📷'}
-                </p>
-
-                {/* Delete Button */}
+              {/* Overlay Delete Button */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                 <button
                   onClick={() => item.id && handleDelete(item.id)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition text-sm font-medium"
+                  disabled={deletingId === item.id}
+                  className="flex items-center justify-center w-10 h-10 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50 transition"
+                  title="Apagar"
                 >
-                  <Trash2 size={16} />
-                  Remover
+                  <Trash2 size={18} />
+                </button>
+              </div>
+
+              {/* Info */}
+              <div className="p-4">
+                <h3 className="font-semibold text-mindelo-dark mb-1 truncate">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-gray-600 mb-2">
+                  {item.category}
+                  {item.type === 'video' && ' 🎥'}
+                  {item.type === 'photo' && ' 📷'}
+                </p>
+
+                {/* Delete Button Below */}
+                <button
+                  onClick={() => item.id && handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition text-xs font-medium disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  {deletingId === item.id ? 'Apagando...' : 'Apagar'}
                 </button>
               </div>
             </div>
