@@ -1,0 +1,45 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/marcuscatia_hostinger
+        chmod 600 ~/.ssh/marcuscatia_hostinger
+        ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+    - name: Deploy to Hostinger
+      run: |
+        ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/marcuscatia_hostinger ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd ~/marcuscatia
+
+          # Pull latest changes
+          git pull origin main || git clone https://github.com/oronlopescv-sudo/marcuscatia.git .
+
+          # Install dependencies
+          npm install --legacy-peer-deps
+
+          # Build
+          npm run build
+
+          # Restart server (if using PM2)
+          pm2 restart marcuscatia || npm start
+        EOF
+
+    - name: Notify deployment
+      if: success()
+      run: echo "✅ Deployment to Hostinger completed successfully!"
+
+    - name: Notify failure
+      if: failure()
+      run: echo "❌ Deployment failed!"
