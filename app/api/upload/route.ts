@@ -10,44 +10,55 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const type = formData.get('type') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validar tipo de arquivo
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ error: 'Only images allowed' }, { status: 400 });
     }
 
-    // Validar tamanho
+    // Validate size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 });
     }
 
-    // Converter arquivo para buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Gerar nome único
+    // Logo uploads overwrite the site's fixed /logo.png so every page
+    // that references it (Header, Hero, Footer, etc.) picks it up
+    // immediately — no extra DB write or component change needed.
+    if (type === 'logo') {
+      const logoPath = join(process.cwd(), 'public', 'logo.png');
+      await writeFile(logoPath, buffer);
+
+      return NextResponse.json({
+        success: true,
+        url: '/logo.png',
+        filename: 'logo.png',
+        size: file.size,
+      }, { status: 201 });
+    }
+
+    // Generic upload: unique filename under public/uploads
     const ext = file.name.split('.').pop();
     const filename = `${randomBytes(8).toString('hex')}.${ext}`;
     const filepath = join(process.cwd(), UPLOAD_DIR, filename);
 
-    // Criar diretório se não existir
     try {
       await mkdir(join(process.cwd(), UPLOAD_DIR), { recursive: true });
-    } catch (err) {
-      // Diretório já existe
+    } catch {
+      // Directory already exists
     }
 
-    // Salvar arquivo
     await writeFile(filepath, buffer);
-
-    const publicUrl = `/uploads/${filename}`;
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: `/uploads/${filename}`,
       filename,
       size: file.size,
     }, { status: 201 });

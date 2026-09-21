@@ -1,8 +1,0 @@
-"scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "clean": "next clean",
-    "db:migrate": "node scripts/run-migrations.js"
-  },

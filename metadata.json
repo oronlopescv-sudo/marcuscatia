@@ -1,6 +1,0 @@
-{
-  "name": "Catia Cooking Mindelo",
-  "description": "Authentic Cape Verdean cooking classes and market tours in Mindelo, São Vicente, Cape Verde.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

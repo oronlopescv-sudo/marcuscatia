@@ -45,6 +45,7 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('type', 'logo');
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -154,21 +155,16 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleReset}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors"
+          disabled={isUploading}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors disabled:opacity-50"
         >
           Reset
-        </button>
-        <button
-          disabled={isUploading || preview === currentLogoUrl}
-          className="px-4 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isUploading ? 'Uploading...' : 'Use This Logo'}
         </button>
       </div>
 
       {/* Info */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-        <p>💡 <strong>Dica:</strong> Logo será automaticamente atualizada em todo o site após upload.</p>
+        <p>💡 <strong>Tip:</strong> The logo updates across the whole site automatically after upload.</p>
       </div>
     </div>
   );

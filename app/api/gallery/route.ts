@@ -26,17 +26,17 @@ export async function POST(req: NextRequest) {
     const category = formData.get('category') as string;
     const youtubeId = formData.get('youtubeId') as string;
 
-    // Validar ficheiro ou YouTube
+    // Validate file or YouTube
     if (!file && !youtubeId) {
       return NextResponse.json(
-        { error: 'Envie uma foto ou fornece um YouTube ID' },
+        { error: 'Please provide a photo or a YouTube ID' },
         { status: 400 }
       );
     }
 
     if (!title || !category) {
       return NextResponse.json(
-        { error: 'Título e categoria são obrigatórios' },
+        { error: 'Title and category are required' },
         { status: 400 }
       );
     }
@@ -44,54 +44,54 @@ export async function POST(req: NextRequest) {
     let src = '';
     let type = 'photo';
 
-    // Se é YouTube video
+    // YouTube video
     if (youtubeId) {
       src = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
       type = 'video';
     }
-    // Se é foto (upload de ficheiro)
+    // Photo upload
     else if (file) {
-      // Validar tipo de ficheiro
+      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         return NextResponse.json(
-          { error: 'Apenas JPEG, PNG e WebP são permitidos' },
+          { error: 'Only JPEG, PNG and WebP are allowed' },
           { status: 400 }
         );
       }
 
-      // Validar tamanho (max 10MB)
+      // Validate size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         return NextResponse.json(
-          { error: 'Ficheiro não pode ter mais de 10MB' },
+          { error: 'File cannot be larger than 10MB' },
           { status: 400 }
         );
       }
 
-      // Salvar ficheiro
+      // Save file
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Criar diretório se não existir
+      // Create directory if it doesn't exist
       const uploadDir = join(process.cwd(), 'public', 'gallery');
       if (!existsSync(uploadDir)) {
         await mkdir(uploadDir, { recursive: true });
       }
 
-      // Gerar nome único
+      // Generate unique filename
       const timestamp = Date.now();
       const ext = file.name.split('.').pop() || 'jpg';
       const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
       const filepath = join(uploadDir, filename);
 
-      // Salvar ficheiro no disco
+      // Save file to disk
       await writeFile(filepath, buffer);
 
       src = `/gallery/${filename}`;
       type = 'photo';
     }
 
-    // Salvar na BD
+    // Save to DB
     const result = await query(
       `INSERT INTO gallery_items (src, title, category, type, youtubeId, created_at)
        VALUES (?, ?, ?, ?, ?, NOW())`,

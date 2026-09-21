@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
-interface ContentItem {
-  title?: string;
-  description?: string;
+interface ContentUpdate {
+  section?: string;
+  key_name?: string;
   content?: string;
-  category?: string;
+  type?: string;
 }
 
 export async function PUT(
@@ -14,25 +14,22 @@ export async function PUT(
 ) {
   try {
     const { id } = await context.params;
-    const data: ContentItem = await request.json();
-
-    const now = new Date().toISOString();
+    const data: ContentUpdate = await request.json();
 
     await query(
       `UPDATE site_content
-       SET title = ?, description = ?, content = ?, category = ?, updated_at = ?
+       SET section = ?, key_name = ?, content = ?, type = ?, updated_at = NOW()
        WHERE id = ?`,
       [
-        data.title || null,
-        data.description || null,
+        data.section || null,
+        data.key_name || null,
         data.content || null,
-        data.category || null,
-        now,
+        data.type || 'text',
         id,
       ]
     );
 
-    return NextResponse.json({ id, ...data, updated_at: now });
+    return NextResponse.json({ id, ...data });
   } catch (error) {
     console.error('Content PUT error:', error);
     return NextResponse.json(

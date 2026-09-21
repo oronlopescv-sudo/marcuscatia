@@ -1,14 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Save, X, Plus, Trash2, Edit3 } from 'lucide-react';
 
-interface ContentItem {
-  id: string;
+// The site_content table only has: id, section, key_name, content, type.
+// This component stores {title, description, body} as JSON inside the
+// `content` column so FAQ / Testimonial / Hero items can have multiple
+// fields without needing extra DB columns.
+interface StoredFields {
   title: string;
-  description?: string;
-  content?: string;
-  category: 'hero' | 'features' | 'faq' | 'testimonial' | 'social';
+  description: string;
+  body: string;
+}
+
+interface ContentRow {
+  id: string;
+  section: string;
+  key_name: string;
+  content: string;
+  type: string;
 }
 
 interface ContentEditorProps {
@@ -16,37 +26,56 @@ interface ContentEditorProps {
   title: string;
 }
 
+function parseFields(raw: string): StoredFields {
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      title: parsed.title || '',
+      description: parsed.description || '',
+      body: parsed.body || '',
+    };
+  } catch {
+    // Legacy plain-text row: treat the whole value as the body.
+    return { title: '', description: '', body: raw || '' };
+  }
+}
+
 export function ContentEditor({ category, title }: ContentEditorProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
+  const [items, setItems] = useState<ContentRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<ContentItem>>({});
+  const [formData, setFormData] = useState<StoredFields>({ title: '', description: '', body: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    loadContent();
-  }, [category]);
-
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     try {
-      const response = await fetch(`/api/content?category=${category}`);
+      const response = await fetch(`/api/content?section=${category}`);
       if (response.ok) {
         const data = await response.json();
-        setItems(data);
+        setItems(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error('Failed to load content:', err);
     }
+  }, [category]);
+
+  useEffect(() => {
+    loadContent();
+  }, [loadContent]);
+
+  const handleEdit = (item: ContentRow) => {
+    setEditingId(item.id);
+    setFormData(parseFields(item.content));
   };
 
-  const handleEdit = (item: ContentItem) => {
-    setEditingId(item.id);
-    setFormData(item);
+  const handleAddNew = () => {
+    setEditingId('new');
+    setFormData({ title: '', description: '', body: '' });
   };
 
   const handleCancel = () => {
     setEditingId(null);
-    setFormData({});
+    setFormData({ title: '', description: '', body: '' });
   };
 
   const handleSave = async () => {
@@ -54,19 +83,35 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
     setMessage('');
 
     try {
-      const url = editingId ? `/api/content/${editingId}` : '/api/content';
-      const method = editingId ? 'PUT' : 'POST';
+      const isNew = editingId === 'new';
+      const existing = !isNew ? items.find((i) => i.id === editingId) : undefined;
+      const keyName = existing?.key_name || `${category}_${Date.now()}`;
+      const id = existing?.id || `${category}_${Date.now()}`;
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, category }),
-      });
+      const payload = {
+        id,
+        section: category,
+        key_name: keyName,
+        content: JSON.stringify(formData),
+        type: 'rich_text',
+      };
+
+      const response = isNew
+        ? await fetch('/api/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch(`/api/content/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
 
       if (response.ok) {
         setMessage('✅ Saved successfully');
         setEditingId(null);
-        setFormData({});
+        setFormData({ title: '', description: '', body: '' });
         await loadContent();
         setTimeout(() => setMessage(''), 3000);
       } else {
@@ -105,10 +150,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
         <h3 className="text-xl font-bold text-mindelo-dark">{title}</h3>
         {!editingId && (
           <button
-            onClick={() => {
-              setEditingId('new');
-              setFormData({ category });
-            }}
+            onClick={handleAddNew}
             className="flex items-center gap-2 bg-mindelo-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
           >
             <Plus size={18} />
@@ -131,7 +173,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
             <input
               type="text"
-              value={formData.title || ''}
+              value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
               placeholder="Enter title..."
@@ -141,7 +183,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
             <textarea
-              value={formData.description || ''}
+              value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent resize-none"
               placeholder="Enter description..."
@@ -152,8 +194,8 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Content</label>
             <textarea
-              value={formData.content || ''}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              value={formData.body}
+              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent resize-none"
               placeholder="Enter content..."
               rows={5}
@@ -185,33 +227,36 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
         {items.length === 0 ? (
           <p className="text-gray-600 text-center py-8">No items yet</p>
         ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between hover:shadow-md transition-shadow"
-            >
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">{item.title}</h4>
-                {item.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{item.description}</p>
-                )}
+          items.map((item) => {
+            const fields = parseFields(item.content);
+            return (
+              <div
+                key={item.id}
+                className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between hover:shadow-md transition-shadow"
+              >
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900">{fields.title || '(untitled)'}</h4>
+                  {fields.description && (
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{fields.description}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="p-2 text-mindelo-blue hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="p-2 text-mindelo-blue hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit3 size={18} />
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

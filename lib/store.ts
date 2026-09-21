@@ -341,7 +341,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
         return newRes;
       }
     } catch (error) {
-      console.error('Erro ao salvar reservação:', error);
+      console.error('Error saving reservation:', error);
     }
 
     return null as any;
@@ -442,7 +442,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             set({ messages: [newMsg, ...get().messages] });
           }
         } catch (error) {
-          console.error('Erro ao salvar mensagem:', error);
+          console.error('Error saving message:', error);
         }
       },
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Plus, Trash2, Upload, X } from 'lucide-react';
 
@@ -31,12 +31,7 @@ export function AdminGalleryManager() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Carregar galeria
-  useEffect(() => {
-    fetchGallery();
-  }, []);
-
-  const fetchGallery = async () => {
+  const fetchGallery = useCallback(async () => {
     try {
       const response = await fetch('/api/gallery');
       const data = await response.json();
@@ -46,9 +41,14 @@ export function AdminGalleryManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // Extrair YouTube ID de URL
+  // Load gallery on mount
+  useEffect(() => {
+    fetchGallery();
+  }, [fetchGallery]);
+
+  // Extract YouTube ID from URL
   const extractYoutubeId = (url: string): string | null => {
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
@@ -69,12 +69,12 @@ export function AdminGalleryManager() {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Apenas JPEG, PNG e WebP são permitidos');
+      setError('Only JPEG, PNG and WebP are allowed');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Ficheiro não pode ter mais de 10MB');
+      setError('File cannot be larger than 10MB');
       return;
     }
 
@@ -88,45 +88,38 @@ export function AdminGalleryManager() {
     reader.readAsDataURL(file);
   };
 
-  // Adicionar novo item
+  // Add new item
   const handleAddItem = async () => {
     setError('');
     setSuccess('');
 
     if (!formData.title.trim()) {
-      setError('Título é obrigatório');
+      setError('Title is required');
       return;
     }
 
-    if (formData.type === 'photo' && !formData.file) {
-      setError('Envie uma foto');
+    if (!formData.file && !formData.youtubeId) {
+      setError('Please provide a photo or YouTube ID');
       return;
     }
 
-    if (formData.type === 'video' && !formData.youtubeId.trim()) {
-      setError('YouTube ID ou URL é obrigatório');
-      return;
-    }
+    setUploading(true);
 
     try {
-      setUploading(true);
-
-      let youtubeId = '';
-      if (formData.type === 'video') {
-        youtubeId = extractYoutubeId(formData.youtubeId) || '';
-        if (!youtubeId) {
-          setError('YouTube URL/ID inválido');
-          return;
-        }
-      }
-
       const data = new FormData();
       data.append('title', formData.title);
       data.append('category', formData.category);
+      data.append('type', formData.type);
+
       if (formData.file) {
         data.append('file', formData.file);
-      }
-      if (youtubeId) {
+      } else if (formData.youtubeId) {
+        const youtubeId = extractYoutubeId(formData.youtubeId);
+        if (!youtubeId) {
+          setError('Invalid YouTube URL or ID');
+          setUploading(false);
+          return;
+        }
         data.append('youtubeId', youtubeId);
       }
 
@@ -135,225 +128,181 @@ export function AdminGalleryManager() {
         body: data,
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao adicionar item');
+        setError(result.error || 'Failed to add item');
+        return;
       }
 
-      const result = await response.json();
-      
-      const newItem: GalleryItem = {
-        id: result.id,
-        src: result.src,
-        title: formData.title,
-        category: formData.category,
-        type: formData.type as 'photo' | 'video',
-        youtubeId: youtubeId || undefined,
-      };
-
-      setGalleryItems([newItem, ...galleryItems]);
-      setSuccess('✅ Item adicionado com sucesso!');
-      
-      setFormData({
-        title: '',
-        category: 'Cooking Class',
-        type: 'photo',
-        file: null,
-        youtubeId: '',
-      });
+      setSuccess('✅ Item added successfully!');
+      setFormData({ title: '', category: 'Cooking Class', type: 'photo', file: null, youtubeId: '' });
       setPreviewUrl('');
       setShowAddForm(false);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao adicionar item');
+      await fetchGallery();
+
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error adding item');
     } finally {
       setUploading(false);
     }
   };
 
   // Delete item
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que quer apagar?')) return;
+  const handleDeleteItem = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
 
+    setDeletingId(id);
     try {
-      setDeletingId(id);
       const response = await fetch(`/api/gallery?id=${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        setGalleryItems(galleryItems.filter(item => item.id !== id));
-        setSuccess('✅ Foto apagada!');
+        setSuccess('✅ Item deleted');
+        await fetchGallery();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('❌ Failed to delete');
       }
     } catch (err) {
-      console.error('Error deleting item:', err);
-      setError('Erro ao apagar');
+      setError('Error deleting item');
     } finally {
       setDeletingId(null);
     }
   };
 
+  const resetForm = () => {
+    setFormData({ title: '', category: 'Cooking Class', type: 'photo', file: null, youtubeId: '' });
+    setPreviewUrl('');
+    setError('');
+    setSuccess('');
+    setShowAddForm(false);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-mindelo-dark">📷 Photo Gallery</h2>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition font-medium"
-        >
-          <Plus size={20} />
-          Add Photo
-        </button>
+    <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-mindelo-dark">Photo Gallery</h2>
+        {!showAddForm && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 bg-mindelo-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+          >
+            <Plus size={20} />
+            Add Photo
+          </button>
+        )}
       </div>
 
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="p-4 bg-green-100 text-green-700 rounded-lg">
-          {success}
+      {/* Messages */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
+          <X size={16} />
+          {error}
         </div>
       )}
-      {error && (
-        <div className="p-4 bg-red-100 text-red-700 rounded-lg">
-          {error}
+
+      {success && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm mb-4">
+          {success}
         </div>
       )}
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="bg-gray-50 p-6 rounded-lg border-2 border-mindelo-blue">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-mindelo-dark">
-              ➕ Add New Photo
-            </h3>
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={24} />
-            </button>
-          </div>
-
-          {/* Type Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Type
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => {
-                setFormData({
-                  ...formData,
-                  type: e.target.value as 'photo' | 'video',
-                });
-                setPreviewUrl('');
-                setFormData({ ...formData, file: null, youtubeId: '' });
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="photo">📷 Foto</option>
-              <option value="video">🎥 Vídeo YouTube</option>
-            </select>
-          </div>
-
-          {/* Title */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título
-            </label>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
             <input
               type="text"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder="ex: Cachupa de Mindelo"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
+              placeholder="e.g., Cachupa cooking class"
             />
           </div>
 
-          {/* Category */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Categoria
-            </label>
-            <input
-              type="text"
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+            <select
               value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-              placeholder="ex: Cooking Class"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
+            >
+              <option>Cooking Class</option>
+              <option>Market Tour</option>
+              <option>Tasting</option>
+              <option>Ambiance</option>
+              <option>Ingredients</option>
+              <option>Other</option>
+            </select>
           </div>
 
-          {/* Photo Upload or YouTube URL */}
-          {formData.type === 'photo' ? (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Upload size={16} className="inline mr-2" />
-                Upload Foto (JPEG, PNG, WebP - max 10MB)
-              </label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFileChange}
-                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-mindelo-blue"
-              />
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'photo' | 'video' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
+            >
+              <option value="photo">Photo</option>
+              <option value="video">YouTube Video</option>
+            </select>
+          </div>
 
-              {/* Preview */}
+          {formData.type === 'photo' ? (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Upload Photo</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="photo-input"
+                />
+                <label htmlFor="photo-input" className="cursor-pointer">
+                  <Upload size={32} className="mx-auto mb-2 text-mindelo-blue" />
+                  <p className="font-semibold text-gray-700">Click to upload or drag and drop</p>
+                  <p className="text-xs text-gray-500">PNG, JPG, WebP up to 10MB</p>
+                </label>
+              </div>
+
               {previewUrl && (
                 <div className="mt-4">
-                  <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                  <div className="relative w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
-                    <Image
-                      src={previewUrl}
-                      alt="Preview"
-                      fill
-                      className="object-cover"
-                    />
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Preview</p>
+                  <div className="relative w-40 h-32 rounded-lg overflow-hidden">
+                    <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                YouTube URL ou ID
-              </label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">YouTube URL or ID</label>
               <input
                 type="text"
                 value={formData.youtubeId}
-                onChange={(e) =>
-                  setFormData({ ...formData, youtubeId: e.target.value })
-                }
-                placeholder="ex: https://youtube.com/watch?v=... ou dQw4w9WgXcQ"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                onChange={(e) => setFormData({ ...formData, youtubeId: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
+                placeholder="e.g., https://youtube.com/watch?v=... or dQw4w9WgXcQ"
               />
             </div>
           )}
 
-          {/* Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={handleAddItem}
               disabled={uploading}
-              className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition font-medium"
+              className="flex-1 bg-mindelo-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50"
             >
-              {uploading ? '⏳ Enviando...' : '✅ Adicionar'}
+              {uploading ? '⏳ Uploading...' : '✅ Add'}
             </button>
             <button
-              onClick={() => {
-                setShowAddForm(false);
-                setFormData({
-                  title: '',
-                  category: 'Cooking Class',
-                  type: 'photo',
-                  file: null,
-                  youtubeId: '',
-                });
-                setPreviewUrl('');
-              }}
-              className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium"
+              onClick={resetForm}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-semibold transition"
             >
               Cancel
             </button>
@@ -361,68 +310,33 @@ export function AdminGalleryManager() {
         </div>
       )}
 
-      {/* Gallery Grid */}
+      {/* Gallery List */}
       {isLoading ? (
-        <p className="text-gray-600 text-center py-8">Carregando galeria...</p>
+        <p className="text-gray-600 text-center py-8">Loading...</p>
       ) : galleryItems.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 mb-4">Nenhuma foto na galeria ainda</p>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-mindelo-blue text-white rounded-lg hover:bg-mindelo-dark transition font-medium"
-          >
-            <Plus size={20} />
-            Adicionar Primeira Foto
-          </button>
-        </div>
+        <p className="text-gray-600 text-center py-8">No photos yet. Add your first photo!</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {galleryItems.map((item) => (
-            <div
-              key={item.id}
-              className="group relative bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition"
-            >
-              {/* Image */}
-              <div className="relative w-full h-48 bg-gray-200">
-                <Image
-                  src={item.src}
-                  alt={item.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Overlay Delete Button */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+            <div key={item.id} className="relative group rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition">
+              <Image
+                src={item.src}
+                alt={item.title}
+                width={300}
+                height={300}
+                className="w-full aspect-square object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-end justify-between p-3">
+                <div className="text-white">
+                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="text-xs text-gray-200">{item.category}</p>
+                </div>
                 <button
-                  onClick={() => item.id && handleDelete(item.id)}
+                  onClick={() => handleDeleteItem(item.id)}
                   disabled={deletingId === item.id}
-                  className="flex items-center justify-center w-10 h-10 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50 transition"
-                  title="Apagar"
+                  className="p-2 bg-red-500 hover:bg-red-600 text-white rounded transition disabled:opacity-50"
                 >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-
-              {/* Info */}
-              <div className="p-4">
-                <h3 className="font-semibold text-mindelo-dark mb-1 truncate">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-gray-600 mb-2">
-                  {item.category}
-                  {item.type === 'video' && ' 🎥'}
-                  {item.type === 'photo' && ' 📷'}
-                </p>
-
-                {/* Delete Button Below */}
-                <button
-                  onClick={() => item.id && handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition text-xs font-medium disabled:opacity-50"
-                >
-                  <Trash2 size={14} />
-                  {deletingId === item.id ? 'Apagando...' : 'Apagar'}
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
