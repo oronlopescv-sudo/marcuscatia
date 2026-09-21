@@ -66,9 +66,11 @@ export function Header() {
           </nav>
 
           {/* Right Action */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-6 sm:gap-8">
             {/* Live Weather Widget for students */}
-            <MindeloWeatherWidget variant="header" />
+            <div className="ml-4 sm:ml-8">
+              <MindeloWeatherWidget variant="header" />
+            </div>
 
             <div className="hidden sm:flex items-center gap-2 lg:gap-3">
               <Link 
