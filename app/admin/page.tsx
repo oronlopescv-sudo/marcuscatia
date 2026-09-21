@@ -1378,8 +1378,6 @@ export default function AdminPage() {
               <DateBlockManager />
             </div>
           </div>
-
-          </div>
         )}
 
         {/* ============================================================ */}
