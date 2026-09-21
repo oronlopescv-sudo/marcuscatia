@@ -36,6 +36,7 @@ import { useAdminStore, Reservation, Course, Message } from '@/lib/store';
 import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
+import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -2270,9 +2271,20 @@ function CourseFormModal({
             />
           </div>
 
+          {/* Photo Upload for Own Photos */}
+          <div>
+            <label className="block font-bold text-slate-700 mb-2">📸 Upload Your Own Course Photo</label>
+            <CoursePhotoUpload
+              courseId={course?.id || 'new-course'}
+              courseName={title || 'Untitled Course'}
+              currentImageUrl={image}
+              onImageUpdate={(url) => setImage(url)}
+            />
+          </div>
+
           {/* Photo Preset Selector from Official Wix Site */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Cover Photo (Select from Cátia&apos;s website gallery or paste URL)</label>
+            <label className="block font-bold text-slate-700 mb-1">Or Select from Cátia&apos;s Website Gallery</label>
             <div className="grid grid-cols-4 gap-2 mb-2">
               {sitePhotoPresets.slice(0, 4).map((photo) => (
                 <button
