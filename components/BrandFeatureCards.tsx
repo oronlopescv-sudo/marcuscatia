@@ -21,15 +21,15 @@ export function BrandFeatureCards() {
         </div>
 
         {/* 3 Pillar Cards with Painterly Blue Rings */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 sm:gap-8 max-w-6xl mx-auto">
-          
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
+
           {/* Card 1: RECIPES & CLASSES */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="group flex flex-col items-center text-center p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-blue-50/40 to-white border border-blue-100/80 shadow-xs hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1"
+            className="group flex flex-col items-center text-center p-5 sm:p-6 md:p-8 rounded-2xl bg-gradient-to-b from-blue-50/40 to-white border border-blue-100/80 shadow-xs hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1"
           >
             {/* Circular Blue Brush Ring with Soup/Cooking Icon */}
             <div className="relative w-28 h-28 mb-6 flex items-center justify-center">

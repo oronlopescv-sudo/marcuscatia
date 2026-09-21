@@ -7,19 +7,19 @@ export function Testimonials() {
       name: 'Maria Silva',
       role: 'Visitor from Portugal',
       content: 'The class with Cátia was truly the highlight of our stay in São Vicente! The Cachupa turned out divine and we learned so much about the island\'s traditions. The warm family atmosphere was unforgettable.',
-      image: 'https://picsum.photos/seed/maria/100/100',
+      image: '/catia-cooking.jpg',
     },
     {
       name: 'John Doe',
       role: 'Global Food Traveler',
       content: 'I have taken cooking classes all over the world, but this one felt like cooking with an old friend. The Tuna Pastels were crunchy and packed with flavor. Highly recommended!',
-      image: 'https://picsum.photos/seed/john/100/100',
+      image: '/catia-cooking-hero.jpg',
     },
     {
       name: 'Elena Dupont',
       role: 'Traveler from France',
       content: 'The market tour was lively and fascinating, and Cátia showed us how to select the freshest fish. Cooking with her was joyful, educational, and absolutely delicious!',
-      image: 'https://picsum.photos/seed/ana/100/100',
+      image: '/logo.jpg',
     }
   ];
 
@@ -27,7 +27,7 @@ export function Testimonials() {
     <section className="py-16 sm:py-20 md:py-24 bg-white border-y border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-mindelo-dark mb-4">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-mindelo-dark mb-6 sm:mb-8">
             What Our Students Say
           </h2>
           <p className="text-lg text-gray-600">

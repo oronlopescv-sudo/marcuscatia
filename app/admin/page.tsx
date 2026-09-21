@@ -36,6 +36,8 @@ import { useAdminStore, Reservation, Course, Message } from '@/lib/store';
 import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
+import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
+import { DateBlockManager } from '@/components/DateBlockManager';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -1371,6 +1373,12 @@ export default function AdminPage() {
 
             </div>
 
+            {/* Date Block Manager - Detailed Control */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <DateBlockManager />
+            </div>
+          </div>
+
           </div>
         )}
 
@@ -2119,37 +2127,6 @@ function CourseFormModal({
   );
   const [newIncludeText, setNewIncludeText] = useState('');
 
-  // Authentic photos from Cátia's Wix site to select easily with 1 click
-  const sitePhotoPresets = [
-    {
-      label: 'Class & Market Tour',
-      url: 'https://static.wixstatic.com/media/f4fd80_4ae355554a644923a2290e145fe89000~mv2.jpg'
-    },
-    {
-      label: 'Cachupa Rica',
-      url: 'https://static.wixstatic.com/media/f4fd80_eff5a4e083fe40478fb642ec935dfd8c~mv2.jpg'
-    },
-    {
-      label: 'Fresh Fish Catch',
-      url: 'https://static.wixstatic.com/media/f4fd80_ec9272a13451476a845b928470b355eb~mv2.jpg'
-    },
-    {
-      label: 'Tuna Pastels',
-      url: 'https://static.wixstatic.com/media/f4fd80_df722da0f9d64552824877d9974b8511~mv2.jpg'
-    },
-    {
-      label: 'Kitchen in Fonte Francês',
-      url: 'https://static.wixstatic.com/media/f4fd80_df372cb7dc234c4b876dbbfda91d0f56~mv2.jpg'
-    },
-    {
-      label: 'Market Spices',
-      url: 'https://static.wixstatic.com/media/f4fd80_d539e27b44eb44299b751dfa7af7219d~mv2.jpg'
-    },
-    {
-      label: 'Island Desserts',
-      url: 'https://static.wixstatic.com/media/f4fd80_5b31e58350534d69bcc87999a830c300~mv2.jpg'
-    }
-  ];
 
   const handleAddInclude = () => {
     if (newIncludeText.trim()) {
@@ -2270,33 +2247,22 @@ function CourseFormModal({
             />
           </div>
 
-          {/* Photo Preset Selector from Official Wix Site */}
+          {/* Photo Upload for Own Photos */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Cover Photo (Select from Cátia&apos;s website gallery or paste URL)</label>
-            <div className="grid grid-cols-4 gap-2 mb-2">
-              {sitePhotoPresets.slice(0, 4).map((photo) => (
-                <button
-                  type="button"
-                  key={photo.url}
-                  onClick={() => setImage(photo.url)}
-                  className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all group text-left ${
-                    image === photo.url ? 'border-mindelo-blue ring-2 ring-mindelo-blue/30' : 'border-slate-200 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <Image src={photo.url} alt={photo.label} fill className="object-cover" referrerPolicy="no-referrer" />
-                  <span className="absolute inset-x-0 bottom-0 bg-black/60 text-[9px] text-white px-1 py-0.5 truncate block font-bold text-center">
-                    {photo.label}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <label className="block font-bold text-slate-700 mb-2">📸 Upload Course Photo</label>
+            <p className="text-xs text-slate-600 mb-2">Upload your own photos. You can replace or delete anytime.</p>
+            <CoursePhotoUpload
+              courseId={course?.id || 'new-course'}
+              courseName={title || 'Untitled Course'}
+              currentImageUrl={image}
+              onImageUpdate={(url) => setImage(url)}
+            />
+            {/* Hidden input - auto updated by CoursePhotoUpload */}
             <input
-              type="url"
+              type="hidden"
               required
               value={image}
               onChange={(e) => setImage(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 border rounded-xl text-xs text-slate-600 font-mono"
             />
           </div>
 
