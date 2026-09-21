@@ -64,7 +64,7 @@ export default function Home() {
         
         {/* Final CTA Section */}
         <section className="py-16 sm:py-20 md:py-24 bg-mindelo-blue relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://picsum.photos/id/493/1920/1080')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-mindelo-dark/20 to-mindelo-blue/20 mix-blend-overlay"></div>
           <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
             <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-6">
               Ready to Get Cooking?

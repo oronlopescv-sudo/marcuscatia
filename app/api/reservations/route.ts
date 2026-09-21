@@ -12,48 +12,20 @@ async function sendNotifications(reservation: {
   totalPrice: number;
 }) {
   try {
-    // Send WhatsApp notification
-    if (reservation.phone) {
-      fetch('/api/notify/whatsapp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumber: reservation.phone,
-          courseTitle: reservation.courseTitle,
-          date: reservation.date,
-          time: reservation.time,
-          guests: reservation.guests,
-          totalPrice: reservation.totalPrice,
-          studentName: reservation.studentName,
-        }),
-      }).catch(err => console.error('WhatsApp notification failed:', err));
-    }
-
-    // Create admin notification
-    fetch('/api/notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'reservation',
-        title: `New Booking: ${reservation.studentName}`,
-        description: `${reservation.courseTitle} on ${reservation.date} at ${reservation.time} for ${reservation.guests} guests`,
-        data: reservation,
-      }),
-    }).catch(err => console.error('Admin notification failed:', err));
-
-    // Send confirmation email
-    fetch('/api/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: reservation.email,
-        subject: '✅ Booking Confirmed - Cátia Cooking Mindelo',
-        template: 'booking-confirmation',
-        data: reservation,
-      }),
-    }).catch(err => console.error('Email notification failed:', err));
+    // TODO: Implement external notification services
+    // - WhatsApp: integrate Twilio or local WhatsApp Business API
+    // - Email: integrate SendGrid or similar
+    // - Admin notifications: store in database or send via email
+    
+    console.log('📧 New reservation - manual notification required:', {
+      student: reservation.studentName,
+      email: reservation.email,
+      phone: reservation.phone,
+      course: reservation.courseTitle,
+      date: reservation.date,
+    });
   } catch (error) {
-    console.error('Notification sending error:', error);
+    console.error('Error in notification workflow:', error);
   }
 }
 

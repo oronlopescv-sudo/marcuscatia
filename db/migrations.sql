@@ -96,6 +96,37 @@ CREATE TABLE IF NOT EXISTS blocked_dates (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
+-- TABELA: SITE_CONTENT (CMS genérico - FAQs, testimonials, hero, features)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS site_content (
+  id VARCHAR(100) PRIMARY KEY,
+  section VARCHAR(100) NOT NULL,
+  key_name VARCHAR(255) NOT NULL,
+  content LONGTEXT NOT NULL,
+  type VARCHAR(50) DEFAULT 'text',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_section (section),
+  KEY idx_key_name (key_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- TABELA: NOTIFICATIONS (Notificações de admin - reservas, mensagens, sistema)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS notifications (
+  id VARCHAR(100) PRIMARY KEY,
+  type ENUM('reservation', 'message', 'comment', 'system') DEFAULT 'system',
+  title VARCHAR(255) NOT NULL,
+  description LONGTEXT,
+  data JSON,
+  read BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_type (type),
+  KEY idx_read (read),
+  KEY idx_created (createdAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
 -- Inserir cursos iniciais
 -- ============================================================================
 INSERT IGNORE INTO courses (id, title, description, price, priceNumber, duration, level, maxCapacity, timeSlot) VALUES

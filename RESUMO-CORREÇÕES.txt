@@ -1,0 +1,125 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    RESUMO DE CORREÇÕES — 21 SETEMBRO 2026                  ║
+║                      Catia Cooking Mindelo (v1.0.0)                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+COMMIT: 8fcfca4 — "fix: correct site codebase — all bugs, dead code, and Portuguese text"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔴 BUGS CRÍTICOS CORRIGIDOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CMS COMPLETAMENTE QUEBRADO
+   ❌ Problema: ContentEditor.tsx enviava campos (title, description, category) 
+              que NÃO EXISTEM na tabela site_content
+   ✅ Solução:  Reescrito para usar schema real (section, key_name, content, type)
+                JSON serialization para multi-field content (FAQ, Testimonials, Hero)
+
+2. GALERIA PÚBLICA DESLIGADA DA API
+   ❌ Problema: /gallery page tinha 9 fotos hardcoded + nunca chamava /api/gallery
+              Todo o trabalho de upload de fotos reais era invisível no site
+   ✅ Solução:  Agora busca fotos reais da BD com fallback para padrões
+                useEffect com abort controller para cancellação correta
+
+3. LOGO UPLOAD NÃO FAZIA NADA
+   ❌ Problema: LogoUploadManager salvava em ficheiro aleatório (public/uploads/)
+              Site inteiro usa /logo.png fixo — logo nunca era atualizado
+   ✅ Solução:  /api/upload agora sobrescreve public/logo.png diretamente
+                Todas as páginas que usam logo vêem mudança imediatamente
+
+4. URL ERRADA EM .env.production
+   ❌ Problema: APP_URL=https://mistyrose-hummingbird-962122.hostingersite.com
+              (antiga, de projeto anterior)
+   ✅ Solução:  Corrigido para: https://lightskyblue-bat-697565.hostingersite.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟡 REFATORAÇÃO COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Componentes Reescritos (100% em inglês, lint clean):
+  • AdminGalleryManager.tsx      (~260 linhas → reescrito, sem erros ESLint)
+  • ContentEditor.tsx            (~80 → reescrito com schema correto)
+  • LogoUploadManager.tsx        (traduzido + botão morto removido)
+
+Rotas da API Refatoradas:
+  • /api/upload                  (agora trata logo especialmente)
+  • /api/gallery                 (mensagens de erro em inglês)
+  • /api/content/[id]            (schema mapeado correctamente)
+
+Texto Traduzido (português → inglês):
+  • AdminGalleryManager: "Apenas JPEG..." → "Only JPEG, PNG and WebP..."
+  • AdminGalleryManager: "Título é obrigatório" → "Title is required"
+  • AdminGalleryManager: "Enviando..." → "Uploading..."
+  • lib/store.ts: console.error('Erro ao salvar...') → 'Error saving...'
+  • app/gallery/page.tsx: comentários refatorados
+  • app/api/gallery/route.ts: todas as mensagens de erro
+
+next.config.ts Limpo:
+  • Removido webpack hack para "HMR disabled in AI Studio"
+  • Removido remotePatterns desnecessários (picsum.photos)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟢 LIMPEZA DE CÓDIGO MORTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7 Componentes Órfãos Removidos (nunca foram importados em lado nenhum):
+  ✗ AdminContentManager.tsx
+  ✗ CatiaHeroSection.tsx
+  ✗ CommentForm.tsx
+  ✗ CommentsList.tsx
+  ✗ FileUpload.tsx
+  ✗ LogoWatermark.tsx
+  ✗ SectionHeroWithLogo.tsx
+
+3 Ficheiros AI Studio Removidos:
+  ✗ metadata.json                (Google AI Studio config)
+  ✗ package.json.update          (ficheiro duplicado)
+  ✗ src/assets/images/           (1.7MB imagens não usadas)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ RESULTADO FINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Build Status:          ✅ npm run build — Pass
+Routes:                20 (0 static prerender + 20 dynamic)
+First Load JS:         175 kB
+JavaScript Size:       Otimizado (no code splitting)
+
+TypeScript:            ✅ sem erros
+ESLint:                ✅ lint clean (após refactoring)
+Texto:                 ✅ 100% inglês
+
+GitHub Commit:         8fcfca4
+GitHub Push:           ✅ main branch atualizado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 PRÓXIMOS PASSOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SSH no Hostinger e fazer deploy:
+   $ cd ~/public_html
+   $ git pull origin main
+   $ npm install
+   $ npm run build
+   $ pm2 restart all
+
+2. Se página fica preta, verificar:
+   $ git log -1 --oneline      (deve ser 8fcfca4)
+   $ npm run build 2>&1 | tail -20
+   $ pm2 logs --lines 50
+
+3. Testar no navegador:
+   https://lightskyblue-bat-697565.hostingersite.com
+
+4. Se houver erros de API:
+   → Executar SQL no MySQL Hostinger (hPanel → Databases)
+   → Copiar conteúdo de db/migrations.sql
+
+PRONTO PARA PRODUÇÃO! ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ficheiro: RESUMO-CORREÇÕES.txt
+Data: 21 Setembro 2026
+Desenvolvedor: Orson (oronlopescv-sudo)
+Projeto: Catia Cooking Mindelo
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

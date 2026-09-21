@@ -3,11 +3,23 @@ let pool: any = null;
 async function createPool() {
   try {
     const mysql = await import('mysql2/promise');
+    
+    // Require environment variables in production
+    const host = process.env.DB_HOST;
+    const user = process.env.DB_USER;
+    const password = process.env.DB_PASSWORD;
+    const database = process.env.DB_NAME;
+    
+    if (!host || !user || !password || !database) {
+      console.warn('⚠️ Missing database credentials in environment variables');
+      return null;
+    }
+    
     return mysql.createPool({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'u128759105_Marcuscatia',
-      password: process.env.DB_PASSWORD || 'f5Zy*2M@',
-      database: process.env.DB_NAME || 'u128759105_Catia',
+      host,
+      user,
+      password,
+      database,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
