@@ -60,7 +60,10 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
   }, [category]);
 
   useEffect(() => {
-    loadContent();
+    const load = async () => {
+      await loadContent();
+    };
+    load();
   }, [loadContent]);
 
   const handleEdit = (item: ContentRow) => {

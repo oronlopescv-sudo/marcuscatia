@@ -45,7 +45,10 @@ export function AdminGalleryManager() {
 
   // Load gallery on mount
   useEffect(() => {
-    fetchGallery();
+    const load = async () => {
+      await fetchGallery();
+    };
+    load();
   }, [fetchGallery]);
 
   // Extract YouTube ID from URL

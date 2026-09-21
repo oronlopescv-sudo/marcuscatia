@@ -65,7 +65,7 @@ export function Hero() {
 
             {/* Secondary Description */}
             <p className="text-sm md:text-base text-gray-600 leading-relaxed mb-8 max-w-lg">
-              Every class is more than just cooking — it's a celebration of culture, tradition, and the passion that goes into every dish.
+              Every class is more than just cooking — it&apos;s a celebration of culture, tradition, and the passion that goes into every dish.
             </p>
 
             {/* CTA Buttons */}
