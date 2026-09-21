@@ -37,6 +37,7 @@ import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
+import { DateBlockManager } from '@/components/DateBlockManager';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -1371,6 +1372,12 @@ export default function AdminPage() {
               </div>
 
             </div>
+
+            {/* Date Block Manager - Detailed Control */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <DateBlockManager />
+            </div>
+          </div>
 
           </div>
         )}
