@@ -2322,9 +2322,9 @@ function CourseFormModal({
                 onChange={(e) => setLevel(e.target.value as any)}
                 className="w-full px-3 py-2 border rounded-xl text-sm font-semibold"
               >
-                <option value="Beginner">Beginner (Iniciante)</option>
-                <option value="Intermediate">Intermediate (Intermédio)</option>
-                <option value="Advanced">Advanced (Avançado)</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
               </select>
             </div>
             <div>

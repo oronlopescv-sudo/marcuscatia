@@ -8,7 +8,7 @@ import { CourseCard } from '@/components/CourseCard';
 import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
 
-export default function CursosPage() {
+export default function CoursesPage() {
   const [filter, setFilter] = useState<string>('All');
   const allCourses = useAdminStore((state) => state.courses);
 

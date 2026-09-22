@@ -28,7 +28,7 @@ export interface Course {
   image: string;
   duration: string;
   maxCapacity: number;
-  level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Iniciante' | 'Intermédio' | 'Avançado';
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
   price: string;
   priceNumber: number;
   active: boolean;

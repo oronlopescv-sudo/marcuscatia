@@ -94,7 +94,7 @@ export default function GalleryPage() {
     }));
   }, [galleryItems]);
 
-  // Filtrar e pesquisar
+  // Filter and search
   const filteredItems = useMemo(() => {
     return galleryItems.filter(item => {
       const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
