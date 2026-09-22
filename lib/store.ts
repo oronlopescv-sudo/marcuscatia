@@ -264,11 +264,33 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
       },
 
       updateReservationStatus: (id, status) => {
+        const reservation = get().reservations.find((r) => r.id === id);
         set({
           reservations: get().reservations.map((r) =>
             r.id === id ? { ...r, status } : r
           ),
         });
+
+        if (!reservation) return;
+
+        const nowConfirmed = status === 'confirmed' || status === 'confirmada';
+        const nowCancelled = status === 'cancelled' || status === 'cancelada';
+        const { blockedDates, toggleBlockedDate, reservations } = get();
+
+        if (nowConfirmed && !blockedDates.includes(reservation.date)) {
+          // Auto-block the date so no one else can book the same slot.
+          toggleBlockedDate(reservation.date);
+        } else if (nowCancelled && blockedDates.includes(reservation.date)) {
+          // Only auto-unblock if no OTHER confirmed reservation still
+          // needs that date blocked.
+          const stillNeeded = reservations.some(
+            (r) => r.id !== id && r.date === reservation.date &&
+              (r.status === 'confirmed' || r.status === 'confirmada')
+          );
+          if (!stillNeeded) {
+            toggleBlockedDate(reservation.date);
+          }
+        }
       },
 
       updateReservationPayment: (id, paymentStatus) => {
