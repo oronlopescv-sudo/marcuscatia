@@ -62,7 +62,7 @@ export default function CursosPage() {
               Find Your Ideal Class
             </h2>
             
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto justify-center">
               {levels.map(level => (
                 <button
                   key={level}

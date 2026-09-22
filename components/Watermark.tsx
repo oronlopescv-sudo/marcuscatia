@@ -14,14 +14,16 @@ export function Watermark({
   size = 'medium'
 }: WatermarkProps) {
   const sizeMap = {
-    small: 'w-24 h-24',
-    medium: 'w-40 h-40',
-    large: 'w-56 h-56'
+    small: 'w-14 h-14 sm:w-24 sm:h-24',
+    medium: 'w-20 h-20 sm:w-40 sm:h-40',
+    large: 'w-28 h-28 sm:w-56 sm:h-56'
   };
 
+  // Bottom-right gets extra clearance on mobile so it doesn't collide with
+  // the fixed WhatsApp button (which sits at bottom-6 right-6, ~56px).
   const positionMap = {
     'top-right': 'top-4 right-4',
-    'bottom-right': 'bottom-4 right-4',
+    'bottom-right': 'bottom-20 right-4 sm:bottom-4',
     'bottom-left': 'bottom-4 left-4',
     'top-left': 'top-4 left-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
