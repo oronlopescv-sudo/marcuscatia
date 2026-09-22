@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Lock, Unlock, X, Calendar } from 'lucide-react';
 
 interface BlockedDate {
@@ -23,11 +23,7 @@ export function DateBlockManager({ courseId, onDateBlocked }: DateBlockManagerPr
   const [isBlocking, setIsBlocking] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    loadBlockedDates();
-  }, [courseId]);
-
-  const loadBlockedDates = async () => {
+  const loadBlockedDates = useCallback(async () => {
     try {
       const url = courseId
         ? `/api/blocked-dates?courseId=${courseId}`
@@ -53,7 +49,11 @@ export function DateBlockManager({ courseId, onDateBlocked }: DateBlockManagerPr
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [courseId]);
+
+  useEffect(() => {
+    loadBlockedDates();
+  }, [loadBlockedDates]);
 
   const handleBlockDate = async () => {
     if (!selectedDate) {
