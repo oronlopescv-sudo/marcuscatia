@@ -35,10 +35,21 @@ export function DateBlockManager({ courseId, onDateBlocked }: DateBlockManagerPr
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setBlockedDates(data);
+        // API may return either a raw array or { blockedDates: [...] };
+        // guard against both shapes and any non-array payload so a
+        // malformed/error response never crashes .map()/.length below.
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.blockedDates)
+            ? data.blockedDates
+            : [];
+        setBlockedDates(list);
+      } else {
+        setBlockedDates([]);
       }
     } catch (err) {
       console.error('Failed to load blocked dates:', err);
+      setBlockedDates([]);
     } finally {
       setIsLoading(false);
     }

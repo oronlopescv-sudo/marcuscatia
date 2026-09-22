@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -37,20 +37,27 @@ import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
-import { DateBlockManager } from '@/components/DateBlockManager';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('catia_admin_authenticated') === 'true';
-    }
-    return false;
-  });
+  // IMPORTANT: always start as false so server and first client render match
+  // exactly. Reading sessionStorage inside the useState initializer causes a
+  // hydration mismatch (server has no window, client may already be
+  // authenticated), which produced the "Application error: a client-side
+  // exception has occurred" crash on /admin. The real value is read after
+  // mount instead, via the effect below.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings'>('overview');
+
+  // Read any existing session after mount (client-only), never during SSR.
+  useEffect(() => {
+    if (sessionStorage.getItem('catia_admin_authenticated') === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Store hooks
   const { 
@@ -1373,10 +1380,6 @@ export default function AdminPage() {
 
             </div>
 
-            {/* Date Block Manager - Detailed Control */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-              <DateBlockManager />
-            </div>
           </div>
         )}
 

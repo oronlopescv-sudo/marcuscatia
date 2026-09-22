@@ -35,9 +35,12 @@ export function AdminGalleryManager() {
     try {
       const response = await fetch('/api/gallery');
       const data = await response.json();
-      setGalleryItems(data);
+      // Guard against error payloads (e.g. { error: "..." } on a 500) so a
+      // failed request never gets stored as if it were the items array.
+      setGalleryItems(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching gallery:', err);
+      setGalleryItems([]);
     } finally {
       setIsLoading(false);
     }
