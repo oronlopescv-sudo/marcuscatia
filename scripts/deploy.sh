@@ -25,16 +25,15 @@ git pull origin main || echo "⚠️  Git pull failed - continuing anyway"
 
 # 2. Instalar dependências
 echo "📦 2. Installing dependencies..."
-npm install mysql2/promise
+npm install
 
-# 3. Executar migrations
-echo "🗄️  3. Running database migrations..."
-npm run db:migrate
-
-if [ $? -ne 0 ]; then
-    echo "❌ Migrations failed!"
-    exit 1
-fi
+# 3. Database migrations
+# Run once manually (not on every deploy) after the app is up:
+#   curl -X POST http://localhost:3000/api/admin/migrate \
+#     -H "Content-Type: application/json" \
+#     -d '{"secret": "<ADMIN_SECRET from .env>"}'
+# This creates all tables (IF NOT EXISTS), so it's safe to re-run.
+echo "🗄️  3. Skipping migrations (run manually once the app is up - see script comments)"
 
 # 4. Build
 echo "🔨 4. Building Next.js..."
