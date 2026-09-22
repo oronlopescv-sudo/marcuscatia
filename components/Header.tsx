@@ -19,7 +19,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-blue-100 shadow-sm">
       {/* Top painted coastal blue decorative stroke */}
       <div className="h-1.5 w-full bg-gradient-to-r from-mindelo-dark via-mindelo-blue to-mindelo-dark"></div>
 
