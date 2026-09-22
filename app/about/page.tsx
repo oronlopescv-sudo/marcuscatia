@@ -43,8 +43,8 @@ export default function AboutPage() {
             <div className="w-full md:w-1/2">
               <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-blue-50">
                  <Image 
-                  src="/catia-cooking.jpg" 
-                  alt="Cátia cooking overlooking the Bay of Mindelo" 
+                  src="/catia-cutting-fish.jpg" 
+                  alt="Cátia Sofia de Andrade preparing fresh fish in her kitchen" 
                   fill
                   className="object-cover"
                   referrerPolicy="no-referrer"
