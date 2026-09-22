@@ -27,9 +27,9 @@ export function Header() {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo + Cape Verde Flag + Slogan */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-mindelo-blue shadow-sm group-hover:scale-105 transition-transform bg-white">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink">
+            <Link href="/" className="flex items-center gap-2 group min-w-0">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-mindelo-blue shadow-sm group-hover:scale-105 transition-transform bg-white flex-shrink-0">
                 <Image 
                   src="/logo.png" 
                   alt="Catia Cooking Mindelo Logo Oficial" 
@@ -39,8 +39,8 @@ export function Header() {
                   priority
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="font-serif italic font-extrabold text-xl text-mindelo-dark tracking-tight leading-none group-hover:text-mindelo-blue transition-colors">
+              <div className="flex flex-col min-w-0">
+                <span className="font-serif italic font-extrabold text-sm sm:text-lg md:text-xl text-mindelo-dark tracking-tight leading-none group-hover:text-mindelo-blue transition-colors truncate">
                   catiacookingmindelo
                 </span>
               </div>
@@ -49,7 +49,7 @@ export function Header() {
           </div>
           
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-shrink-0">
             {navLinks.map((link, idx) => (
               <span key={link.name} className="flex items-center">
                 <Link 
@@ -66,9 +66,9 @@ export function Header() {
           </nav>
 
           {/* Right Action */}
-          <div className="flex items-center gap-6 sm:gap-8">
-            {/* Live Weather Widget for students */}
-            <div className="ml-4 sm:ml-8">
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-shrink-0">
+            {/* Live Weather Widget for students - hidden on small screens to save space for nav */}
+            <div className="hidden sm:block">
               <MindeloWeatherWidget variant="header" />
             </div>
 

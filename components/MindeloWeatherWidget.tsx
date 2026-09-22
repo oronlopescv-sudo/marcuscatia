@@ -204,7 +204,7 @@ export function MindeloWeatherWidget({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 sm:right-auto sm:left-0 mt-2 w-80 sm:w-88 p-4 bg-white rounded-2xl shadow-xl border border-blue-100 z-50 text-gray-800"
+              className="absolute right-0 sm:right-auto sm:left-0 mt-2 w-[calc(100vw-2rem)] max-w-80 sm:w-80 p-4 bg-white rounded-2xl shadow-xl border border-blue-100 z-50 text-gray-800"
             >
               {/* Card Header */}
               <div className="flex items-start justify-between pb-3 border-b border-gray-100">

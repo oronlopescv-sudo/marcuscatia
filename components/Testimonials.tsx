@@ -39,7 +39,7 @@ export function Testimonials() {
           {testimonials.map((testimonial, idx) => (
             <div key={idx} className="bg-mindelo-cream/30 p-8 rounded-2xl border border-blue-50 relative mt-8">
               <div className="absolute -top-10 left-1/2 transform -translate-x-1/2">
-                <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden shadow-md">
+                <div className="relative w-20 h-20 rounded-full border-4 border-white overflow-hidden shadow-md">
                   <Image 
                     src={testimonial.image}
                     alt={testimonial.name}
