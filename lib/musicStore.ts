@@ -5,56 +5,40 @@ export interface Track {
   id: string;
   title: string;
   url: string;
-  createdAt: string;
 }
 
 interface MusicStore {
-  tracks: Track[];
   currentTrack: Track | null;
   isPlaying: boolean;
   volume: number;
   
-  // Actions
-  setTracks: (tracks: Track[]) => void;
-  addTrack: (track: Track) => void;
-  deleteTrack: (id: string) => void;
   setCurrentTrack: (track: Track | null) => void;
   setIsPlaying: (playing: boolean) => void;
   setVolume: (volume: number) => void;
 }
 
+export const MUSIC_TRACKS: Track[] = [
+  { id: '1', title: 'Mindelo Vibes', url: 'https://example.com/music/mindelo-vibes.mp3' },
+  { id: '2', title: 'Sunset in Praia', url: 'https://example.com/music/sunset-praia.mp3' },
+  { id: '3', title: 'Cape Verde Rhythm', url: 'https://example.com/music/cv-rhythm.mp3' },
+  { id: '4', title: 'Cooking Ambiance', url: 'https://example.com/music/cooking.mp3' },
+  { id: '5', title: 'Island Breeze', url: 'https://example.com/music/island-breeze.mp3' },
+  { id: '6', title: 'Mornas Classic', url: 'https://example.com/music/mornas.mp3' },
+  { id: '7', title: 'Funaná Energy', url: 'https://example.com/music/funana.mp3' },
+  { id: '8', title: 'Ocean Waves', url: 'https://example.com/music/ocean.mp3' },
+  { id: '9', title: 'Market Life', url: 'https://example.com/music/market.mp3' },
+  { id: '10', title: 'Evening Calm', url: 'https://example.com/music/evening.mp3' },
+];
+
 export const useMusicStore = create<MusicStore>()(
   persist(
-    (set, get) => ({
-      tracks: [],
-      currentTrack: null,
+    (set) => ({
+      currentTrack: MUSIC_TRACKS[0],
       isPlaying: false,
       volume: 0.5,
 
-      setTracks: (tracks) => set({ tracks }),
-      
-      addTrack: (track) => {
-        const tracks = get().tracks;
-        const updated = [...tracks, track];
-        set({ tracks: updated });
-        // Auto-select first track if none selected
-        if (!get().currentTrack && updated.length === 1) {
-          set({ currentTrack: track });
-        }
-      },
-
-      deleteTrack: (id) => {
-        const tracks = get().tracks.filter(t => t.id !== id);
-        set({ tracks });
-        // Clear current track if deleted
-        if (get().currentTrack?.id === id) {
-          set({ currentTrack: null, isPlaying: false });
-        }
-      },
-
       setCurrentTrack: (track) => {
         set({ currentTrack: track });
-        // Reset playback when switching tracks
         set({ isPlaying: !!track });
       },
 

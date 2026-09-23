@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Music, Play, Pause, Volume2, X } from 'lucide-react';
-import { useMusicStore } from '@/lib/musicStore';
+import { Music, Play, Pause, Volume2, X, ChevronDown } from 'lucide-react';
+import { useMusicStore, MUSIC_TRACKS } from '@/lib/musicStore';
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -12,13 +12,13 @@ export default function MusicPlayer() {
     setIsPlaying, 
     volume, 
     setVolume,
-    tracks 
+    setCurrentTrack
   } = useMusicStore();
   const [isMinimized, setIsMinimized] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [showList, setShowList] = useState(false);
 
-  // Sincronizar play/pause com o store
   useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
     
@@ -29,14 +29,12 @@ export default function MusicPlayer() {
     }
   }, [isPlaying, currentTrack]);
 
-  // Sincronizar volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // Atualizar duração e tempo
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
@@ -67,7 +65,7 @@ export default function MusicPlayer() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!currentTrack || tracks.length === 0) {
+  if (!currentTrack) {
     return null;
   }
 
@@ -88,35 +86,32 @@ export default function MusicPlayer() {
         }`}
       >
         {isMinimized ? (
-          // Botão minimizado
           <button
             onClick={() => setIsMinimized(false)}
             className="w-full h-full flex items-center justify-center text-white hover:bg-blue-800 rounded-lg transition"
-            title="Click to expand"
+            title="Expand player"
           >
             <Music className="w-6 h-6" />
           </button>
         ) : (
-          // Player expandido
           <div className="space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Music className="w-5 h-5 text-blue-300 flex-shrink-0" />
                 <p className="text-white text-sm font-semibold truncate">
-                  {currentTrack.title || 'Untitled'}
+                  {currentTrack.title}
                 </p>
               </div>
               <button
                 onClick={() => setIsMinimized(true)}
                 className="text-blue-200 hover:text-white transition ml-2 flex-shrink-0"
-                title="Minimize"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Barra de progresso */}
+            {/* Progress Bar */}
             <div className="space-y-1">
               <input
                 type="range"
@@ -132,9 +127,8 @@ export default function MusicPlayer() {
               </div>
             </div>
 
-            {/* Controles */}
+            {/* Controls */}
             <div className="flex items-center gap-3">
-              {/* Play/Pause */}
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 transition"
@@ -152,7 +146,6 @@ export default function MusicPlayer() {
                 )}
               </button>
 
-              {/* Volume */}
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-blue-300 flex-shrink-0" />
                 <input
@@ -162,10 +155,41 @@ export default function MusicPlayer() {
                   step="0.1"
                   value={volume}
                   onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-16 h-1 bg-blue-800 rounded-full cursor-pointer accent-blue-400"
-                  title="Volume"
+                  className="w-12 h-1 bg-blue-800 rounded-full cursor-pointer accent-blue-400"
                 />
               </div>
+            </div>
+
+            {/* Playlist Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowList(!showList)}
+                className="w-full bg-blue-800 hover:bg-blue-700 text-white py-2 rounded-lg flex items-center justify-between gap-2 px-3 text-sm transition"
+              >
+                <span className="truncate">Playlist</span>
+                <ChevronDown className={`w-4 h-4 transition ${showList ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showList && (
+                <div className="absolute top-full mt-2 w-full bg-blue-900 border border-blue-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {MUSIC_TRACKS.map((track) => (
+                    <button
+                      key={track.id}
+                      onClick={() => {
+                        setCurrentTrack(track);
+                        setShowList(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm transition ${
+                        currentTrack.id === track.id
+                          ? 'bg-blue-700 text-white font-semibold'
+                          : 'text-blue-100 hover:bg-blue-800'
+                      }`}
+                    >
+                      {track.title}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
