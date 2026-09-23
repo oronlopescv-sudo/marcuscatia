@@ -10,3 +10,7 @@ gallery/
 *.jpeg
 *.png
 *.webp
+
+# secrets
+*_key*
+*.pem

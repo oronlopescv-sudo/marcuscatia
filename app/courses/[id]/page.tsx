@@ -116,7 +116,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       courseId: course.id,
       courseTitle: course.title,
       date: formattedDate,
-      time: course.timeSlot || '09:30 - 13:30',
+      time: course.timeSlot || '10:00 - 12:30',
       guests: trimmedData.guests,
       totalPrice,
       currency: 'EUR',
@@ -174,9 +174,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-full p-8 md:p-16 text-white max-w-7xl mx-auto">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-mindelo-blue mb-4">
-              {course.level}
-            </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4">{course.title}</h1>
             <div className="flex flex-wrap items-center gap-6 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">

@@ -107,13 +107,8 @@ CREATE TABLE IF NOT EXISTS activity_log (
 
 -- Insert Sample Courses
 INSERT INTO courses (id, title, description, level, price, priceNumber, maxCapacity, duration, active) VALUES
-('cooking-course', 'Traditional Cooking Class & Mindelo Markets Tour', 'A guided visit to the Municipal Market and Fish Market of Mindelo, traditional local transport to our family home in Fonte Francês, and a hands-on Cape Verdean cooking class in a warm, welcoming environment.', 'Beginner', '€45', 45, 8, '2h 30min', 1),
-('cachupa-rica', 'The Art of Cachupa Rica from São Vicente', 'Learn how to cook Cape Verde\'s national dish from scratch. From preparing hominy corn and savory meats to the secret sauté that imparts its signature rich golden flavor.', 'Beginner', '€45', 45, 6, '3h 30min', 1),
-('vegetarian-creole', 'Vegetarian & Vegan Cape Verdean Creole Masterclass', 'As featured on German television cooking shows! A comprehensive plant-based masterclass celebrating São Vicente vegetables.', 'Beginner', '€40', 40, 8, '2h 30min', 1),
-('caldo-de-peixe', 'Mindelo Fresh Catch & Island Caldo de Peixe', 'Experience Mindelo\'s rich seafaring heritage. Visit the bustling fish market to pick the day\'s fresh Atlantic catch.', 'Intermediate', '€45', 45, 6, '3h 00min', 1),
-('pastel-tuna', 'Cape Verdean Tuna Pastels & Street Savories', 'Master the flaky, golden crust and spicy, succulent filling of São Vicente\'s famous tuna pastéis.', 'Intermediate', '€35', 35, 8, '2h 30min', 1),
-('arroz-atum', 'Mindelo Traditional Tuna Rice (Arroz de Atum)', 'Cape Verde\'s ultimate comfort dish. A masterclass focused on Creole herbs, aromatic broth reduction.', 'Beginner', '€40', 40, 8, '2h 30min', 1),
-('doces-tradicionais', 'Island Desserts: Goat Cheese Pudding & Sweet Papaya', 'Round off your meals in true island style. Learn to make creamy baked goat cheese flan.', 'Beginner', '€30', 30, 8, '2h 30min', 1);
+('cooking-course', 'Traditional Cooking Class', 'A guided visit to the Municipal Market and Fish Market of Mindelo, traditional local transport to our family home in Fonte Francês, and a hands-on Cape Verdean cooking class in a warm, welcoming environment.', 'Beginner', '€45', 45, 8, '2h 30min', 1),
+('vegetarian-creole', 'Vegetarian / Vegan Cooking Class', 'As featured on German television cooking shows! A comprehensive plant-based masterclass celebrating São Vicente vegetables.', 'Beginner', '€40', 40, 8, '2h 30min', 1);
 
 -- Create user for application (if needed)
 -- GRANT ALL PRIVILEGES ON catia_cooking_db.* TO 'catia_admin'@'localhost' IDENTIFIED BY 'your_secure_password';

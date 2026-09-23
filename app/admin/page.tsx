@@ -123,9 +123,9 @@ export default function AdminPage() {
     studentName: '',
     email: '',
     phone: '',
-    courseId: courses[0]?.id || 'cachupa-rica',
+    courseId: courses[0]?.id || 'cooking-course',
     date: format(new Date(), 'yyyy-MM-dd'),
-    time: '09:30 - 13:30',
+    time: courses[0]?.timeSlot || '10:00 - 12:30',
     guests: 2,
     status: 'confirmed' as Reservation['status'],
     paymentStatus: 'on_arrival' as Reservation['paymentStatus'],
@@ -270,9 +270,9 @@ export default function AdminPage() {
       studentName: '',
       email: '',
       phone: '',
-      courseId: courses[0]?.id || 'cachupa-rica',
+      courseId: courses[0]?.id || 'cooking-course',
       date: format(new Date(), 'yyyy-MM-dd'),
-      time: '09:30 - 13:30',
+      time: courses[0]?.timeSlot || '10:00 - 12:30',
       guests: 2,
       status: 'confirmed',
       paymentStatus: 'on_arrival',
@@ -1100,11 +1100,6 @@ export default function AdminPage() {
                       className="object-cover"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur-xs text-[#0A2240] shadow-xs">
-                        {course.level}
-                      </span>
-                    </div>
                     <div className="absolute top-3 right-3">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#0A2240] text-white shadow-xs">
                         {course.price}
@@ -1532,7 +1527,7 @@ export default function AdminPage() {
                     required
                     value={newRes.time}
                     onChange={(e) => setNewRes({ ...newRes, time: e.target.value })}
-                    placeholder="09:30 - 13:30"
+                    placeholder="10:00 - 12:30"
                     className="w-full px-3 py-2 border rounded-xl text-sm"
                   />
                 </div>
@@ -1978,7 +1973,7 @@ function EditReservationModal({
                 required
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                placeholder="09:30 - 12:00"
+                placeholder="10:00 - 12:30"
                 className="w-full px-3 py-2 border rounded-xl text-sm"
               />
             </div>
@@ -2110,9 +2105,8 @@ function CourseFormModal({
   const [duration, setDuration] = useState(course?.duration || '2h 30min');
   const [maxCapacity, setMaxCapacity] = useState(course?.maxCapacity || 8);
   const [priceNumber, setPriceNumber] = useState(course?.priceNumber || 45);
-  const [level, setLevel] = useState<Course['level']>(course?.level || 'Beginner');
   const [active, setActive] = useState(course ? course.active : true);
-  const [timeSlot, setTimeSlot] = useState(course?.timeSlot || '09:30 - 12:00');
+  const [timeSlot, setTimeSlot] = useState(course?.timeSlot || '10:00 - 12:30');
   
   // Dynamic list of includes
   const [includes, setIncludes] = useState<string[]>(
@@ -2183,7 +2177,7 @@ function CourseFormModal({
 
     // Validation: Check timeSlot format
     if (!timeSlot.trim() || !timeSlot.includes('-')) {
-      alert('Please enter a valid time slot (e.g. "09:30 - 12:00")');
+      alert('Please enter a valid time slot (e.g. "10:00 - 12:30")');
       return;
     }
 
@@ -2196,7 +2190,6 @@ function CourseFormModal({
       maxCapacity: capacityNum,
       priceNumber: priceNum,
       price: `€${priceNum}`,
-      level,
       active,
       includes: includes.map(inc => inc.trim()).filter(inc => inc.length > 0)
     });
@@ -2311,21 +2304,9 @@ function CourseFormModal({
                 type="text"
                 value={timeSlot}
                 onChange={(e) => setTimeSlot(e.target.value)}
-                placeholder="09:30 - 12:00"
+                placeholder="10:00 - 12:30"
                 className="w-full px-3 py-2 border rounded-xl text-sm"
               />
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Level</label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value as any)}
-                className="w-full px-3 py-2 border rounded-xl text-sm font-semibold"
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
             </div>
             <div>
               <label className="block font-bold text-slate-700 mb-1">Status on Site</label>

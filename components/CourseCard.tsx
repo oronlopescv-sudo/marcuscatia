@@ -12,24 +12,11 @@ export interface CourseProps {
   image: string;
   duration: string;
   maxCapacity: number;
-  level: string;
+  level?: string;
   price: string;
 }
 
 export function CourseCard({ course, index = 0 }: { course: CourseProps; index?: number }) {
-  const getLevelBadge = (level: string) => {
-    const l = level.toLowerCase();
-    if (l.includes('ini') || l.includes('beg')) {
-      return { text: 'Beginner', style: 'bg-green-100 text-green-800' };
-    }
-    if (l.includes('inter')) {
-      return { text: 'Intermediate', style: 'bg-blue-100 text-blue-800' };
-    }
-    return { text: 'Advanced', style: 'bg-mindelo-dark text-white' };
-  };
-
-  const badge = getLevelBadge(course.level);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -47,11 +34,6 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute top-4 left-4">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${badge.style}`}>
-              {badge.text}
-            </span>
-          </div>
           <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
             <span className="text-mindelo-dark font-bold text-sm">{course.price}</span>
           </div>

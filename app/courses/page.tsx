@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -9,16 +8,11 @@ import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
 
 export default function CoursesPage() {
-  const [filter, setFilter] = useState<string>('All');
   const allCourses = useAdminStore((state) => state.courses);
-
-  const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
   const activeCourses = allCourses.filter(c => c.active !== false);
 
-  const filteredCourses = filter === 'All'
-    ? activeCourses
-    : activeCourses.filter(c => c.level === filter);
+  const filteredCourses = activeCourses;
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 relative">
@@ -62,39 +56,13 @@ export default function CoursesPage() {
               Find Your Ideal Class
             </h2>
             
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto justify-center">
-              {levels.map(level => (
-                <button
-                  key={level}
-                  onClick={() => setFilter(level)}
-                  className={`px-5 py-2 rounded-full font-medium transition-colors ${
-                    filter === level 
-                      ? 'bg-mindelo-blue text-white shadow-md' 
-                      : 'bg-white text-gray-600 border border-gray-200 hover:border-mindelo-blue hover:text-mindelo-blue'
-                  }`}
-                >
-                  {level}
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {filteredCourses.map((course, index) => (
               <CourseCard key={course.id} course={course} index={index} />
             ))}
             
-            {filteredCourses.length === 0 && (
-              <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 max-w-md mx-auto">
-                <p className="text-gray-600 text-lg mb-4">No classes found for level &quot;{filter}&quot;.</p>
-                <button
-                  onClick={() => setFilter('All')}
-                  className="px-6 py-2.5 bg-mindelo-blue hover:bg-blue-700 text-white rounded-full font-bold text-sm transition-colors shadow-sm"
-                >
-                  View All Classes
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </main>
