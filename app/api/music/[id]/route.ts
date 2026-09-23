@@ -7,9 +7,11 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || 'public/music';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Verify admin
     const isAdmin = req.headers.get('x-admin-verified') === 'true';
     if (!isAdmin) {
@@ -18,8 +20,6 @@ export async function DELETE(
         { status: 401 }
       );
     }
-
-    const { id } = params;
 
     // Sanitize ID to prevent directory traversal
     if (!id.match(/^[a-f0-9]{16}$/i)) {

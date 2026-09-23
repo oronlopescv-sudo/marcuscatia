@@ -13,10 +13,6 @@ export default function AdminMusicManager() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Carregar tracks existentes
-  useEffect(() => {
-    loadTracks();
-  }, []);
-
   const loadTracks = async () => {
     setLoading(true);
     try {
@@ -32,6 +28,10 @@ export default function AdminMusicManager() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTracks();
+  }, []);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
