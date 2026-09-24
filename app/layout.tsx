@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css'; // Global styles
 import { WhatsAppButton } from '@/components/WhatsAppButton';
+import MusicPlayer from '@/components/MusicPlayer';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
@@ -33,6 +34,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body className="antialiased font-sans" suppressHydrationWarning>
         {children}
         <WhatsAppButton />
+        <MusicPlayer />
       </body>
     </html>
   );
