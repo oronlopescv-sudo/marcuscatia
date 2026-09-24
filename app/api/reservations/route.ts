@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { sendWhatsAppBookingConfirmation } from '@/lib/whatsapp';
+import { getSetting } from '@/lib/settings';
+import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/lib/whatsapp';
 
 // ---------------------------------------------------------------
 // Email (Resend) — helper único
@@ -140,6 +141,25 @@ export async function POST(request: Request) {
 
     notifyAdmin(resData);
     confirmToCustomer(resData);
+
+    // Aviso de "Nova Reserva" também por WhatsApp para o número configurado
+    // pelo admin em Settings (notify_whatsapp). Sem número ou sem credenciais,
+    // simplesmente não faz nada.
+    getSetting('notify_whatsapp')
+      .then((adminPhone) => {
+        if (!adminPhone) return;
+        return sendWhatsAppNewReservation(adminPhone, {
+          studentName,
+          email,
+          phone: phone || '',
+          courseTitle,
+          date,
+          time: time || '',
+          guests: guests || 1,
+          totalPrice: totalPrice || 0,
+        });
+      })
+      .catch((err) => console.error('WhatsApp new-reservation notify failed:', err));
 
     return NextResponse.json({ success: true, id }, { status: 201 });
   } catch (error) {
