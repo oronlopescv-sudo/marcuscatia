@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { sendWhatsAppBookingConfirmation } from '@/lib/whatsapp';
 
 // ---------------------------------------------------------------
 // Email (Resend) — helper único
@@ -177,6 +178,20 @@ export async function PATCH(request: Request) {
         courseTitle: r.courseTitle, date: r.date, time: r.time || '',
         guests: r.guests || 1, totalPrice: Number(r.totalPrice) || 0, currency: r.currency || 'EUR',
       });
+
+      // Confirmação também por WhatsApp (envia só se as credenciais existirem;
+      // sem credenciais retorna configured:false e não faz nada).
+      if (r.phone) {
+        sendWhatsAppBookingConfirmation({
+          phoneNumber: r.phone,
+          studentName: r.studentName,
+          courseTitle: r.courseTitle,
+          date: r.date,
+          time: r.time || '',
+          guests: r.guests || 1,
+          totalPrice: Number(r.totalPrice) || 0,
+        }).catch((err) => console.error('WhatsApp notify failed:', err));
+      }
     }
 
     return NextResponse.json({ success: true });
