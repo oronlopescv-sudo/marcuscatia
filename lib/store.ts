@@ -209,6 +209,14 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             toggleBlockedDate(reservation.date);
           }
         }
+
+        // Persist the change so the admin approval reaches the server
+        // (which also triggers the confirmation email to the customer).
+        fetch('/api/reservations', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: reservation.id, status }),
+        }).catch((err) => console.error('Error persisting reservation status:', err));
       },
 
       updateReservationPayment: (id, paymentStatus) => {
@@ -217,12 +225,22 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             r.id === id ? { ...r, paymentStatus } : r
           ),
         });
+        fetch('/api/reservations', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, paymentStatus }),
+        }).catch((err) => console.error('Error persisting payment status:', err));
       },
 
       deleteReservation: (id) => {
         set({
           reservations: get().reservations.filter((r) => r.id !== id),
         });
+        fetch('/api/reservations', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        }).catch((err) => console.error('Error deleting reservation:', err));
       },
 
       addCourse: (courseData) => {
