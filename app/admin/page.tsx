@@ -115,6 +115,7 @@ export default function AdminPage() {
           site_whatsapp: data.site_whatsapp || prev.site_whatsapp,
           site_location: data.site_location || prev.site_location,
           notify_whatsapp: data.notify_whatsapp || prev.notify_whatsapp,
+          notify_email: data.notify_email || prev.notify_email,
         }));
       } catch (e) {
         console.error('Failed to load settings:', e);
@@ -170,6 +171,7 @@ export default function AdminPage() {
     site_whatsapp: '+238 595 3973',
     site_location: 'Mindelo, Cape Verde',
     notify_whatsapp: '+238 595 3973',
+    notify_email: '',
   });
   const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -1582,6 +1584,11 @@ export default function AdminPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp number to receive new reservation notifications</label>
                       <input type="tel" value={siteInfo.notify_whatsapp} onChange={(e) => setSiteInfo({ ...siteInfo, notify_whatsapp: e.target.value })} placeholder="+238 595 3973" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
                       <p className="text-xs text-gray-500 mt-1">Este número recebe o aviso automático de "Nova Reserva" por WhatsApp (requer credenciais da WhatsApp Cloud API no servidor).</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email to receive reservations & site notifications</label>
+                      <input type="email" value={siteInfo.notify_email} onChange={(e) => setSiteInfo({ ...siteInfo, notify_email: e.target.value })} placeholder="admin@example.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                      <p className="text-xs text-gray-500 mt-1">Este email recebe os avisos de novas reservas e mensagens de contacto. Se ficar vazio, usa a variável NOTIFY_EMAIL do servidor.</p>
                     </div>
                   </div>
                   {settingsMsg && (

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSetting, setSetting } from '@/lib/settings';
 
 // Chaves usadas no painel admin (Site Information)
-const KEYS = ['site_title', 'site_email', 'site_whatsapp', 'site_location', 'notify_whatsapp'] as const;
+const KEYS = ['site_title', 'site_email', 'site_whatsapp', 'site_location', 'notify_whatsapp', 'notify_email'] as const;
 
 export async function GET() {
   try {

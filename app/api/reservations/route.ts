@@ -2,46 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSetting } from '@/lib/settings';
 import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/lib/whatsapp';
-
-// ---------------------------------------------------------------
-// Email (Resend) — helper único
-// ---------------------------------------------------------------
-async function sendEmail(to: string, subject: string, html: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.log('📧 Email not sent (RESEND_API_KEY not set):', subject, '->', to);
-    return;
-  }
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: process.env.NOTIFY_FROM_EMAIL || 'Catia Cooking <onboarding@resend.dev>',
-        to,
-        subject,
-        html,
-      }),
-    });
-    if (!res.ok) {
-      const errBody = await res.text();
-      console.error('Resend API error:', res.status, errBody);
-    }
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
-}
-
-function esc(s: unknown): string {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+import { sendEmail, esc } from '@/lib/email';
 
 type ResData = {
   studentName: string;
@@ -70,14 +31,22 @@ function detailsHtml(r: ResData, extra = '') {
     </div>`;
 }
 
-// Notifica o admin sobre uma nova reserva
-function notifyAdmin(r: ResData) {
-  const notifyEmail = process.env.NOTIFY_EMAIL;
+// Notifica o admin sobre uma nova reserva. Prioriza o email definido pelo
+// admin em Settings (notify_email); senão usa NOTIFY_EMAIL da env.
+async function notifyAdmin(r: ResData) {
+  let notifyEmail = process.env.NOTIFY_EMAIL || '';
+  try {
+    const stored = await getSetting('notify_email');
+    if (stored) notifyEmail = stored;
+  } catch (e) {
+    console.error('Error reading notify_email setting:', e);
+  }
+
   if (!notifyEmail) {
-    console.log('📧 Nova reserva (NOTIFY_EMAIL não configurado):', r.studentName);
+    console.log('📧 Nova reserva (email do admin não configurado):', r.studentName);
     return;
   }
-  sendEmail(
+  await sendEmail(
     notifyEmail,
     `Nova Reserva: ${r.studentName} - ${r.date}`,
     detailsHtml(r, `<p style="margin-top:16px;color:#666;">Aceda ao painel admin para confirmar ou recusar esta reserva.</p>`)
@@ -139,7 +108,7 @@ export async function POST(request: Request) {
       date, time: time || '', guests: guests || 1, totalPrice: totalPrice || 0, currency: currency || 'EUR',
     };
 
-    notifyAdmin(resData);
+    notifyAdmin(resData).catch((err) => console.error('Admin notify failed:', err));
     confirmToCustomer(resData);
 
     // Aviso de "Nova Reserva" também por WhatsApp para o número configurado
