@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -9,6 +10,23 @@ import { useAdminStore } from '@/lib/store';
 
 export default function CoursesPage() {
   const allCourses = useAdminStore((state) => state.courses);
+  const hydrate = useAdminStore((state) => state.hydrate);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/courses');
+        const data = await res.json();
+        const courses = Array.isArray(data) ? data : data?.courses;
+        if (Array.isArray(courses)) hydrate({ courses });
+      } catch (e) {
+        console.error('Failed to load courses:', e);
+      }
+    })();
+  }, [hydrate]);
 
   const activeCourses = allCourses.filter(c => c.active !== false);
 

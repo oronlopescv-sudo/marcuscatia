@@ -70,7 +70,7 @@ interface AdminStoreState {
   deleteMessage: (id: string) => void;
 
   toggleBlockedDate: (dateStr: string) => void;
-  hydrate: (data: { reservations?: Reservation[]; messages?: Message[]; blockedDates?: string[] }) => void;
+  hydrate: (data: { reservations?: Reservation[]; messages?: Message[]; blockedDates?: string[]; courses?: Course[] }) => void;
   resetToDefaults: () => void;
 }
 
@@ -255,6 +255,13 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             .replace(/^-|-$/g, '') || `curso-${Date.now()}`,
         };
         set({ courses: [...get().courses, newCourse] });
+
+        fetch('/api/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCourse),
+        }).catch((err) => console.error('Error persisting course:', err));
+
         return newCourse;
       },
 
@@ -264,20 +271,37 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             c.id === id ? { ...c, ...updates } : c
           ),
         });
+        fetch('/api/courses', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...updates }),
+        }).catch((err) => console.error('Error persisting course update:', err));
       },
 
       toggleCourseActive: (id) => {
+        const course = get().courses.find((c) => c.id === id);
+        const active = course ? !course.active : false;
         set({
           courses: get().courses.map((c) =>
-            c.id === id ? { ...c, active: !c.active } : c
+            c.id === id ? { ...c, active } : c
           ),
         });
+        fetch('/api/courses', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, active }),
+        }).catch((err) => console.error('Error persisting course active state:', err));
       },
 
       deleteCourse: (id) => {
         set({
           courses: get().courses.filter((c) => c.id !== id),
         });
+        fetch('/api/courses', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        }).catch((err) => console.error('Error deleting course:', err));
       },
 
       addMessage: async (msg) => {
@@ -356,6 +380,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           reservations: mergeById(get().reservations, data.reservations),
           messages: mergeById(get().messages, data.messages),
           blockedDates: Array.from(new Set([...get().blockedDates, ...(data.blockedDates || [])])),
+          courses: mergeById(get().courses, data.courses),
         });
       },
 

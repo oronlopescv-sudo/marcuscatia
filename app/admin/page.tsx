@@ -82,12 +82,14 @@ export default function AdminPage() {
       const reservations = await loadFromServer('/api/reservations');
       const messages = await loadFromServer('/api/messages');
       const blocked = await loadFromServer('/api/blocked-dates');
+      const courses = await loadFromServer('/api/courses?all=1');
       if (cancelled) return;
 
       hydrate({
         reservations: Array.isArray(reservations) ? reservations : reservations?.reservations,
         messages: Array.isArray(messages) ? messages : messages?.messages,
         blockedDates: Array.isArray(blocked) ? blocked : blocked?.blockedDates,
+        courses: Array.isArray(courses) ? courses : courses?.courses,
       });
     })();
 
@@ -96,6 +98,30 @@ export default function AdminPage() {
     };
     // hydrate is a referentially stable zustand action, safe to omit from deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load saved Site Information settings (best-effort; shows defaults if none)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setSiteInfo((prev) => ({
+          site_title: data.site_title || prev.site_title,
+          site_email: data.site_email || prev.site_email,
+          site_whatsapp: data.site_whatsapp || prev.site_whatsapp,
+          site_location: data.site_location || prev.site_location,
+        }));
+      } catch (e) {
+        console.error('Failed to load settings:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Store hooks
@@ -135,6 +161,39 @@ export default function AdminPage() {
   const [pinNew, setPinNew] = useState('');
   const [pinSaving, setPinSaving] = useState(false);
   const [pinMessage, setPinMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  // Site Information (Settings) state
+  const [siteInfo, setSiteInfo] = useState({
+    site_title: 'Cátia Cooking Mindelo',
+    site_email: 'info@catiamindelo.com',
+    site_whatsapp: '+238 595 3973',
+    site_location: 'Mindelo, Cape Verde',
+  });
+  const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsMsg(null);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(siteInfo),
+      });
+      if (res.ok) {
+        setSettingsMsg({ type: 'ok', text: 'Settings saved.' });
+        setTimeout(() => setSettingsMsg(null), 3000);
+      } else {
+        setSettingsMsg({ type: 'err', text: 'Could not save settings.' });
+      }
+    } catch {
+      setSettingsMsg({ type: 'err', text: 'Network error saving settings.' });
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   const handleChangePin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1499,27 +1558,38 @@ export default function AdminPage() {
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-mindelo-dark">Site Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Site Title</label>
-                    <input type="text" defaultValue="Cátia Cooking Mindelo" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Site Title</label>
+                      <input type="text" value={siteInfo.site_title} onChange={(e) => setSiteInfo({ ...siteInfo, site_title: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Site Email</label>
+                      <input type="email" value={siteInfo.site_email} onChange={(e) => setSiteInfo({ ...siteInfo, site_email: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
+                      <input type="tel" value={siteInfo.site_whatsapp} onChange={(e) => setSiteInfo({ ...siteInfo, site_whatsapp: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                      <input type="text" value={siteInfo.site_location} onChange={(e) => setSiteInfo({ ...siteInfo, site_location: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Site Email</label>
-                    <input type="email" defaultValue="info@catiamindelo.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
-                    <input type="tel" defaultValue="+238 595 3973" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                    <input type="text" defaultValue="Mindelo, Cape Verde" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                  </div>
-                </div>
-                <button className="px-6 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
-                  Save Settings
-                </button>
+                  {settingsMsg && (
+                    <p className={`text-sm font-semibold ${settingsMsg.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {settingsMsg.text}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={settingsSaving}
+                    className="px-6 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {settingsSaving ? 'Saving...' : 'Save Settings'}
+                  </button>
+                </form>
               </div>
             </div>
 

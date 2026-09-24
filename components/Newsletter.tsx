@@ -7,7 +7,7 @@ export function Newsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const trimmedEmail = email.trim();
@@ -21,11 +21,23 @@ export function Newsletter() {
 
     setStatus('loading');
 
-    setTimeout(() => {
-      setStatus('success');
-      setEmail('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail }),
+      });
+      if (res.ok) {
+        setEmail('');
+        setStatus('success');
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    } finally {
       setTimeout(() => setStatus('idle'), 3000);
-    }, 1500);
+    }
   };
 
   return (
