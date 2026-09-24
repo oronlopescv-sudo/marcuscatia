@@ -26,7 +26,7 @@ cd ~/domains/lightskyblue-bat-697565.hostingersite.com/hbuilds/last-source
 
 # Execute migration
 mysql -u u128759105_Marcuscatia -p u128759105_Catia < migrations/002_add_content_and_notifications.sql
-# Password: f5Zy*2M@
+# Password: SEU_DB_PASSWORD
 ```
 
 ## 2. Update Environment Variables
@@ -36,7 +36,7 @@ Ensure your `.env.production.local` includes:
 ```env
 DB_HOST=72.60.93.207
 DB_USER=u128759105_Marcuscatia
-DB_PASSWORD=f5Zy*2M@
+DB_PASSWORD=SEU_DB_PASSWORD
 DB_NAME=u128759105_Catia
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token

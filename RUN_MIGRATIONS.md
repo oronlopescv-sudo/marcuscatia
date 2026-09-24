@@ -104,7 +104,7 @@ Se retornar dados, tudo funcionou! ✅
 ### Erro: "Access Denied"
 ❌ Verifique credenciais:
   - User: u128759105_Marcuscatia
-  - Password: f5Zy*2M@
+  - Password: SEU_DB_PASSWORD
   - Database: u128759105_Catia
 
 ---

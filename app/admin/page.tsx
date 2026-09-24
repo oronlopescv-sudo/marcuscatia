@@ -59,6 +59,45 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Load real data from the database into the client store. Without this,
+  // the dashboard only showed data created inside the current browser
+  // session and went blank after a refresh (reservations/messages/blocked
+  // dates made by visitors were never fetched).
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFromServer = async (path: string) => {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) return {};
+        return res.json();
+      } catch (err) {
+        console.error(`Failed to load ${path}:`, err);
+        return {};
+      }
+    };
+
+    (async () => {
+      // Shape the server responses into what the store expects.
+      const reservations = await loadFromServer('/api/reservations');
+      const messages = await loadFromServer('/api/messages');
+      const blocked = await loadFromServer('/api/blocked-dates');
+      if (cancelled) return;
+
+      hydrate({
+        reservations: Array.isArray(reservations) ? reservations : reservations?.reservations,
+        messages: Array.isArray(messages) ? messages : messages?.messages,
+        blockedDates: Array.isArray(blocked) ? blocked : blocked?.blockedDates,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // hydrate is a referentially stable zustand action, safe to omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Store hooks
   const { 
     reservations, 
@@ -76,7 +115,8 @@ export default function AdminPage() {
     deleteCourse,
     markMessageRead,
     deleteMessage,
-    toggleBlockedDate
+    toggleBlockedDate,
+    hydrate
   } = useAdminStore();
 
   // Search & Filters for Reservations

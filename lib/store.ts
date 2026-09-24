@@ -70,7 +70,22 @@ interface AdminStoreState {
   deleteMessage: (id: string) => void;
 
   toggleBlockedDate: (dateStr: string) => void;
+  hydrate: (data: { reservations?: Reservation[]; messages?: Message[]; blockedDates?: string[] }) => void;
   resetToDefaults: () => void;
+}
+
+// Junta arrays já existentes (session) com dados vindos do servidor, sem
+// duplicar por id. Mantém a ordem: primeiro o que já estava na sessão.
+function mergeById<T extends { id: string | number }>(local: T[], server: T[] | null | undefined): T[] {
+  const seen = new Set<string | number>();
+  const out: T[] = [];
+  for (const item of [...local, ...(Array.isArray(server) ? server : [])]) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id);
+      out.push(item);
+    }
+  }
+  return out;
 }
 
 export const INITIAL_COURSES: Course[] = [
@@ -295,11 +310,35 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
 
       toggleBlockedDate: (dateStr) => {
         const current = get().blockedDates;
-        if (current.includes(dateStr)) {
+        const isBlocked = current.includes(dateStr);
+        if (isBlocked) {
           set({ blockedDates: current.filter((d) => d !== dateStr) });
         } else {
           set({ blockedDates: [...current, dateStr] });
         }
+
+        // Persist to the database so the block survives a refresh and is
+        // seen by visitors booking from other browsers (best-effort).
+        try {
+          fetch('/api/blocked-dates', {
+            method: isBlocked ? 'DELETE' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: dateStr,
+              ...(isBlocked ? {} : { reason: 'Blocked via admin' }),
+            }),
+          }).catch((err) => console.error('Failed to persist blocked date:', err));
+        } catch (err) {
+          console.error('Failed to persist blocked date:', err);
+        }
+      },
+
+      hydrate: (data) => {
+        set({
+          reservations: mergeById(get().reservations, data.reservations),
+          messages: mergeById(get().messages, data.messages),
+          blockedDates: Array.from(new Set([...get().blockedDates, ...(data.blockedDates || [])])),
+        });
       },
 
       resetToDefaults: () => {

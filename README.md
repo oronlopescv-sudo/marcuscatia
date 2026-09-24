@@ -25,7 +25,7 @@ Website para aulas de culinária cabo-verdiana em Mindelo, São Vicente.
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    MYSQL_HOST=auth-db2121.hstgr.io
    MYSQL_USER=u128759105_Marcuscatia
-   MYSQL_PASSWORD=Caboverde238cv@.
+   MYSQL_PASSWORD=SEU_DB_PASSWORD
    MYSQL_DATABASE=u128759105_Catia
    GEMINI_API_KEY=seu_api_key_aqui
    ```

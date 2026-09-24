@@ -11,7 +11,7 @@
 ### 1. SSH para o Hostinger
 ```bash
 ssh -p 65002 u128759105@72.60.93.207
-# Password: Caboverde238cv@.
+# Password: SEU_DB_PASSWORD
 cd ~/public_html
 ```
 

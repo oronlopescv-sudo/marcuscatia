@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Image from 'next/image';
@@ -31,7 +31,26 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   // Need to unwrap params since Next.js 15
   const unwrappedParams = use(params);
   
-  const { courses, addReservation, blockedDates } = useAdminStore();
+  const { courses, addReservation, blockedDates, hydrate } = useAdminStore();
+
+  // Load blocked dates from the database so admin-blocked days are actually
+  // disabled in the booking calendar for visitors.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/blocked-dates')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : data?.blockedDates;
+        if (Array.isArray(list)) {
+          hydrate({ blockedDates: list });
+        }
+      })
+      .catch((err) => console.error('Failed to load blocked dates:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrate]);
   
   // Find from store or fallback to initial
   const course = courses.find((c) => c.id === unwrappedParams.id) || 
