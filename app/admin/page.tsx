@@ -130,6 +130,38 @@ export default function AdminPage() {
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
+  // Change-PIN form state
+  const [pinCurrent, setPinCurrent] = useState('');
+  const [pinNew, setPinNew] = useState('');
+  const [pinSaving, setPinSaving] = useState(false);
+  const [pinMessage, setPinMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const handleChangePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinSaving(true);
+    setPinMessage(null);
+    try {
+      const res = await fetch('/api/admin/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPin: pinCurrent, newPin: pinNew }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setPinMessage({ type: 'ok', text: 'PIN atualizado com sucesso.' });
+        setPinCurrent('');
+        setPinNew('');
+      } else {
+        setPinMessage({ type: 'err', text: data.error || 'Não foi possível alterar o PIN.' });
+      }
+    } catch (err) {
+      console.error('Change PIN failed:', err);
+      setPinMessage({ type: 'err', text: 'Erro de conexão ao trocar o PIN.' });
+    } finally {
+      setPinSaving(false);
+    }
+  };
+
   // CSV Export
   const exportReservationsCSV = () => {
     const headers = ['ID', 'Student Name', 'Email', 'Phone', 'Course', 'Date', 'Time', 'Guests', 'Total EUR', 'Status', 'Payment Status', 'Dietary Restrictions', 'Notes'];
@@ -173,15 +205,27 @@ export default function AdminPage() {
     dietaryRestrictions: ''
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Default PIN: 1234 or "mindelo" or "catia"
-    if (pinInput === '1234' || pinInput.toLowerCase() === 'mindelo' || pinInput.toLowerCase() === 'catia') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('catia_admin_authenticated', 'true');
-      setAuthError('');
-    } else {
-      setAuthError('Incorrect PIN. Please try again.');
+    setAuthError('');
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinInput.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('catia_admin_authenticated', 'true');
+        setPinInput('');
+      } else {
+        setAuthError('Incorrect PIN. Please try again.');
+      }
+    } catch (err) {
+      console.error('Login failed:', err);
+      setAuthError('Could not verify PIN. Check your connection.');
     }
   };
 
@@ -1476,6 +1520,52 @@ export default function AdminPage() {
                 <button className="px-6 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
                   Save Settings
                 </button>
+              </div>
+            </div>
+
+            {/* Change Admin PIN */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-mindelo-dark">Change Admin PIN</h2>
+                <p className="text-sm text-gray-500">
+                  Update the code used to enter this admin panel. Minimum 4 characters.
+                </p>
+                <form onSubmit={handleChangePin} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Current PIN</label>
+                    <input
+                      type="password"
+                      value={pinCurrent}
+                      onChange={(e) => setPinCurrent(e.target.value)}
+                      placeholder="Current PIN"
+                      autoComplete="off"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">New PIN</label>
+                    <input
+                      type="password"
+                      value={pinNew}
+                      onChange={(e) => setPinNew(e.target.value)}
+                      placeholder="New PIN (min. 4 characters)"
+                      autoComplete="new-password"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue"
+                    />
+                  </div>
+                  {pinMessage && (
+                    <p className={`text-sm font-semibold ${pinMessage.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {pinMessage.text}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={pinSaving || !pinCurrent || pinNew.length < 4}
+                    className="px-6 py-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {pinSaving ? 'Saving...' : 'Update PIN'}
+                  </button>
+                </form>
               </div>
             </div>
           </div>
