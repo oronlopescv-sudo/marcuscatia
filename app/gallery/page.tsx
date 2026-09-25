@@ -76,7 +76,7 @@ const DEFAULT_GALLERY_ITEMS: GalleryItem[] = [
 ];
 
 export default function GalleryPage() {
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(DEFAULT_GALLERY_ITEMS);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -103,20 +103,24 @@ export default function GalleryPage() {
     });
   }, [galleryItems, selectedCategory, searchQuery]);
 
-  // Load real photos uploaded by the admin. Fall back to the default
-  // showcase set if the API is unreachable or the gallery is still empty.
+  // Load photos/videos uploaded by the admin. Only fall back to the default
+  // showcase set when the API is unreachable (never when the gallery is
+  // simply empty, so that deletions always stick).
   useEffect(() => {
     let cancelled = false;
 
     fetch('/api/gallery')
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((data: GalleryItem[]) => {
-        if (!cancelled && Array.isArray(data) && data.length > 0) {
+        if (!cancelled && Array.isArray(data)) {
           setGalleryItems(data);
         }
       })
       .catch((err) => {
         console.error('Failed to load gallery:', err);
+        if (!cancelled) {
+          setGalleryItems(DEFAULT_GALLERY_ITEMS);
+        }
       });
 
     return () => {

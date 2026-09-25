@@ -73,7 +73,7 @@ export function AdminGalleryManager() {
       const response = await fetch('/api/gallery/categories');
       if (!response.ok) return;
       const data = await response.json();
-      if (Array.isArray(data.categories) && data.categories.length > 0) {
+      if (Array.isArray(data.categories)) {
         setCategories(data.categories);
       }
     } catch (err) {
