@@ -2373,7 +2373,7 @@ function CourseFormModal({
 }) {
   const [title, setTitle] = useState(course?.title || '');
   const [description, setDescription] = useState(course?.description || '');
-  const [image, setImage] = useState(course?.image || 'https://static.wixstatic.com/media/f4fd80_ec9272a13451476a845b928470b355eb~mv2.jpg');
+  const [image, setImage] = useState(course?.image || '');
   const [duration, setDuration] = useState(course?.duration || '2h 30min');
   const [maxCapacity, setMaxCapacity] = useState(course?.maxCapacity || 8);
   const [priceNumber, setPriceNumber] = useState(course?.priceNumber || 45);
@@ -2435,8 +2435,8 @@ function CourseFormModal({
       return;
     }
 
-    // Validation: Check image URL format (aceita URLs http(s) e caminhos locais /uploads/...)
-    if (!image.trim().startsWith('http') && !image.trim().startsWith('/')) {
+    // Validation: Check image URL format (vazio é permitido; se preenchido aceita http(s) e caminhos locais /uploads/...)
+    if (image.trim() && !image.trim().startsWith('http') && !image.trim().startsWith('/')) {
       alert('Image must be a valid URL or uploaded image path');
       return;
     }
@@ -2526,7 +2526,6 @@ function CourseFormModal({
             {/* Hidden input - auto updated by CoursePhotoUpload */}
             <input
               type="hidden"
-              required
               value={image}
               onChange={(e) => setImage(e.target.value)}
             />

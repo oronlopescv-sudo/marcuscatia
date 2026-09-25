@@ -28,7 +28,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
       <div className="flex-1 group flex flex-col bg-white rounded-xl border border-blue-50 overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 transform hover:-translate-y-1">
         <div className="relative h-40 sm:h-48 md:h-56 w-full overflow-hidden bg-gray-100">
           <Image
-            src={course.image}
+            src={course.image || '/catia-cooking.jpg'}
             alt={course.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"

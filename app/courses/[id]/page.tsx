@@ -191,7 +191,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
         {/* Hero Image */}
         <div className="relative h-[40vh] md:h-[50vh] w-full bg-mindelo-dark">
           <Image
-            src={course.image}
+            src={course.image || '/catia-cooking.jpg'}
             alt={course.title}
             fill
             className="object-cover opacity-60 mix-blend-overlay"
