@@ -11,12 +11,25 @@ import { FAQ } from '@/components/FAQ';
 import { Newsletter } from '@/components/Newsletter';
 import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
+import { RESTAURANT_DINNER } from '@/lib/restaurant';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 export default function Home() {
   const storeCourses = useAdminStore((state) => state.courses);
-  const featuredCourses = storeCourses.filter((c) => c.active !== false).slice(0, 3);
+  const hydrate = useAdminStore((state) => state.hydrate);
+  const featuredCourses = [...storeCourses.filter((c) => c.active !== false).slice(0, 2), RESTAURANT_DINNER];
+
+  useEffect(() => {
+    fetch('/api/courses')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const courses = Array.isArray(data) ? data : data?.courses;
+        if (Array.isArray(courses)) hydrate({ courses });
+      })
+      .catch((err) => console.error('Failed to load courses:', err));
+  }, [hydrate]);
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative">
@@ -31,27 +44,27 @@ export default function Home() {
         <div className="py-8 sm:py-12 md:py-16"></div>
 
         {/* Featured Courses Section */}
-        <section className="-mt-8 py-20 sm:py-24 md:py-32 bg-white">
+        <section className="-mt-8 py-14 sm:py-24 md:py-32 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 sm:mb-16 gap-4">
               <div className="max-w-2xl">
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-mindelo-dark mb-6 sm:mb-8">
-                  Featured Classes
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-mindelo-dark mb-4 sm:mb-8">
+                  Classes &amp; Dinner
                 </h2>
-                <p className="text-lg text-gray-600">
-                  Our most requested traditional recipes, taught step-by-step. Choose your next culinary adventure.
+                <p className="text-base sm:text-lg text-gray-600">
+                  Learn traditional recipes step by step, or sit down to a three-course Cape Verdean dinner at our family table.
                 </p>
               </div>
               <Link
                 href="/courses"
-                className="inline-flex items-center gap-2 text-mindelo-blue font-bold hover:text-mindelo-dark transition-colors group"
+                className="inline-flex items-center gap-2 py-2 text-mindelo-blue font-bold hover:text-mindelo-dark transition-colors group"
               >
-                <span>View all classes</span>
+                <span>See all options</span>
                 <ArrowRight size={20} className="transform group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
               {featuredCourses.map((course, index) => (
                 <CourseCard key={course.id} course={course} index={index} />
               ))}

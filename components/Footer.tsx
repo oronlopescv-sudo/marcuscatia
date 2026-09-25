@@ -42,14 +42,16 @@ export function Footer() {
           {/* Navigation */}
           <div>
             <h3 className="text-xs sm:text-base font-serif font-bold mb-3 sm:mb-4 text-mindelo-gold uppercase tracking-wider">Navigation</h3>
-            <ul className="space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
-              <li><Link href="/" className="text-blue-100 hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/courses" className="text-blue-100 hover:text-white transition-colors">Classes</Link></li>
-              <li><Link href="/about" className="text-blue-100 hover:text-white transition-colors">About</Link></li>
-              <li><Link href="/gallery" className="text-blue-100 hover:text-white transition-colors">Gallery</Link></li>
-              <li><Link href="/contact" className="text-blue-100 hover:text-white transition-colors">Contact</Link></li>
+            <ul className="grid grid-cols-2 gap-x-4 sm:block sm:space-y-2.5 text-sm">
+              <li><Link href="/" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Home</Link></li>
+              <li><Link href="/courses" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Classes</Link></li>
+              <li><Link href="/courses?type=restaurant" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Restaurant</Link></li>
+              <li><Link href="/about" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">About</Link></li>
+              <li><Link href="/gallery" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Gallery</Link></li>
+              <li><Link href="/gallery?tab=videos" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Videos</Link></li>
+              <li><Link href="/contact" className="inline-block py-2 sm:py-0 text-blue-100 hover:text-white transition-colors">Contact</Link></li>
               <li>
-                <Link href="/admin" className="text-mindelo-gold hover:text-white font-medium transition-colors inline-flex items-center gap-1.5">
+                <Link href="/admin" className="py-2 sm:py-0 text-mindelo-gold hover:text-white font-medium transition-colors inline-flex items-center gap-1.5">
                   🔒 Admin
                 </Link>
               </li>
@@ -59,14 +61,14 @@ export function Footer() {
           {/* Contact */}
           <div>
             <h3 className="text-xs sm:text-base font-serif font-bold mb-3 sm:mb-4 text-mindelo-gold uppercase tracking-wider">Direct Contact</h3>
-            <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+            <ul className="space-y-1 sm:space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <Phone size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
-                <a href="tel:+2385953973" className="text-blue-100 hover:text-white transition-colors">+238 595 3973</a>
+                <a href="tel:+2385953973" className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors">+238 595 3973</a>
               </li>
               <li className="flex items-start gap-2">
                 <Mail size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
-                <a href="mailto:deandradeleukelcatiasofia@gmail.com" className="text-blue-100 hover:text-white transition-colors break-all">deandradeleukelcatiasofia@gmail.com</a>
+                <a href="mailto:deandradeleukelcatiasofia@gmail.com" className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors break-all">deandradeleukelcatiasofia@gmail.com</a>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
@@ -88,12 +90,12 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs sm:text-sm text-blue-200">
           <p>&copy; 2026 Catia Cooking Mindelo. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <a href="https://www.instagram.com/catiacookingmindelo/" target="_blank" rel="noopener noreferrer" className="hover:text-mindelo-gold transition-colors">
-              <Instagram size={18} />
+          <div className="flex items-center gap-2">
+            <a href="https://www.instagram.com/catiacookingmindelo/" target="_blank" rel="noopener noreferrer" className="p-2.5 hover:text-mindelo-gold transition-colors" aria-label="Instagram">
+              <Instagram size={20} />
             </a>
-            <a href="https://www.facebook.com/profile.php?id=61563087589223&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer" className="hover:text-mindelo-gold transition-colors">
-              <Facebook size={18} />
+            <a href="https://www.facebook.com/profile.php?id=61563087589223&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer" className="p-2.5 hover:text-mindelo-gold transition-colors" aria-label="Facebook">
+              <Facebook size={20} />
             </a>
           </div>
         </div>

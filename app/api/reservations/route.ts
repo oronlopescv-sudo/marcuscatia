@@ -5,6 +5,7 @@ import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/l
 import { sendEmail, esc } from '@/lib/email';
 import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
+import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 
 type ResData = {
   studentName: string;
@@ -121,14 +122,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid date' }, { status: 400 });
     }
 
-    const courseRows: any = await query('SELECT * FROM courses WHERE id = ?', [String(courseId)]);
-    const course = courseRows?.[0];
-    if (!course || (!course.active && !isAdmin)) {
-      return NextResponse.json({ error: 'This class is not available' }, { status: 400 });
+    const isDinner = isRestaurantBooking(String(courseId));
+    let course: any = RESTAURANT_DINNER;
+    if (!isDinner) {
+      const courseRows: any = await query('SELECT * FROM courses WHERE id = ?', [String(courseId)]);
+      course = courseRows?.[0];
+      if (!course || (!course.active && !isAdmin)) {
+        return NextResponse.json({ error: 'This class is not available' }, { status: 400 });
+      }
     }
     const maxCapacity = Number(course.maxCapacity) || 8;
-    if (guests < 1 || guests > maxCapacity) {
-      return NextResponse.json({ error: `Guests must be between 1 and ${maxCapacity}` }, { status: 400 });
+    const minGuests = isDinner && !isAdmin ? RESTAURANT_MIN_GUESTS : 1;
+    if (guests < minGuests || guests > maxCapacity) {
+      return NextResponse.json({ error: `Guests must be between ${minGuests} and ${maxCapacity}` }, { status: 400 });
     }
 
     // Visitors can't book past or blocked days; the admin may (manual entries).

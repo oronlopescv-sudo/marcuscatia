@@ -68,7 +68,7 @@ export function BrandFeatureCards() {
 
             <Link 
               href="/courses"
-              className="inline-flex items-center gap-1.5 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
+              className="inline-flex items-center gap-1.5 py-2 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
             >
               <span>Explore</span>
               <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
@@ -126,7 +126,7 @@ export function BrandFeatureCards() {
 
             <Link 
               href="/about"
-              className="inline-flex items-center gap-1.5 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
+              className="inline-flex items-center gap-1.5 py-2 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
             >
               <span>Explore</span>
               <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
@@ -179,7 +179,7 @@ export function BrandFeatureCards() {
 
             <Link 
               href="/contact"
-              className="inline-flex items-center gap-1.5 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
+              className="inline-flex items-center gap-1.5 py-2 font-bold text-sm text-[#0A3D78] group-hover:text-mindelo-red transition-colors"
             >
               <span>Explore</span>
               <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Watermark } from '@/components/Watermark';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, ChevronLeft, ChevronRight, ZoomIn, ArrowRight, Utensils, MessageCircle, Play, Share2, Search, Filter } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, ArrowRight, Utensils, MessageCircle, Play, Share2, Search, Filter, Camera, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GalleryItem {
@@ -19,11 +20,33 @@ interface GalleryItem {
 }
 
 export default function GalleryPage() {
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  return (
+    <Suspense fallback={null}>
+      <GalleryContent />
+    </Suspense>
+  );
+}
+
+function GalleryContent() {
+  const router = useRouter();
+  const tab: 'photos' | 'videos' = useSearchParams().get('tab') === 'videos' ? 'videos' : 'photos';
+  const isVideos = tab === 'videos';
+  const [allItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const galleryItems = useMemo(
+    () => allItems.filter((item) => (isVideos ? item.type === 'video' : item.type !== 'video')),
+    [allItems, isVideos]
+  );
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [shareMessage, setShareMessage] = useState('');
+
+  const switchTab = (next: 'photos' | 'videos') => {
+    setSelectedCategory('All');
+    setSearchQuery('');
+    setActiveIdx(null);
+    router.replace(next === 'videos' ? '/gallery?tab=videos' : '/gallery', { scroll: false });
+  };
 
   // Extrair categorias únicas e contar
   const categories = useMemo(() => {
@@ -129,8 +152,9 @@ export default function GalleryPage() {
   };
 
   // Gerar URL do thumbnail do YouTube
+  // hqdefault exists for every video (maxresdefault doesn't).
   const getYoutubeThumbnail = (youtubeId: string): string => {
-    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
   };
 
   return (
@@ -158,10 +182,12 @@ export default function GalleryPage() {
               {/* Text */}
               <div className="text-center md:text-left flex-1">
                 <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
-                  Photo Gallery
+                  {isVideos ? 'Cooking Videos' : 'Photo Gallery'}
                 </h1>
                 <p className="text-base md:text-lg text-gray-300">
-                  Take a peek at our previous classes and experience the joy of cooking together in Mindelo.
+                  {isVideos
+                    ? 'Watch Cátia prepare Cape Verdean dishes step by step.'
+                    : 'Take a peek at our previous classes and experience the joy of cooking together in Mindelo.'}
                 </p>
               </div>
             </div>
@@ -169,7 +195,29 @@ export default function GalleryPage() {
         </div>
 
         {/* Search & Filter Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+          {/* Photos / Videos */}
+          <div className="grid grid-cols-2 gap-2 max-w-md mx-auto mb-8 sm:mb-10 p-1.5 bg-white rounded-2xl border border-blue-100 shadow-sm" role="tablist">
+            {([
+              { id: 'photos', label: 'Photos', icon: Camera },
+              { id: 'videos', label: 'Videos', icon: Video },
+            ] as const).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                onClick={() => switchTab(id)}
+                className={`flex items-center justify-center gap-2 min-h-12 px-3 py-3 rounded-xl font-bold transition-colors ${
+                  tab === id ? 'bg-mindelo-blue text-white shadow-md' : 'text-mindelo-dark hover:bg-blue-50'
+                }`}
+              >
+                <Icon size={18} className="shrink-0" />
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Search Bar */}
           <div className="mb-8 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -214,12 +262,44 @@ export default function GalleryPage() {
 
           {/* Results Counter */}
           <div className="mb-8 text-sm text-gray-600">
-            Showing <span className="font-semibold text-mindelo-dark">{filteredItems.length}</span> of <span className="font-semibold text-mindelo-dark">{galleryItems.length}</span> photos
+            Showing <span className="font-semibold text-mindelo-dark">{filteredItems.length}</span> of <span className="font-semibold text-mindelo-dark">{galleryItems.length}</span> {isVideos ? 'videos' : 'photos'}
           </div>
 
           {/* Gallery Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className={`grid gap-4 sm:gap-6 ${isVideos ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}>
             {filteredItems.map((item, idx) => {
+              if (isVideos) {
+                return (
+                  <button
+                    key={item.id ?? idx}
+                    type="button"
+                    onClick={() => setActiveIdx(idx)}
+                    className="group text-left bg-white rounded-xl overflow-hidden border border-gray-200/70 shadow-sm hover:shadow-xl transition-shadow focus:outline-none focus:ring-4 focus:ring-mindelo-blue/30"
+                    aria-label={`Play video: ${item.title}`}
+                  >
+                    <div className="relative aspect-video bg-gray-900">
+                      <Image
+                        src={getYoutubeThumbnail(item.youtubeId || '')}
+                        alt={item.title}
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/25 transition-colors">
+                        <span className="w-14 h-14 sm:w-16 sm:h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                          <Play size={28} className="text-white fill-white ml-1" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="font-bold text-mindelo-dark leading-snug line-clamp-2">{item.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">{item.category}</p>
+                    </div>
+                  </button>
+                );
+              }
+
               const thumbnail = item.type === 'video' 
                 ? getYoutubeThumbnail(item.youtubeId || '')
                 : item.src;
@@ -273,16 +353,24 @@ export default function GalleryPage() {
           {/* No Results State */}
           {filteredItems.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-lg text-gray-600">No photos found matching your search.</p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('All');
-                }}
-                className="mt-4 px-6 py-2 text-sm font-medium text-mindelo-blue hover:text-mindelo-dark transition-colors underline"
-              >
-                Clear filters
-              </button>
+              <p className="text-lg text-gray-600">
+                {galleryItems.length === 0
+                  ? isVideos
+                    ? 'Cooking videos are coming soon.'
+                    : 'Photos are coming soon.'
+                  : `No ${isVideos ? 'videos' : 'photos'} found matching your search.`}
+              </p>
+              {galleryItems.length > 0 && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('All');
+                  }}
+                  className="mt-4 px-6 py-2 text-sm font-medium text-mindelo-blue hover:text-mindelo-dark transition-colors underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
 
@@ -431,7 +519,7 @@ export default function GalleryPage() {
                 <iframe
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${filteredItems[activeIdx].youtubeId}?autoplay=1&modestbranding=1`}
+                  src={`https://www.youtube.com/embed/${filteredItems[activeIdx].youtubeId}?autoplay=1&modestbranding=1&playsinline=1`}
                   title={filteredItems[activeIdx].title}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

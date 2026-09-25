@@ -22,7 +22,7 @@ interface ContentRow {
 }
 
 interface ContentEditorProps {
-  category: 'hero' | 'features' | 'faq' | 'testimonial' | 'social';
+  category: 'hero' | 'features' | 'faq' | 'testimonial' | 'social' | 'restaurant_menu';
   title: string;
 }
 
@@ -44,6 +44,7 @@ const FIELD_LABELS: Record<ContentEditorProps['category'], { title: string; desc
   faq: { title: 'Question', description: 'Short summary (optional)', body: 'Answer', hint: 'While this list is empty, the site shows the default FAQ.' },
   testimonial: { title: 'Guest name', description: 'Where they are from (e.g. "Traveler from France")', body: 'Testimonial text', hint: 'The testimonials section is hidden until you add one.' },
   hero: { title: 'Headline', description: 'Tagline', body: 'Intro paragraph', hint: 'Only the first item is used. Empty fields keep the default text.' },
+  restaurant_menu: { title: 'Course (e.g. Starter, Main course, Dessert)', description: 'Dish name', body: 'Short description (optional)', hint: 'While this list is empty, the site shows a generic three-course menu.' },
   features: { title: 'Title', description: 'Description', body: 'Content' },
   social: { title: 'Title', description: 'Description', body: 'Content' },
 };

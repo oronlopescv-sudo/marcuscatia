@@ -139,7 +139,7 @@ export default function ContactPage() {
                         href="https://wa.me/2385953973?text=Hello%20C%C3%A1tia!%20I%20would%20like%20information%20about%20cooking%20classes%20in%20Mindelo." 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors"
+                        className="inline-flex items-center gap-1.5 mt-2 px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors"
                       >
                         <span>Chat on WhatsApp →</span>
                       </a>

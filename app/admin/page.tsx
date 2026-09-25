@@ -39,6 +39,7 @@ import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
 import { MusicManager } from '@/components/MusicManager';
 import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
+import { RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -74,6 +75,9 @@ export default function AdminPage() {
     toggleBlockedDate,
     hydrate
   } = useAdminStore();
+
+  // Everything a reservation can be for: the classes plus the restaurant dinner.
+  const bookable = [...courses, RESTAURANT_DINNER];
 
   // Site Information (Settings) state
   const [siteInfo, setSiteInfo] = useState({
@@ -172,6 +176,7 @@ export default function AdminPage() {
   // Search & Filters for Reservations
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'classes' | 'restaurant'>('all');
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
   // Modal States
@@ -336,7 +341,10 @@ export default function AdminPage() {
     else if (statusFilter === 'completed') matchesStatus = isCompleted(r.status);
     else if (statusFilter === 'cancelled') matchesStatus = isCancelled(r.status);
 
-    return matchesSearch && matchesStatus;
+    const matchesType =
+      typeFilter === 'all' || (typeFilter === 'restaurant') === isRestaurantBooking(r.courseId);
+
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   // Today and upcoming
@@ -370,8 +378,8 @@ export default function AdminPage() {
 
     // Validation: Check guests is valid
     const guestNum = Number(newRes.guests);
-    if (guestNum < 1 || guestNum > 12 || isNaN(guestNum)) {
-      alert('Please select a valid number of guests (1-12)');
+    if (guestNum < 1 || guestNum > 20 || isNaN(guestNum)) {
+      alert('Please select a valid number of guests (1-20)');
       return;
     }
 
@@ -381,7 +389,7 @@ export default function AdminPage() {
       return;
     }
 
-    const selectedCourse = courses.find(c => c.id === newRes.courseId) ?? courses[0];
+    const selectedCourse = bookable.find(c => c.id === newRes.courseId) ?? bookable[0];
     if (!selectedCourse) {
       alert('Please create a cooking class first (Courses tab).');
       return;
@@ -449,7 +457,7 @@ export default function AdminPage() {
   const generateWhatsAppLink = (res: Reservation) => {
     const cleanPhone = res.phone.replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
-      `Hello ${res.studentName}! This is Cátia from Catia Cooking Mindelo 🇨🇻. Reaching out regarding your cooking class "${res.courseTitle}" booked for ${res.date} at ${res.time} (${res.guests} ${res.guests > 1 ? 'guests' : 'guest'}). We are so excited to welcome you to our kitchen in Fonte Francês!`
+      `Hello ${res.studentName}! This is Cátia from Catia Cooking Mindelo 🇨🇻. Reaching out regarding your ${isRestaurantBooking(res.courseId) ? 'dinner' : `cooking class "${res.courseTitle}"`} booked for ${res.date} at ${res.time} (${res.guests} ${res.guests > 1 ? 'guests' : 'guest'}). We are so excited to welcome you to our home in Fonte Francês!`
     );
     return `https://wa.me/${cleanPhone}?text=${message}`;
   };
@@ -739,7 +747,7 @@ export default function AdminPage() {
         <div className="md:hidden flex overflow-x-auto border-t border-blue-900/60 px-2 py-2 gap-1 bg-[#0A2240]">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'overview' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -747,7 +755,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('reservations')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'reservations' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -755,7 +763,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('courses')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'courses' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -763,7 +771,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('messages')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'messages' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -771,7 +779,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'calendar' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -779,7 +787,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'gallery' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -787,7 +795,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('content')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'content' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -795,7 +803,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'settings' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -803,7 +811,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('music')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap ${
               activeTab === 'music' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
             }`}
           >
@@ -939,7 +947,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="font-serif font-bold text-lg text-slate-900">
-                      Upcoming Scheduled Classes
+                      Upcoming Bookings
                     </h3>
                     <p className="text-xs text-slate-500">
                       Chronological list of enrolled students and scheduled workshops
@@ -947,7 +955,7 @@ export default function AdminPage() {
                   </div>
                   <button
                     onClick={() => setActiveTab('reservations')}
-                    className="text-xs font-bold text-mindelo-blue hover:underline"
+                    className="py-2 -my-2 text-xs font-bold text-mindelo-blue hover:underline"
                   >
                     View All →
                   </button>
@@ -1019,7 +1027,7 @@ export default function AdminPage() {
                     </h3>
                     <button
                       onClick={() => setActiveTab('courses')}
-                      className="text-xs text-mindelo-blue font-bold hover:underline"
+                      className="py-2 -my-2 text-xs text-mindelo-blue font-bold hover:underline"
                     >
                       Manage
                     </button>
@@ -1106,7 +1114,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
               
               {/* Search input */}
-              <div className="sm:col-span-8 relative">
+              <div className="sm:col-span-6 relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   type="text"
@@ -1117,8 +1125,23 @@ export default function AdminPage() {
                 />
               </div>
 
+              {/* Type filter: classes vs restaurant */}
+              <div className="sm:col-span-3 relative">
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as 'all' | 'classes' | 'restaurant')}
+                  className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-mindelo-blue text-sm font-medium text-slate-700 appearance-none pr-8 cursor-pointer"
+                  aria-label="Booking type"
+                >
+                  <option value="all">Classes &amp; Restaurant</option>
+                  <option value="classes">Classes ({reservations.filter(r => !isRestaurantBooking(r.courseId)).length})</option>
+                  <option value="restaurant">Restaurant ({reservations.filter(r => isRestaurantBooking(r.courseId)).length})</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
+
               {/* Status filter dropdown */}
-              <div className="sm:col-span-4 relative">
+              <div className="sm:col-span-3 relative">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -1135,8 +1158,112 @@ export default function AdminPage() {
 
             </div>
 
+            {/* Reservations as cards on phones */}
+            <div className="md:hidden space-y-3">
+              {filteredReservations.length === 0 ? (
+                <p className="text-center py-12 text-slate-400 bg-white rounded-2xl border border-slate-200/80">
+                  No bookings found matching the selected filters.
+                </p>
+              ) : (
+                filteredReservations.map((res) => {
+                  const paid = res.paymentStatus === 'paid' || res.paymentStatus === 'pago';
+                  const dinner = isRestaurantBooking(res.courseId);
+                  return (
+                    <div key={res.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-base break-words">{res.studentName}</p>
+                          <p className="text-xs text-slate-500 break-all">{res.email}</p>
+                          <p className="text-xs text-slate-500 font-mono">{res.phone}</p>
+                        </div>
+                        <span className={`shrink-0 px-2 py-0.5 rounded text-[11px] font-bold border ${
+                          dinner ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                        }`}>
+                          {dinner ? 'Restaurant' : 'Class'}
+                        </span>
+                      </div>
+
+                      <div className="text-sm text-slate-700 space-y-1">
+                        <p className="font-semibold">{res.courseTitle}</p>
+                        <p className="flex items-center gap-1.5 text-slate-600">
+                          <Calendar size={14} /> {res.date} · {res.time}
+                        </p>
+                        <p className="flex items-center gap-1.5 text-slate-600">
+                          <Users size={14} /> {res.guests} {res.guests > 1 ? 'guests' : 'guest'} · <span className="font-bold text-slate-900">€{res.totalPrice}</span>
+                        </p>
+                        {res.dietaryRestrictions && (
+                          <span className="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
+                            {res.dietaryRestrictions}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={isConfirmed(res.status) ? 'confirmed' : isPending(res.status) ? 'pending' : isCompleted(res.status) ? 'completed' : 'cancelled'}
+                          onChange={(e) => updateReservationStatus(res.id, e.target.value as Reservation['status'])}
+                          className="h-11 text-sm font-bold rounded-xl border border-slate-200 px-2 bg-white focus:outline-none focus:ring-2 focus:ring-mindelo-blue"
+                          aria-label="Booking status"
+                        >
+                          <option value="pending">⏳ Pending</option>
+                          <option value="confirmed">✅ Confirmed</option>
+                          <option value="completed">🎉 Completed</option>
+                          <option value="cancelled">❌ Cancelled</option>
+                        </select>
+                        <button
+                          onClick={() => updateReservationPayment(res.id, paid ? 'on_arrival' : 'paid')}
+                          className={`h-11 text-sm font-bold rounded-xl border transition-colors ${
+                            paid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          {getPaymentLabel(res.paymentStatus)}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                        <a
+                          href={generateWhatsAppLink(res)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center"
+                          aria-label="Send WhatsApp message"
+                        >
+                          <Phone size={18} />
+                        </a>
+                        <button
+                          onClick={() => setSelectedReservation(res)}
+                          className="h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center"
+                          aria-label="View full details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => setEditingReservation(res)}
+                          className="h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center"
+                          aria-label="Edit booking"
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to remove the booking for ${res.studentName}?`)) {
+                              deleteReservation(res.id);
+                            }
+                          }}
+                          className="h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"
+                          aria-label="Delete booking"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
             {/* Reservations Table */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-700">
                   <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
@@ -1167,6 +1294,13 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3.5 px-4">
                             <span className="font-semibold text-slate-800 block">{res.courseTitle}</span>
+                            <span className={`inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold border ${
+                              isRestaurantBooking(res.courseId)
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {isRestaurantBooking(res.courseId) ? 'Restaurant' : 'Class'}
+                            </span>
                             {res.dietaryRestrictions && (
                               <span className="inline-block mt-0.5 px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
                                 {res.dietaryRestrictions}
@@ -1183,7 +1317,7 @@ export default function AdminPage() {
                                 {res.guests} {res.guests > 1 ? 'guests' : 'guest'}
                               </span>
                               {(() => {
-                                const course = courses.find(c => c.id === res.courseId);
+                                const course = bookable.find(c => c.id === res.courseId);
                                 if (course && res.guests > course.maxCapacity) {
                                   return (
                                     <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200 whitespace-nowrap">
@@ -1329,7 +1463,7 @@ export default function AdminPage() {
                         </h3>
                         <button
                           onClick={() => toggleCourseActive(course.id)}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0 ${
+                          className={`text-[11px] font-bold px-3 py-1.5 rounded-full uppercase shrink-0 ${
                             course.active 
                               ? 'bg-emerald-100 text-emerald-800' 
                               : 'bg-slate-100 text-slate-500'
@@ -1359,7 +1493,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                       <button
                         onClick={() => setEditingCourse(course)}
-                        className="text-xs font-bold text-mindelo-blue hover:underline inline-flex items-center gap-1"
+                        className="py-2 -my-2 text-xs font-bold text-mindelo-blue hover:underline inline-flex items-center gap-1"
                       >
                         <Edit3 size={13} />
                         <span>Edit</span>
@@ -1371,7 +1505,7 @@ export default function AdminPage() {
                             deleteCourse(course.id);
                           }
                         }}
-                        className="text-xs text-slate-400 hover:text-red-600 transition-colors p-1"
+                        className="text-xs text-slate-400 hover:text-red-600 transition-colors p-2.5 -m-1.5"
                         title="Delete Course"
                       >
                         <Trash2 size={15} />
@@ -1482,7 +1616,7 @@ export default function AdminPage() {
                         {!msg.read && (
                           <button
                             onClick={() => markMessageRead(msg.id)}
-                            className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+                            className="py-2 -my-2 text-xs text-slate-500 hover:text-slate-800 font-medium"
                           >
                             Mark as Read
                           </button>
@@ -1491,7 +1625,7 @@ export default function AdminPage() {
                           onClick={() => {
                             if (confirm('Delete this message?')) deleteMessage(msg.id);
                           }}
-                          className="text-slate-400 hover:text-red-600 p-1"
+                          className="text-slate-400 hover:text-red-600 p-2.5 -m-1.5"
                           title="Delete Message"
                         >
                           <Trash2 size={15} />
@@ -1613,6 +1747,9 @@ export default function AdminPage() {
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <ContentEditor category="hero" title="Hero Section" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <ContentEditor category="restaurant_menu" title="Restaurant Menu" />
             </div>
           </div>
         )}
@@ -1787,13 +1924,16 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Select Course *</label>
+                <label className="block font-bold text-slate-700 mb-1">Class or Dinner *</label>
                 <select
                   value={newRes.courseId}
-                  onChange={(e) => setNewRes({ ...newRes, courseId: e.target.value })}
+                  onChange={(e) => {
+                    const picked = bookable.find((c) => c.id === e.target.value);
+                    setNewRes({ ...newRes, courseId: e.target.value, time: picked?.timeSlot || newRes.time });
+                  }}
                   className="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-mindelo-blue text-sm"
                 >
-                  {courses.map((c) => (
+                  {bookable.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.title} ({c.price})
                     </option>
@@ -1828,7 +1968,7 @@ export default function AdminPage() {
                   <input
                     type="number"
                     min="1"
-                    max="12"
+                    max="20"
                     required
                     value={newRes.guests}
                     onChange={(e) => setNewRes({ ...newRes, guests: Number(e.target.value) })}
@@ -2004,7 +2144,7 @@ export default function AdminPage() {
       {editingReservation && (
         <EditReservationModal
           reservation={editingReservation}
-          courses={courses}
+          courses={bookable}
           onClose={() => setEditingReservation(null)}
           onSave={(updates) => {
             updateReservation(editingReservation.id, updates);
@@ -2134,8 +2274,8 @@ function EditReservationModal({
 
     // Validation: Check guests is valid
     const guestNum = Number(guests);
-    if (guestNum < 1 || guestNum > 12 || isNaN(guestNum)) {
-      alert('Please select a valid number of guests (1-12)');
+    if (guestNum < 1 || guestNum > 20 || isNaN(guestNum)) {
+      alert('Please select a valid number of guests (1-20)');
       return;
     }
 
@@ -2230,7 +2370,7 @@ function EditReservationModal({
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Cooking Class *</label>
+            <label className="block font-bold text-slate-700 mb-1">Class or Dinner *</label>
             <select
               value={courseId}
               onChange={(e) => handleCourseChange(e.target.value)}
@@ -2246,7 +2386,7 @@ function EditReservationModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Class Date *</label>
+              <label className="block font-bold text-slate-700 mb-1">Date *</label>
               <input
                 type="date"
                 required
@@ -2334,7 +2474,7 @@ function EditReservationModal({
                   type="button"
                   key={opt}
                   onClick={() => setDietaryRestrictions(opt === 'None' ? '' : opt)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors ${
                     dietaryRestrictions === opt 
                       ? 'bg-amber-100 border-amber-300 text-amber-900' 
                       : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, Users, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 
 export interface CourseProps {
   id: string;
@@ -35,7 +36,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             referrerPolicy="no-referrer"
           />
           <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-            <span className="text-mindelo-dark font-bold text-sm">{course.price}</span>
+            <span className="text-mindelo-dark font-bold text-sm">{course.price}{isRestaurantBooking(course.id) ? ' / person' : ''}</span>
           </div>
         </div>
         
@@ -55,15 +56,15 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             </div>
             <div className="flex items-center gap-1.5">
               <Users size={16} className="text-mindelo-blue" />
-              <span>Max. {course.maxCapacity} guests</span>
+              <span>{isRestaurantBooking(course.id) ? `From ${RESTAURANT_MIN_GUESTS} guests` : `Max. ${course.maxCapacity} guests`}</span>
             </div>
           </div>
           
           <Link 
             href={`/courses/${course.id}`}
-            className="inline-flex items-center justify-between w-full font-bold text-mindelo-dark group-hover:text-mindelo-blue transition-colors"
+            className="inline-flex items-center justify-between w-full py-2 font-bold text-mindelo-dark group-hover:text-mindelo-blue transition-colors"
           >
-            <span>View Details</span>
+            <span>{isRestaurantBooking(course.id) ? 'Book a Dinner' : 'View Details'}</span>
             <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

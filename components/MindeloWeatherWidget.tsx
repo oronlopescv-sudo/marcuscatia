@@ -113,7 +113,7 @@ export function MindeloWeatherWidget({
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-1.5 rounded-full hover:bg-white/10 text-blue-200 hover:text-white transition-colors"
+            className="p-2.5 -m-1 rounded-full hover:bg-white/10 text-blue-200 hover:text-white transition-colors"
             title="Refresh weather with Google Search"
             aria-label="Refresh weather"
           >
@@ -217,7 +217,7 @@ export function MindeloWeatherWidget({
                   <button
                     onClick={handleRefresh}
                     disabled={refreshing}
-                    className="p-1 text-gray-400 hover:text-mindelo-blue rounded-md transition-colors"
+                    className="p-2 -m-1 text-gray-400 hover:text-mindelo-blue rounded-md transition-colors"
                     title="Refresh now"
                     aria-label="Refresh weather data"
                   >

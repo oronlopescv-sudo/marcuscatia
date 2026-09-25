@@ -12,8 +12,10 @@ export function Header() {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Classes', href: '/courses' },
-    { name: 'About', href: '/about' },
+    { name: 'Restaurant', href: '/courses?type=restaurant' },
     { name: 'Gallery', href: '/gallery' },
+    { name: 'Videos', href: '/gallery?tab=videos' },
+    { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
 
@@ -47,7 +49,7 @@ export function Header() {
           </div>
           
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-shrink-0">
+          <nav className="hidden xl:flex items-center space-x-4 2xl:space-x-6 flex-shrink-0">
             {navLinks.map((link, idx) => (
               <span key={link.name} className="flex items-center">
                 <Link 
@@ -57,14 +59,14 @@ export function Header() {
                   {link.name}
                 </Link>
                 {idx < navLinks.length - 1 && (
-                  <span className="ml-6 lg:ml-8 text-blue-200 text-xs select-none">|</span>
+                  <span className="ml-4 2xl:ml-6 text-blue-200 text-xs select-none">|</span>
                 )}
               </span>
             ))}
           </nav>
 
           {/* Right Action */}
-          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-shrink-0">
+          <div className="ml-auto xl:ml-0 flex items-center gap-2 sm:gap-4 lg:gap-6 flex-shrink-0">
             <div className="hidden sm:flex items-center gap-2 lg:gap-3">
               <Link 
                 href="/admin" 
@@ -93,17 +95,18 @@ export function Header() {
                 href="/courses" 
                 className="bg-mindelo-red hover:bg-red-700 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 whitespace-nowrap"
               >
-                Book a Class
+                Book Now
               </Link>
             </div>
           </div>
 
           {/* Mobile Menu Toggle */}
-          <div className="md:hidden flex items-center ml-1">
+          <div className="xl:hidden flex items-center ml-1">
             <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="text-mindelo-dark hover:text-mindelo-blue p-2"
-              aria-label="Open navigation menu"
+              className="text-mindelo-dark hover:text-mindelo-blue p-2.5 -mr-2.5"
+              aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isOpen}
             >
               {isOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
@@ -117,7 +120,7 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-blue-100"
+            className="xl:hidden bg-white border-b border-blue-100 overflow-hidden"
           >
             <div className="px-4 pt-2 pb-6 space-y-1">
               {navLinks.map((link) => (
@@ -143,7 +146,7 @@ export function Header() {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-mindelo-red hover:bg-red-700 text-white px-6 py-3 rounded-md font-bold transition-colors"
                 >
-                  Book a Class
+                  Book Now
                 </Link>
               </div>
             </div>

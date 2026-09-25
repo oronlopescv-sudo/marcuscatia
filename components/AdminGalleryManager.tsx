@@ -95,12 +95,13 @@ export function AdminGalleryManager() {
   // Extract YouTube ID from URL
   const extractYoutubeId = (url: string): string | null => {
     const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-      /youtube\.com\/embed\/([^&\n?#]+)/,
-      /^([a-zA-Z0-9_-]{11})$/,
+      /[?&]v=([A-Za-z0-9_-]{11})/,
+      /youtu\.be\/([A-Za-z0-9_-]{11})/,
+      /youtube\.com\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})/,
+      /^([A-Za-z0-9_-]{11})$/,
     ];
     for (const pattern of patterns) {
-      const match = url.match(pattern);
+      const match = url.trim().match(pattern);
       if (match) return match[1];
     }
     return null;
@@ -228,8 +229,8 @@ export function AdminGalleryManager() {
       return;
     }
 
-    if (!formData.file && !formData.youtubeId) {
-      setError('Please provide a photo or YouTube ID');
+    if (formData.type === 'photo' ? !formData.file : !formData.youtubeId.trim()) {
+      setError(formData.type === 'photo' ? 'Please choose a photo' : 'Please paste the YouTube link');
       return;
     }
 
@@ -243,9 +244,9 @@ export function AdminGalleryManager() {
       data.append('category', category);
       data.append('type', formData.type);
 
-      if (formData.file) {
+      if (formData.type === 'photo' && formData.file) {
         data.append('file', formData.file);
-      } else if (formData.youtubeId) {
+      } else {
         const youtubeId = extractYoutubeId(formData.youtubeId);
         if (!youtubeId) {
           setError('Invalid YouTube URL or ID');
@@ -467,7 +468,7 @@ export function AdminGalleryManager() {
                 {cat}
                 <button
                   onClick={() => startRenameCategory(cat)}
-                  className="text-gray-400 hover:text-mindelo-blue transition-colors"
+                  className="p-2 -m-1 text-gray-400 hover:text-mindelo-blue transition-colors"
                   aria-label={`Rename category ${cat}`}
                   title={`Rename ${cat}`}
                 >
@@ -475,7 +476,7 @@ export function AdminGalleryManager() {
                 </button>
                 <button
                   onClick={() => handleDeleteCategory(cat)}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  className="p-2 -m-1 text-gray-400 hover:text-red-600 transition-colors"
                   aria-label={`Remove category ${cat}`}
                   title={`Remove ${cat}`}
                 >
@@ -489,7 +490,7 @@ export function AdminGalleryManager() {
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newCategory}
@@ -500,12 +501,12 @@ export function AdminGalleryManager() {
                 handleAddCategory();
               }
             }}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
-            placeholder="New category name (e.g., Kitchen, Pastries…)"
+            className="flex-1 min-w-0 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mindelo-blue focus:border-transparent"
+            placeholder="New category (e.g. Kitchen, Pastries…)"
           />
           <button
             onClick={handleAddCategory}
-            className="bg-mindelo-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition whitespace-nowrap"
+            className="bg-mindelo-blue hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-semibold transition whitespace-nowrap"
           >
             + Add Category
           </button>
@@ -553,6 +554,11 @@ export function AdminGalleryManager() {
               <option value="photo">Photo</option>
               <option value="video">YouTube Video</option>
             </select>
+            {formData.type === 'video' && (
+              <p className="text-xs text-gray-500 mt-1">
+                Videos appear in the &quot;Videos&quot; section of the gallery. Upload the video to YouTube first, then paste its link here.
+              </p>
+            )}
           </div>
 
           {formData.type === 'photo' ? (
@@ -697,25 +703,25 @@ export function AdminGalleryManager() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {galleryItems.map((item) => (
-            <div key={item.id} className="relative group rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition">
+            <div key={item.id} className="flex flex-col rounded-lg overflow-hidden border border-gray-200 bg-white hover:shadow-lg transition">
               <Image
-                src={item.src}
+                src={item.type === 'video' && item.youtubeId ? `https://i.ytimg.com/vi/${item.youtubeId}/hqdefault.jpg` : item.src}
                 alt={item.title}
                 width={300}
                 height={300}
-                className="w-full aspect-square object-cover"
+                className="w-full aspect-square object-cover bg-gray-100"
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-end justify-between p-3">
-                <div className="text-white">
-                  <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="text-xs text-gray-200">
+              <div className="p-2.5 sm:p-3 flex flex-col gap-2 flex-1">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 break-words">{item.title}</p>
+                  <p className="text-xs text-gray-500 truncate">
                     {item.category} · {item.type === 'video' ? 'Video' : 'Photo'}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => startEdit(item)}
-                    className="p-2 bg-mindelo-blue hover:bg-blue-700 text-white rounded transition"
+                    className="h-10 flex items-center justify-center bg-mindelo-blue hover:bg-blue-700 text-white rounded-lg transition"
                     aria-label={`Edit ${item.title}`}
                     title="Edit"
                   >
@@ -724,7 +730,7 @@ export function AdminGalleryManager() {
                   <button
                     onClick={() => handleDeleteItem(item.id)}
                     disabled={deletingId === item.id}
-                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded transition disabled:opacity-50"
+                    className="h-10 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50"
                     aria-label={`Delete ${item.title}`}
                     title="Delete"
                   >

@@ -4,7 +4,7 @@ import { useState, use, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Image from 'next/image';
-import { Clock, Users, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Clock, Users, MapPin, CheckCircle2, AlertCircle, Minus, Plus, ArrowDown } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import { format, isPast, isToday, addDays } from 'date-fns';
 import 'react-day-picker/dist/style.css';
@@ -13,6 +13,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import { useAdminStore } from '@/lib/store';
+import { useSiteContent } from '@/lib/useSiteContent';
+import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 
 const reservationSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
@@ -21,7 +23,7 @@ const reservationSchema = z.object({
     .min(8, 'Phone number must have at least 8 digits')
     .regex(/^[\d\s+().-]+$/, 'Phone number contains invalid characters')
     .trim(),
-  guests: z.number().min(1, 'Minimum 1 person').max(12, 'Maximum 12 people'),
+  guests: z.number({ message: 'Enter the number of guests' }).int().min(1, 'Minimum 1 person').max(20, 'Maximum 20 people'),
   notes: z.string().optional(),
 });
 
@@ -32,9 +34,13 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const unwrappedParams = use(params);
   
   const { courses, addReservation, blockedDates, hydrate } = useAdminStore();
+  const isDinner = isRestaurantBooking(unwrappedParams.id);
+  const storedMenu = useSiteContent('restaurant_menu');
+  const menuFromAdmin = (storedMenu || []).filter((m) => m.title || m.description);
+  const dinnerMenu = menuFromAdmin.length > 0 ? menuFromAdmin : DEFAULT_MENU;
   // Só mostra "a carregar" se o store ainda não tiver cursos (navegação direta).
   // Ao vir da listagem, o store já está hidratado e mostramos o curso de imediato.
-  const [loadingCourse, setLoadingCourse] = useState(courses.length === 0);
+  const [loadingCourse, setLoadingCourse] = useState(courses.length === 0 && !isDinner);
 
   // Carrega os cursos do banco para que links diretos (ex.: partilhados) a um
   // curso funcionem mesmo sem passar pela página de listagem. Sem fallback
@@ -79,7 +85,8 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   }, [hydrate]);
   
   // Encontra o curso apenas no banco (sem fallback hardcoded).
-  const course = courses.find((c) => c.id === unwrappedParams.id);
+  const course = isDinner ? RESTAURANT_DINNER : courses.find((c) => c.id === unwrappedParams.id);
+  const minGuests = isDinner ? RESTAURANT_MIN_GUESTS : 1;
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [dateError, setDateError] = useState<string | null>(null);
@@ -92,10 +99,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   // Rate limit: max 1 submission per 30 seconds
   const RATE_LIMIT_MS = 30000;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      guests: 1
+      guests: isRestaurantBooking(unwrappedParams.id) ? RESTAURANT_MIN_GUESTS : 1
     }
   });
 
@@ -113,6 +120,11 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
     if (!selectedDate) {
       setDateError('Please select a date on the calendar for your class.');
+      return;
+    }
+
+    if (data.guests < minGuests) {
+      setDateError(`Dinner bookings are for groups of at least ${minGuests} guests.`);
       return;
     }
 
@@ -247,7 +259,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Hero Image */}
-        <div className="relative h-[40vh] md:h-[50vh] w-full bg-mindelo-dark">
+        <div className="relative min-h-[40vh] md:min-h-[50vh] w-full bg-mindelo-dark flex items-end">
           <Image
             src={course.image || '/catia-cooking.jpg'}
             alt={course.title}
@@ -257,22 +269,28 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full p-8 md:p-16 text-white max-w-7xl mx-auto">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4">{course.title}</h1>
-            <div className="flex flex-wrap items-center gap-6 text-sm md:text-base font-medium">
+          <div className="relative w-full px-5 pt-24 pb-8 sm:p-8 md:p-16 text-white max-w-7xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4">{course.title}</h1>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">
                 <Clock size={20} className="text-mindelo-gold" />
                 <span>{course.duration}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={20} className="text-mindelo-gold" />
-                <span>Max {course.maxCapacity} guests</span>
+                <span>{isDinner ? `Groups from ${minGuests} guests` : `Max ${course.maxCapacity} guests`}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={20} className="text-mindelo-gold" />
                 <span>Fonte Francês, Mindelo</span>
               </div>
             </div>
+            <a
+              href="#booking"
+              className="lg:hidden mt-6 inline-flex items-center gap-2 bg-mindelo-red hover:bg-red-700 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg transition-colors"
+            >
+              {isDinner ? 'Book a dinner' : 'Book this class'} <ArrowDown size={18} />
+            </a>
           </div>
         </div>
 
@@ -282,28 +300,51 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             {/* Course Information */}
             <div className="lg:col-span-2 space-y-12">
               <section>
-                <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">About the Class</h2>
+                <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">{isDinner ? 'About the Dinner' : 'About the Class'}</h2>
                 <p className="text-gray-700 leading-relaxed text-lg">
                   {course.description}
                 </p>
               </section>
 
-              <section>
-                <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">What&apos;s Included</h2>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {course.includes.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {isDinner ? (
+                <section>
+                  <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">The Menu</h2>
+                  <ol className="space-y-4">
+                    {dinnerMenu.map((item, idx) => (
+                      <li key={idx} className="flex gap-3">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-mindelo-blue text-white font-bold flex items-center justify-center">{idx + 1}</span>
+                        <div>
+                          <p className="font-bold text-mindelo-dark text-lg">
+                            {item.title}
+                            {item.description && <span className="font-normal text-gray-600"> — {item.description}</span>}
+                          </p>
+                          {item.body && <p className="text-gray-600">{item.body}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-6 text-gray-600">
+                    €{course.priceNumber} per person · groups from {minGuests} guests · served {course.duration.toLowerCase()}.
+                  </p>
+                </section>
+              ) : (
+                <section>
+                  <h2 className="text-2xl font-serif font-bold text-mindelo-dark mb-4 border-b border-gray-200 pb-2">What&apos;s Included</h2>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {course.includes.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
+                        <span className="text-gray-700">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </div>
 
             {/* Booking Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8 sticky top-28">
+            <div className="lg:col-span-1 scroll-mt-24" id="booking">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 sm:p-6 md:p-8 lg:sticky lg:top-28">
                 <div className="flex justify-between items-end mb-6 border-b border-gray-100 pb-6">
                   <div>
                     <span className="block text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Price per guest</span>
@@ -348,7 +389,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
                     <div className="space-y-3">
                       <a
-                        href={`https://wa.me/2385953973?text=${encodeURIComponent(`Hello Cátia! I have just submitted a booking request on your site for the cooking class "${course.title}" on ${submittedData?.date} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`)}`}
+                        href={`https://wa.me/2385953973?text=${encodeURIComponent(`Hello Cátia! I have just submitted a booking request on your site for ${isDinner ? 'a dinner' : `the cooking class "${course.title}"`} on ${submittedData?.date} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
@@ -376,7 +417,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
                       <label className="block text-sm font-bold text-mindelo-dark mb-2">1. Choose Your Date</label>
                       <div className="border border-gray-200 rounded-xl p-2 bg-gray-50 flex justify-center custom-calendar">
@@ -411,16 +452,20 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       <div>
                         <input
                           {...register('name')}
+                          autoComplete="name"
                           placeholder="Full Name"
                           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
                         />
                         {errors.name && <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                         <div>
                           <input
                             {...register('email')}
+                            type="email"
+                            inputMode="email"
+                            autoComplete="email"
                             placeholder="Email Address"
                             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
                           />
@@ -429,6 +474,9 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                         <div>
                           <input
                             {...register('phone')}
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
                             placeholder="WhatsApp Number"
                             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
                           />
@@ -437,15 +485,35 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white">
-                          <span className="text-gray-600">Number of Guests</span>
-                          <input
-                            type="number"
-                            {...register('guests', { valueAsNumber: true })}
-                            className="w-16 text-center font-bold outline-none text-mindelo-dark"
-                            min="1"
-                            max={course.maxCapacity}
-                          />
+                        <div className="flex items-center justify-between gap-3 pl-4 pr-1.5 py-1.5 rounded-lg border border-gray-200 bg-white">
+                          <label htmlFor="guests" className="text-gray-600">Number of Guests</label>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setValue('guests', Math.max(minGuests, (Number(watch('guests')) || minGuests) - 1), { shouldValidate: true })}
+                              className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-mindelo-dark flex items-center justify-center transition-colors"
+                              aria-label="Fewer guests"
+                            >
+                              <Minus size={18} />
+                            </button>
+                            <input
+                              id="guests"
+                              type="number"
+                              inputMode="numeric"
+                              {...register('guests', { valueAsNumber: true })}
+                              className="w-12 h-10 text-center text-lg font-bold outline-none text-mindelo-dark"
+                              min={minGuests}
+                              max={course.maxCapacity}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setValue('guests', Math.min(course.maxCapacity, (Number(watch('guests')) || minGuests) + 1), { shouldValidate: true })}
+                              className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-mindelo-dark flex items-center justify-center transition-colors"
+                              aria-label="More guests"
+                            >
+                              <Plus size={18} />
+                            </button>
+                          </div>
                         </div>
                         {errors.guests && <span className="text-red-500 text-xs mt-1">{errors.guests.message}</span>}
                       </div>
@@ -469,11 +537,11 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                         {isSubmitting ? (
                           <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                         ) : (
-                          'Request Booking'
+                          isDinner ? 'Request Dinner Booking' : 'Request Booking'
                         )}
                       </button>
                       <p className="text-center text-xs text-gray-500 mt-4">
-                        No online payment required now. Payment is settled in cash on the day of the class.
+                        No online payment required now. Payment is settled in cash on the day of your {isDinner ? 'dinner' : 'class'}.
                       </p>
                     </div>
                   </form>

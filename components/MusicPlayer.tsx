@@ -138,7 +138,7 @@ export default function MusicPlayer() {
           canto inferior direito — evita sobreposição) */}
       <div
         className={`fixed bottom-4 left-4 z-40 bg-gradient-to-r from-mindelo-blue to-blue-900 shadow-2xl transition-all duration-300 ${
-          isMinimized ? 'w-12 h-12 rounded-full' : 'w-80 rounded-full'
+          isMinimized ? 'w-12 h-12 rounded-full' : 'w-[calc(100vw-7rem)] max-w-80 rounded-3xl'
         }`}
       >
         {isMinimized ? (
@@ -152,7 +152,7 @@ export default function MusicPlayer() {
           </button>
         ) : (
           <div className="relative">
-            <div className="flex items-center gap-2 h-12 px-3">
+            <div className="flex items-center gap-2 h-12 pl-1.5 pr-3">
               {/* Play/Pause */}
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
@@ -183,14 +183,15 @@ export default function MusicPlayer() {
                   max={duration || 0}
                   value={currentTime}
                   onChange={handleSeek}
-                  className="w-full h-0.5 mt-1 bg-blue-800 rounded-full cursor-pointer accent-blue-400"
+                  className="block w-full h-4 cursor-pointer accent-blue-400"
+                  aria-label="Seek"
                 />
               </div>
 
               {/* Anterior / Seguinte */}
               <button
                 onClick={playPrev}
-                className="shrink-0 p-1 text-blue-200 hover:text-white transition"
+                className="shrink-0 p-2 -m-1 text-blue-200 hover:text-white transition"
                 title="Previous track"
                 aria-label="Previous track"
               >
@@ -198,7 +199,7 @@ export default function MusicPlayer() {
               </button>
               <button
                 onClick={playNext}
-                className="shrink-0 p-1 text-blue-200 hover:text-white transition"
+                className="shrink-0 p-2 -m-1 text-blue-200 hover:text-white transition"
                 title="Next track"
                 aria-label="Next track"
               >
@@ -222,7 +223,7 @@ export default function MusicPlayer() {
               {/* Playlist */}
               <button
                 onClick={() => setShowList(!showList)}
-                className="shrink-0 p-1 text-blue-200 hover:text-white transition"
+                className="shrink-0 p-2 -m-1 text-blue-200 hover:text-white transition"
                 title="Playlist"
                 aria-label="Playlist"
               >
@@ -234,7 +235,7 @@ export default function MusicPlayer() {
               {/* Minimizar */}
               <button
                 onClick={() => setIsMinimized(true)}
-                className="shrink-0 p-1 text-blue-200 hover:text-white transition"
+                className="shrink-0 p-2 -m-1 text-blue-200 hover:text-white transition"
                 title="Minimize"
                 aria-label="Minimize"
               >
@@ -244,7 +245,7 @@ export default function MusicPlayer() {
 
             {/* Playlist dropdown */}
             {showList && (
-              <div className="absolute top-full mt-1.5 left-0 right-0 bg-blue-900 border border-blue-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+              <div className="absolute bottom-full mb-1.5 left-0 right-0 bg-blue-900 border border-blue-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                 {tracks.map((track) => (
                   <button
                     key={track.id}
@@ -252,7 +253,7 @@ export default function MusicPlayer() {
                       setCurrentTrack(track);
                       setShowList(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition ${
+                    className={`w-full text-left px-3 py-2.5 text-sm transition ${
                       currentTrack.id === track.id
                         ? 'bg-blue-700 text-white font-semibold'
                         : 'text-blue-100 hover:bg-blue-800'
