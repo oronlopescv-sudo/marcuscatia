@@ -31,7 +31,7 @@ export default function Home() {
         <div className="py-8 sm:py-12 md:py-16"></div>
 
         {/* Featured Courses Section */}
-        <section className="py-20 sm:py-24 md:py-32 bg-white">
+        <section className="-mt-8 py-20 sm:py-24 md:py-32 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
               <div className="max-w-2xl">
