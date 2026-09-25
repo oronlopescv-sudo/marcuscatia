@@ -171,21 +171,14 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 -- SEED / DADOS INICIAIS
 -- ============================================================
 
--- Cursos iniciais (conforme lib/store.ts INITIAL_COURSES)
-INSERT INTO courses (id, title, description, level, price, priceNumber, maxCapacity, duration, image, timeSlot, includes, active) VALUES
-('cooking-course', 'Traditional Cooking Class', 'A guided visit to the Municipal Market and Fish Market of Mindelo, traditional local transport to our family home in Fonte Francês, and a hands-on Cape Verdean cooking class in a warm, welcoming environment.', 'Beginner', '€45', 45, 8, '2h 30min', 'https://static.wixstatic.com/media/f4fd80_4ae355554a644923a2290e145fe89000~mv2.jpg', '10:00 - 12:30', JSON_ARRAY('Tour do Mercado Municipal & Mercado do Peixe', 'Transporte tradicional colectivo até Fonte Francês', 'Aula prática de cozinha cabo-verdiana com a Cátia', 'Almoço caseiro completo e prova em grupo', 'Bebidas de boas-vindas e livro de receitas de recordação'), 1),
-('vegetarian-creole', 'Vegetarian / Vegan Cooking Class', 'As featured on German television cooking shows! A comprehensive plant-based masterclass celebrating São Vicente vegetables: slow-simmered bean & squash Cachupa, sweet potato, manioc, and rich aromatic Creole sofrito.', 'Beginner', '€40', 40, 8, '2h 30min', 'https://static.wixstatic.com/media/f4fd80_df372cb7dc234c4b876dbbfda91d0f56~mv2.jpg', '15:00 - 17:30', JSON_ARRAY('Produtos frescos 100% vegetais do mercado', 'Técnicas tradicionais e especiarias crioulas', 'Receitas veganas autênticas', 'Prova completa e sobremesa'), 1)
-ON DUPLICATE KEY UPDATE title = VALUES(title);
+-- Sem cursos de demonstração: os cursos reais são criados no painel admin
+-- (tab "Courses & Classes").
 
 -- PIN inicial do painel admin (padrão 1234; trocável em /admin > Settings)
 INSERT INTO app_settings (id, value) VALUES ('admin_pin', '1234')
 ON DUPLICATE KEY UPDATE value = VALUES(value);
 
--- Conteúdo FAQ inicial (seção 'faq', usada pelo ContentEditor)
-INSERT IGNORE INTO site_content (id, section, key_name, content, type) VALUES
-('faq-booking', 'faq', 'faq-booking', 'Visit our Courses page, select your preferred class and date, and fill in the reservation form. You''ll receive a confirmation via email and WhatsApp.', 'rich_text'),
-('faq-cancellation', 'faq', 'faq-cancellation', 'We offer full refunds for cancellations made 48 hours in advance. For cancellations within 48 hours, a 50% refund is provided.', 'rich_text'),
-('faq-group', 'faq', 'faq-group', 'Yes! We offer group discounts. Classes are limited to 8 people maximum. Contact us directly for group bookings.', 'rich_text');
+-- Sem conteúdo de demonstração: FAQ e depoimentos são geridos no Content Editor.
 
 -- Verificação
 SELECT 'Base de dados criada com sucesso!' AS status;

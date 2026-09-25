@@ -2,26 +2,18 @@ import { Star } from 'lucide-react';
 import Image from 'next/image';
 
 export function Testimonials() {
-  const testimonials = [
-    {
-      name: 'Maria Silva',
-      role: 'Visitor from Portugal',
-      content: 'The class with Cátia was truly the highlight of our stay in São Vicente! The Cachupa turned out divine and we learned so much about the island\'s traditions. The warm family atmosphere was unforgettable.',
-      image: '/catia-cooking.jpg',
-    },
-    {
-      name: 'John Doe',
-      role: 'Global Food Traveler',
-      content: 'I have taken cooking classes all over the world, but this one felt like cooking with an old friend. The Tuna Pastels were crunchy and packed with flavor. Highly recommended!',
-      image: '/catia-cooking-hero.jpg',
-    },
-    {
-      name: 'Elena Dupont',
-      role: 'Traveler from France',
-      content: 'The market tour was lively and fascinating, and Cátia showed us how to select the freshest fish. Cooking with her was joyful, educational, and absolutely delicious!',
-      image: '/logo.jpg',
-    }
-  ];
+  // Sem depoimentos de demonstração. Os depoimentos reais são geridos no
+  // painel admin (Content Editor) e podem ser adicionados quando houver.
+  const testimonials: {
+    name: string;
+    role: string;
+    content: string;
+    image: string;
+  }[] = [];
+
+  if (testimonials.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-16 sm:py-20 md:py-24 bg-white border-y border-gray-100">

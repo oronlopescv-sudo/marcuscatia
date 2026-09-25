@@ -122,9 +122,8 @@ async function runMigration() {
     // Migration 8: Create courses table
     // Matches app/api/courses/route.ts: id, title, description, price,
     // priceNumber, maxCapacity, level, duration, image, timeSlot,
-    // includes, active. Note: lib/store.ts INITIAL_COURSES is the
-    // client-side source of truth today, so this table is populated only
-    // if/when courses start being managed through the database.
+    // includes, active. O banco é a única fonte de verdade: os cursos são
+    // criados/geridos pelo painel admin.
     `CREATE TABLE IF NOT EXISTS courses (
       id VARCHAR(255) PRIMARY KEY,
       title VARCHAR(255) NOT NULL,
@@ -141,15 +140,6 @@ async function runMigration() {
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_active (active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-
-    // Migration 9: Insert sample FAQs.
-    // ContentEditor stores {title, description, body} as a JSON string in
-    // the `content` column (see components/ContentEditor.tsx parseFields),
-    // so the seed rows must follow that same shape, not plain text.
-    `INSERT IGNORE INTO site_content (id, section, key_name, content, type) VALUES
-    ('faq_booking', 'faq', 'faq_booking', '{"title":"How do I book a class?","description":"Information about booking classes","body":"Visit our Courses page, select your preferred class and date, and fill in the reservation form. You will receive a confirmation via email and WhatsApp."}', 'rich_text'),
-    ('faq_cancellation', 'faq', 'faq_cancellation', '{"title":"What is your cancellation policy?","description":"Information about cancellations","body":"We offer full refunds for cancellations made 48 hours in advance. For cancellations within 48 hours, a 50% refund is provided."}', 'rich_text'),
-    ('faq_group', 'faq', 'faq_group', '{"title":"Can I book for a group?","description":"Information about group bookings","body":"Yes! We offer group discounts. Classes are limited to 8 people maximum. Contact us directly for group bookings."}', 'rich_text')`,
   ];
 
   const results = [];
