@@ -8,18 +8,21 @@ export interface Track {
 }
 
 interface MusicStore {
+  tracks: Track[];
   currentTrack: Track | null;
   isPlaying: boolean;
   volume: number;
-  
+
+  // Carrega a playlist real (do banco). Não auto-reproduz.
+  hydrateTracks: (tracks: Track[]) => void;
   setCurrentTrack: (track: Track | null) => void;
   setIsPlaying: (playing: boolean) => void;
   setVolume: (volume: number) => void;
 }
 
-// Faixas de demonstração com áudio real e estável (amostras MP3 livres da
-// SoundHelix) até serem substituídas por música cabo-verdiana licenciada
-// (morna/funaná) hospedada em local estável.
+// Faixas de demonstração — usadas APENAS como fallback se a API
+// /api/music estiver indisponível. Nunca sobrescrevem o que o admin
+// apagou: quando a API responde (mesmo vazio), a lista real substitui isto.
 export const MUSIC_TRACKS: Track[] = [
   { id: '1', title: 'Mindelo Vibes', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
   { id: '2', title: 'Sunset in Praia', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
@@ -36,9 +39,17 @@ export const MUSIC_TRACKS: Track[] = [
 export const useMusicStore = create<MusicStore>()(
   persist(
     (set) => ({
+      tracks: MUSIC_TRACKS,
       currentTrack: MUSIC_TRACKS[0],
       isPlaying: false,
       volume: 0.5,
+
+      hydrateTracks: (tracks) =>
+        set({
+          tracks,
+          currentTrack: tracks.length > 0 ? tracks[0] : null,
+          isPlaying: false,
+        }),
 
       setCurrentTrack: (track) => {
         set({ currentTrack: track });
@@ -46,13 +57,13 @@ export const useMusicStore = create<MusicStore>()(
       },
 
       setIsPlaying: (playing) => set({ isPlaying: playing }),
-      
+
       setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
     }),
     {
       name: 'catia-music-store',
-      // bumped → discards any stale cached track so users get the fixed URLs
-      version: 2,
+      // bumped → descarta faixas/dados antigos em cache e garante os novos campos
+      version: 3,
     }
   )
 );

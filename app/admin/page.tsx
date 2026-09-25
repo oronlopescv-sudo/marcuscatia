@@ -37,6 +37,7 @@ import { AdminGalleryManager } from '@/components/AdminGalleryManager';
 import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
+import { MusicManager } from '@/components/MusicManager';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -50,7 +51,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings' | 'music'>('overview');
 
   // Read any existing session after mount (client-only), never during SSR.
   useEffect(() => {
@@ -652,6 +653,46 @@ export default function AdminPage() {
             >
               Calendar
             </button>
+            <button
+              onClick={() => setActiveTab('gallery')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'gallery' 
+                  ? 'bg-white text-[#0A2240] shadow-xs' 
+                  : 'text-blue-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Gallery
+            </button>
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'content' 
+                  ? 'bg-white text-[#0A2240] shadow-xs' 
+                  : 'text-blue-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Content
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'settings' 
+                  ? 'bg-white text-[#0A2240] shadow-xs' 
+                  : 'text-blue-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('music')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'music' 
+                  ? 'bg-white text-[#0A2240] shadow-xs' 
+                  : 'text-blue-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Music
+            </button>
           </nav>
 
           {/* Right Header Actions */}
@@ -742,6 +783,14 @@ export default function AdminPage() {
             }`}
           >
             Settings
+          </button>
+          <button
+            onClick={() => setActiveTab('music')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+              activeTab === 'music' ? 'bg-white text-[#0A2240]' : 'text-blue-100'
+            }`}
+          >
+            Music
           </button>
         </div>
       </header>
@@ -1652,6 +1701,15 @@ export default function AdminPage() {
                 </form>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 9: MUSIC PLAYER                                          */}
+        {/* ============================================================ */}
+        {activeTab === 'music' && (
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+            <MusicManager />
           </div>
         )}
 

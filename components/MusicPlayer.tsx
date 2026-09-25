@@ -1,27 +1,50 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Music, Play, Pause, Volume2, X, ChevronDown } from 'lucide-react';
-import { useMusicStore, MUSIC_TRACKS } from '@/lib/musicStore';
+import { Music, Play, Pause, Volume2, X, ChevronDown, SkipBack, SkipForward } from 'lucide-react';
+import { useMusicStore } from '@/lib/musicStore';
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { 
-    currentTrack, 
-    isPlaying, 
-    setIsPlaying, 
-    volume, 
+  const {
+    tracks,
+    currentTrack,
+    isPlaying,
+    setIsPlaying,
+    volume,
     setVolume,
-    setCurrentTrack
+    setCurrentTrack,
+    hydrateTracks,
   } = useMusicStore();
   const [isMinimized, setIsMinimized] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [showList, setShowList] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+
+  // Carrega a playlist real (do banco). As faixas de demonstração só
+  // permanecem se a API /api/music estiver indisponível — nunca sobrescrevem
+  // o que o admin apagou.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/music')
+      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data)) {
+          hydrateTracks(data);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load music:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrateTracks]);
 
   useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
-    
+    setAudioError(false);
     if (isPlaying) {
       audioRef.current.play().catch(() => setIsPlaying(false));
     } else {
@@ -48,7 +71,7 @@ export default function MusicPlayer() {
   };
 
   const handleEnded = () => {
-    setIsPlaying(false);
+    playNext();
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +79,20 @@ export default function MusicPlayer() {
     if (audioRef.current) {
       audioRef.current.currentTime = newTime;
     }
+  };
+
+  const playNext = () => {
+    if (tracks.length === 0) return;
+    const idx = tracks.findIndex((t) => t.id === currentTrack?.id);
+    const next = tracks[(idx + 1) % tracks.length];
+    if (next) setCurrentTrack(next);
+  };
+
+  const playPrev = () => {
+    if (tracks.length === 0) return;
+    const idx = tracks.findIndex((t) => t.id === currentTrack?.id);
+    const prev = tracks[(idx - 1 + tracks.length) % tracks.length];
+    if (prev) setCurrentTrack(prev);
   };
 
   const formatTime = (seconds: number) => {
@@ -77,6 +114,7 @@ export default function MusicPlayer() {
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
+        onError={() => setAudioError(true)}
       />
 
       {/* Mini Player Fixo */}
@@ -128,7 +166,16 @@ export default function MusicPlayer() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={playPrev}
+                className="p-2 text-blue-200 hover:text-white hover:bg-blue-800 rounded-lg transition"
+                title="Previous track"
+                aria-label="Previous track"
+              >
+                <SkipBack className="w-4 h-4" />
+              </button>
+
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 transition"
@@ -144,6 +191,15 @@ export default function MusicPlayer() {
                     <span className="text-sm font-semibold">Play</span>
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={playNext}
+                className="p-2 text-blue-200 hover:text-white hover:bg-blue-800 rounded-lg transition"
+                title="Next track"
+                aria-label="Next track"
+              >
+                <SkipForward className="w-4 h-4" />
               </button>
 
               <div className="flex items-center gap-2">
@@ -166,13 +222,13 @@ export default function MusicPlayer() {
                 onClick={() => setShowList(!showList)}
                 className="w-full bg-blue-800 hover:bg-blue-700 text-white py-2 rounded-lg flex items-center justify-between gap-2 px-3 text-sm transition"
               >
-                <span className="truncate">Playlist</span>
+                <span className="truncate">Playlist ({tracks.length})</span>
                 <ChevronDown className={`w-4 h-4 transition ${showList ? 'rotate-180' : ''}`} />
               </button>
 
               {showList && (
                 <div className="absolute top-full mt-2 w-full bg-blue-900 border border-blue-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                  {MUSIC_TRACKS.map((track) => (
+                  {tracks.map((track) => (
                     <button
                       key={track.id}
                       onClick={() => {
@@ -191,6 +247,12 @@ export default function MusicPlayer() {
                 </div>
               )}
             </div>
+
+            {audioError && (
+              <p className="text-xs text-amber-300">
+                ⚠️ Could not load this audio.
+              </p>
+            )}
           </div>
         )}
       </div>
