@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
 import { randomBytes } from 'crypto';
 
@@ -65,6 +65,40 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// DELETE - remover um ficheiro local previamente carregado (body: { url })
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const url = (body?.url as string) || '';
+
+    if (!url) {
+      return NextResponse.json({ error: 'No url provided' }, { status: 400 });
+    }
+
+    // Só apaga ficheiros locais (caminhos relativos a /public). URLs externas
+    // (ex.: Wix/S3) são ignoradas.
+    if (url.startsWith('/')) {
+      const rel = url.replace(/^\/+/, '');
+      const publicDir = join(process.cwd(), 'public');
+      const filepath = join(publicDir, rel);
+
+      // Proteção contra path traversal
+      if (filepath.startsWith(publicDir)) {
+        try {
+          await unlink(filepath);
+        } catch {
+          // Ficheiro pode não existir — ignora
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Delete failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

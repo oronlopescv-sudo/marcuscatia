@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
+// A coluna `includes` é guardada como JSON; devolve sempre array.
+function parseIncludes(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x));
+  if (typeof v === 'string') {
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p.map((x) => String(x)) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 // GET — lista cursos. Aceita ?all=1 para incluir inativos (uso no admin).
 export async function GET(request: Request) {
   try {
@@ -9,7 +23,12 @@ export async function GET(request: Request) {
     const sql = all
       ? 'SELECT * FROM courses ORDER BY title ASC'
       : 'SELECT * FROM courses WHERE active = 1 ORDER BY title ASC';
-    const courses = await query(sql);
+    const rows: any = await query(sql);
+    const courses = (Array.isArray(rows) ? rows : []).map((c: any) => ({
+      ...c,
+      includes: parseIncludes(c.includes),
+      active: !!c.active,
+    }));
     return NextResponse.json({ courses }, { status: 200 });
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -20,15 +39,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { id, title, description, price, priceNumber, maxCapacity, level, duration, image, includes, timeSlot } = body;
+    const { id, title, description, price, priceNumber, maxCapacity, level, duration, image, includes, timeSlot, active } = body;
 
     if (!id || !title) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const activeVal = active === undefined ? 1 : active ? 1 : 0;
+
     await query(
-      'INSERT INTO courses (id, title, description, price, priceNumber, maxCapacity, level, duration, image, timeSlot, includes, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      [id, title, description || '', price, priceNumber || 0, maxCapacity || 8, level || 'Beginner', duration || '', image || '', timeSlot || '', JSON.stringify(includes || [])]
+      'INSERT INTO courses (id, title, description, price, priceNumber, maxCapacity, level, duration, image, timeSlot, includes, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, title, description || '', price, priceNumber || 0, maxCapacity || 8, level || 'Beginner', duration || '', image || '', timeSlot || '', JSON.stringify(includes || []), activeVal]
     );
 
     return NextResponse.json({ success: true }, { status: 201 });
@@ -53,6 +74,13 @@ export async function PATCH(request: Request) {
     }
     const c = existing[0];
 
+    // `includes` só é re-serializado quando veio no body (array). Se omitido
+    // (ex.: toggle active), mantém o valor já guardado (string JSON) como está.
+    const includesVal =
+      includes !== undefined
+        ? JSON.stringify(Array.isArray(includes) ? includes : parseIncludes(includes))
+        : c.includes;
+
     await query(
       `UPDATE courses SET
         title = ?, description = ?, price = ?, priceNumber = ?,
@@ -69,7 +97,7 @@ export async function PATCH(request: Request) {
         duration ?? c.duration,
         image ?? c.image,
         timeSlot ?? c.timeSlot,
-        JSON.stringify(includes ?? (c.includes || [])),
+        includesVal,
         active === undefined ? c.active : (active ? 1 : 0),
         id,
       ]

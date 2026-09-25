@@ -21,6 +21,7 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const addMessage = useAdminStore((state) => state.addMessage);
   
@@ -31,10 +32,11 @@ export default function ContactPage() {
     resolver: zodResolver(contactSchema),
   });
 
-  const onSubmit = (data: ContactFormValues) => {
+  const onSubmit = async (data: ContactFormValues) => {
     // Rate limiting check
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
+      setSubmitErrorMessage('Please wait 30 seconds before trying again.');
       setSubmitStatus('error');
       setTimeout(() => setSubmitStatus('idle'), 3000);
       return;
@@ -53,25 +55,32 @@ export default function ContactPage() {
     // Validate trimmed data is not empty
     if (!trimmedData.name || !trimmedData.email || !trimmedData.message) {
       setIsSubmitting(false);
+      setSubmitErrorMessage('Please fill in all fields.');
       setSubmitStatus('error');
       setTimeout(() => setSubmitStatus('idle'), 3000);
       return;
     }
 
-    // Save to admin inbox
-    addMessage({
+    // Save to admin inbox — aguarda o resultado e só mostra sucesso se a
+    // gravação no servidor tiver mesmo acontecido.
+    const ok = await addMessage({
       name: trimmedData.name,
       email: trimmedData.email,
       message: trimmedData.message,
       subject: 'Message from Contact Form'
     });
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitStatus('success');
-      reset();
-      setTimeout(() => setSubmitStatus('idle'), 5000);
-    }, 600);
+    setIsSubmitting(false);
+
+    if (!ok) {
+      setSubmitErrorMessage('Sorry, we could not send your message. Please try again or use WhatsApp for faster contact.');
+      setSubmitStatus('error');
+      return;
+    }
+
+    setSubmitStatus('success');
+    reset();
+    setTimeout(() => setSubmitStatus('idle'), 5000);
   };
 
   return (
@@ -205,7 +214,7 @@ export default function ContactPage() {
                 ) : submitStatus === 'error' ? (
                   <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-6 text-center">
                     <p className="font-bold text-lg mb-2">Error sending message</p>
-                    <p>Please wait 30 seconds before trying again, or use WhatsApp for faster contact.</p>
+                    <p>{submitErrorMessage || 'Please wait 30 seconds before trying again, or use WhatsApp for faster contact.'}</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

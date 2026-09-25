@@ -143,7 +143,12 @@ export async function POST(request: Request) {
 // ---------------------------------------------------------------
 export async function PATCH(request: Request) {
   try {
-    const { id, status, paymentStatus } = await request.json();
+    const body = await request.json();
+    const {
+      id, studentName, email, phone, courseId, courseTitle, date, time,
+      guests, totalPrice, currency, notes, dietaryRestrictions, status, paymentStatus,
+    } = body;
+
     if (!id || typeof id !== 'string') {
       return NextResponse.json({ error: 'Missing reservation id' }, { status: 400 });
     }
@@ -157,28 +162,58 @@ export async function PATCH(request: Request) {
     const newStatus = status ?? r.status;
     const newPayment = paymentStatus ?? r.paymentStatus;
 
-    await query('UPDATE reservations SET status = ?, paymentStatus = ? WHERE id = ?', [newStatus, newPayment, id]);
+    await query(
+      `UPDATE reservations SET
+        studentName = ?, email = ?, phone = ?, courseId = ?, courseTitle = ?,
+        date = ?, time = ?, guests = ?, totalPrice = ?, currency = ?,
+        notes = ?, dietaryRestrictions = ?, status = ?, paymentStatus = ?
+       WHERE id = ?`,
+      [
+        studentName ?? r.studentName,
+        email ?? r.email,
+        phone ?? r.phone,
+        courseId ?? r.courseId,
+        courseTitle ?? r.courseTitle,
+        date ?? r.date,
+        time ?? r.time,
+        guests ?? r.guests,
+        totalPrice ?? r.totalPrice,
+        currency ?? r.currency,
+        notes ?? r.notes,
+        dietaryRestrictions ?? r.dietaryRestrictions,
+        newStatus,
+        newPayment,
+        id,
+      ]
+    );
 
     const wasConfirmed = r.status === 'confirmed' || r.status === 'confirmada';
     const nowConfirmed = newStatus === 'confirmed' || newStatus === 'confirmada';
     if (nowConfirmed && !wasConfirmed) {
       approveToCustomer({
-        studentName: r.studentName, email: r.email, phone: r.phone || '',
-        courseTitle: r.courseTitle, date: r.date, time: r.time || '',
-        guests: r.guests || 1, totalPrice: Number(r.totalPrice) || 0, currency: r.currency || 'EUR',
+        studentName: studentName ?? r.studentName,
+        email: email ?? r.email,
+        phone: (phone ?? r.phone) || '',
+        courseTitle: courseTitle ?? r.courseTitle,
+        date: date ?? r.date,
+        time: (time ?? r.time) || '',
+        guests: (guests ?? r.guests) || 1,
+        totalPrice: Number(totalPrice ?? r.totalPrice) || 0,
+        currency: (currency ?? r.currency) || 'EUR',
       });
 
       // Confirmação também por WhatsApp (envia só se as credenciais existirem;
       // sem credenciais retorna configured:false e não faz nada).
-      if (r.phone) {
+      const custPhone = (phone ?? r.phone) || '';
+      if (custPhone) {
         sendWhatsAppBookingConfirmation({
-          phoneNumber: r.phone,
-          studentName: r.studentName,
-          courseTitle: r.courseTitle,
-          date: r.date,
-          time: r.time || '',
-          guests: r.guests || 1,
-          totalPrice: Number(r.totalPrice) || 0,
+          phoneNumber: custPhone,
+          studentName: studentName ?? r.studentName,
+          courseTitle: courseTitle ?? r.courseTitle,
+          date: date ?? r.date,
+          time: (time ?? r.time) || '',
+          guests: (guests ?? r.guests) || 1,
+          totalPrice: Number(totalPrice ?? r.totalPrice) || 0,
         }).catch((err) => console.error('WhatsApp notify failed:', err));
       }
     }

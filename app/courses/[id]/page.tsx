@@ -61,6 +61,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const [dateError, setDateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [submittedData, setSubmittedData] = useState<{ name: string; date: string; guests: number } | null>(null);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   
@@ -74,10 +75,11 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     }
   });
 
-  const onSubmit = (data: ReservationFormValues) => {
+  const onSubmit = async (data: ReservationFormValues) => {
     // Rate limiting check
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
+      setSubmitErrorMessage('Please wait 30 seconds before submitting another booking request.');
       setSubmitStatus('error');
       setTimeout(() => setSubmitStatus('idle'), 3000);
       return;
@@ -127,8 +129,9 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       guests: Number(data.guests),
     };
 
-    // Save real reservation to Admin store
-    addReservation({
+    // Save real reservation to Admin store — aguarda o resultado e só mostra
+    // sucesso se a gravação no servidor tiver mesmo acontecido.
+    const saved = await addReservation({
       studentName: trimmedData.name,
       email: trimmedData.email,
       phone: trimmedData.phone,
@@ -144,16 +147,20 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       notes: trimmedData.notes,
     });
 
+    setIsSubmitting(false);
+
+    if (!saved) {
+      setSubmitErrorMessage('Sorry, we could not send your booking request. Please try again or contact Cátia directly via WhatsApp.');
+      setSubmitStatus('error');
+      return;
+    }
+
     setSubmittedData({
       name: trimmedData.name,
       date: formattedDate,
       guests: trimmedData.guests,
     });
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitStatus('success');
-    }, 600);
+    setSubmitStatus('success');
   };
 
   // Disabled dates: past dates + dates blocked by Cátia in admin panel
@@ -253,7 +260,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     </div>
                     <h3 className="text-xl font-bold text-mindelo-dark mb-2">Booking Error</h3>
                     <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                      Please wait 30 seconds before submitting another booking request. You can also contact Cátia directly via WhatsApp for faster confirmation.
+                      {submitErrorMessage || 'Please wait 30 seconds before submitting another booking request. You can also contact Cátia directly via WhatsApp for faster confirmation.'}
                     </p>
                     <Link
                       href="https://wa.me/2385953973"

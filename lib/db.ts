@@ -23,6 +23,7 @@ async function createPool() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      dateStrings: true,
     });
   } catch (err) {
     console.warn('⚠️ mysql2/promise not available (normal in local dev)');

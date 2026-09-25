@@ -2435,9 +2435,9 @@ function CourseFormModal({
       return;
     }
 
-    // Validation: Check image URL format
-    if (!image.trim().startsWith('http')) {
-      alert('Image must be a valid HTTP URL');
+    // Validation: Check image URL format (aceita URLs http(s) e caminhos locais /uploads/...)
+    if (!image.trim().startsWith('http') && !image.trim().startsWith('/')) {
+      alert('Image must be a valid URL or uploaded image path');
       return;
     }
 

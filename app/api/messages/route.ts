@@ -55,3 +55,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create message' }, { status: 500 });
   }
 }
+
+// PATCH - marcar mensagem como lida/não lida
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, read } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    }
+    await query('UPDATE messages SET `read` = ? WHERE id = ?', [read ? 1 : 0, id]);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating message:', error);
+    return NextResponse.json({ error: 'Failed to update message' }, { status: 500 });
+  }
+}
+
+// DELETE - apagar mensagem (?id=...)
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    }
+    await query('DELETE FROM messages WHERE id = ?', [id]);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 });
+  }
+}

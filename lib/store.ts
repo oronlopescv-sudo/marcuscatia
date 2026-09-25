@@ -65,7 +65,7 @@ interface AdminStoreState {
   toggleCourseActive: (id: string) => void;
   deleteCourse: (id: string) => void;
 
-  addMessage: (msg: Omit<Message, 'id' | 'createdAt' | 'read'>) => Promise<void>;
+  addMessage: (msg: Omit<Message, 'id' | 'createdAt' | 'read'>) => Promise<boolean>;
   markMessageRead: (id: string) => void;
   deleteMessage: (id: string) => void;
 
@@ -179,6 +179,11 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             r.id === id ? { ...r, ...updates } : r
           ),
         });
+        fetch('/api/reservations', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...updates }),
+        }).catch((err) => console.error('Error persisting reservation update:', err));
       },
 
       updateReservationStatus: (id, status) => {
@@ -330,9 +335,12 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
               createdAt: new Date().toISOString(),
             };
             set({ messages: [newMsg, ...get().messages] });
+            return true;
           }
+          return false;
         } catch (error) {
           console.error('Error saving message:', error);
+          return false;
         }
       },
 
@@ -342,12 +350,20 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
             m.id === id ? { ...m, read: true } : m
           ),
         });
+        fetch('/api/messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, read: true }),
+        }).catch((err) => console.error('Error persisting message read:', err));
       },
 
       deleteMessage: (id) => {
         set({
           messages: get().messages.filter((m) => m.id !== id),
         });
+        fetch(`/api/messages?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        }).catch((err) => console.error('Error deleting message:', err));
       },
 
       toggleBlockedDate: (dateStr) => {
