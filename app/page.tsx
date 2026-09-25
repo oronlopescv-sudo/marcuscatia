@@ -4,7 +4,6 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Hero } from '@/components/Hero';
 import { BrandFeatureCards } from '@/components/BrandFeatureCards';
-import { Stats } from '@/components/Stats';
 import { CourseCard } from '@/components/CourseCard';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Testimonials } from '@/components/Testimonials';
@@ -31,9 +30,6 @@ export default function Home() {
         <div className="py-8 sm:py-12 md:py-16"></div>
 
         <BrandFeatureCards />
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
-        <Stats />
         <div className="py-8 sm:py-12 md:py-16"></div>
 
         {/* Featured Courses Section */}
