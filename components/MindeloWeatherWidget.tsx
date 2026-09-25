@@ -10,7 +10,6 @@ import {
   RefreshCw, 
   Sparkles, 
   ExternalLink,
-  ChevronDown,
   X
 } from 'lucide-react';
 
@@ -164,8 +163,9 @@ export function MindeloWeatherWidget({
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200/80 shadow-2xs text-xs font-medium text-[#0A3D78] transition-all duration-200 group"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200/80 shadow-2xs text-xs font-medium text-[#0A3D78] transition-all duration-200 group"
         aria-label="View Mindelo weather for students"
+        title={loading ? 'Mindelo weather' : `${data?.weather.condition || 'Sunny'} — ${data?.weather.temperature || '26°C'}`}
       >
         <span className="flex items-center justify-center">
           {loading ? (
@@ -175,18 +175,9 @@ export function MindeloWeatherWidget({
           )}
         </span>
 
-        <span className="font-semibold text-gray-800">
-          Mindelo: {loading ? '...' : (data?.weather.temperature || '26°C')}
+        <span className="font-semibold text-gray-800 whitespace-nowrap">
+          {loading ? '...' : (data?.weather.temperature || '26°C')}
         </span>
-
-        <span className="hidden xl:inline text-gray-500 text-[11px]">
-          {loading ? 'Loading' : (data?.weather.condition || 'Sunny')}
-        </span>
-
-        <ChevronDown 
-          size={12} 
-          className={`text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
-        />
       </button>
 
       {/* Popover / Dropdown Details Card */}
