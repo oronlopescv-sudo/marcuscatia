@@ -10,7 +10,6 @@ import { Testimonials } from '@/components/Testimonials';
 import { FAQ } from '@/components/FAQ';
 import { Newsletter } from '@/components/Newsletter';
 import { Watermark } from '@/components/Watermark';
-import { SplashScreen } from '@/components/SplashScreen';
 import { useAdminStore } from '@/lib/store';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -21,7 +20,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative">
-      <SplashScreen />
       <Watermark position="top-right" opacity={0.08} size="medium" />
       <Header />
       

@@ -84,6 +84,7 @@ export default function MusicPlayer() {
     errorCountRef.current += 1;
     if (tracks.length > 1 && errorCountRef.current < tracks.length) {
       playNext();
+      setAudioError(false);
     } else {
       setIsPlaying(false);
     }
