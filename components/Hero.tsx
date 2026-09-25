@@ -86,22 +86,6 @@ export function Hero() {
                 💬 Contact Cátia
               </a>
             </div>
-
-            {/* Trust indicators */}
-            <div className="flex flex-col sm:flex-row gap-6 mt-12 pt-8 border-t border-gray-200">
-              <div className="text-center sm:text-left">
-                <div className="text-2xl font-bold text-mindelo-dark">7+</div>
-                <p className="text-xs md:text-sm text-gray-600">Authentic Classes</p>
-              </div>
-              <div className="text-center sm:text-left">
-                <div className="text-2xl font-bold text-mindelo-dark">500+</div>
-                <p className="text-xs md:text-sm text-gray-600">Happy Students</p>
-              </div>
-              <div className="text-center sm:text-left">
-                <div className="text-2xl font-bold text-mindelo-dark">Mindelo</div>
-                <p className="text-xs md:text-sm text-gray-600">Fonte Francês, CV</p>
-              </div>
-            </div>
           </motion.div>
         </div>
       </div>
