@@ -109,6 +109,55 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PATCH - Editar item existente (title, category, type, youtubeId)
+export async function PATCH(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { title, category, type, youtubeId } = body ?? {};
+
+    const fields: string[] = [];
+    const values: (string | number | boolean | null)[] = [];
+
+    if (typeof title === 'string') {
+      fields.push('title = ?');
+      values.push(title.trim());
+    }
+    if (typeof category === 'string') {
+      fields.push('category = ?');
+      values.push(category.trim());
+    }
+    if (type === 'photo' || type === 'video') {
+      fields.push('type = ?');
+      values.push(type);
+    }
+    if (typeof youtubeId === 'string' && type === 'video') {
+      fields.push('youtubeId = ?');
+      fields.push('src = ?');
+      values.push(youtubeId);
+      values.push(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+    }
+
+    if (fields.length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+    }
+
+    values.push(id);
+    await query(`UPDATE gallery_items SET ${fields.join(', ')} WHERE id = ?`, values);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('PATCH /api/gallery error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 // DELETE - Remover item da galeria
 export async function DELETE(req: NextRequest) {
   try {
