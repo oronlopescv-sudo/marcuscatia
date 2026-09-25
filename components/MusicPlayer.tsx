@@ -133,9 +133,10 @@ export default function MusicPlayer() {
         onError={handleError}
       />
 
-      {/* Barra fina, fixa no canto inferior direito */}
+      {/* Barra fina, fixa no canto inferior ESQUERDO (o WhatsApp ocupa o
+          canto inferior direito — evita sobreposição) */}
       <div
-        className={`fixed bottom-4 right-4 z-40 bg-gradient-to-r from-mindelo-blue to-blue-900 shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-4 left-4 z-40 bg-gradient-to-r from-mindelo-blue to-blue-900 shadow-2xl transition-all duration-300 ${
           isMinimized ? 'w-12 h-12 rounded-full' : 'w-80 rounded-full'
         }`}
       >
