@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { Menu, X, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MindeloWeatherWidget } from '@/components/MindeloWeatherWidget';
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,9 +25,9 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
-          {/* Logo + Cape Verde Flag + Slogan */}
-          <div className="flex items-center gap-3 min-w-0 flex-shrink">
-            <Link href="/" className="flex items-center gap-2 group min-w-0">
+          {/* Logo + Site Name */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-mindelo-blue shadow-sm group-hover:scale-105 transition-transform bg-white flex-shrink-0">
                 <Image 
                   src="/logo.png" 
@@ -39,13 +38,12 @@ export function Header() {
                   priority
                 />
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-serif italic font-extrabold text-sm sm:text-lg md:text-xl text-mindelo-dark tracking-tight leading-none group-hover:text-mindelo-blue transition-colors truncate">
+              <div className="flex flex-col">
+                <span className="font-serif italic font-extrabold text-sm sm:text-lg md:text-xl text-mindelo-dark tracking-tight leading-none group-hover:text-mindelo-blue transition-colors whitespace-nowrap">
                   catiacookingmindelo
                 </span>
               </div>
             </Link>
-
           </div>
           
           {/* Navigation Links */}
@@ -67,11 +65,6 @@ export function Header() {
 
           {/* Right Action */}
           <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-shrink-0">
-            {/* Live Weather Widget for students - hidden on small screens to save space for nav */}
-            <div className="hidden sm:block">
-              <MindeloWeatherWidget variant="header" />
-            </div>
-
             <div className="hidden sm:flex items-center gap-2 lg:gap-3">
               <Link 
                 href="/admin" 
