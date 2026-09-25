@@ -38,6 +38,7 @@ import { LogoUploadManager } from '@/components/LogoUploadManager';
 import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
 import { MusicManager } from '@/components/MusicManager';
+import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
@@ -53,11 +54,12 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings' | 'music'>('overview');
 
-  // Read any existing session after mount (client-only), never during SSR.
+  // Ask the server whether this browser already has a valid admin session.
   useEffect(() => {
-    if (sessionStorage.getItem('catia_admin_authenticated') === 'true') {
-      setIsAuthenticated(true);
-    }
+    fetch('/api/admin/login')
+      .then((res) => (res.ok ? res.json() : { ok: false }))
+      .then((data) => setIsAuthenticated(!!data.ok))
+      .catch(() => setIsAuthenticated(false));
   }, []);
 
   // Load real data from the database into the client store. Without this,
@@ -65,11 +67,16 @@ export default function AdminPage() {
   // session and went blank after a refresh (reservations/messages/blocked
   // dates made by visitors were never fetched).
   useEffect(() => {
+    if (!isAuthenticated) return;
     let cancelled = false;
 
     const loadFromServer = async (path: string) => {
       try {
         const res = await fetch(path);
+        if (res.status === 401) {
+          if (!cancelled) setIsAuthenticated(false);
+          return {};
+        }
         if (!res.ok) return {};
         return res.json();
       } catch (err) {
@@ -99,10 +106,11 @@ export default function AdminPage() {
     };
     // hydrate is a referentially stable zustand action, safe to omit from deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
   // Load saved Site Information settings (best-effort; shows defaults if none)
   useEffect(() => {
+    if (!isAuthenticated) return;
     let cancelled = false;
     (async () => {
       try {
@@ -125,7 +133,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Store hooks
   const { 
@@ -282,10 +290,9 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok && data.ok) {
         setIsAuthenticated(true);
-        sessionStorage.setItem('catia_admin_authenticated', 'true');
         setPinInput('');
       } else {
-        setAuthError('Incorrect PIN. Please try again.');
+        setAuthError(data.error || 'Incorrect PIN. Please try again.');
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -295,7 +302,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('catia_admin_authenticated');
+    fetch('/api/admin/login', { method: 'DELETE' }).catch(() => {});
   };
 
   // Status helper predicates
@@ -366,19 +373,20 @@ export default function AdminPage() {
       return;
     }
 
-    // Validation: Check date is not in the past
-    const selectedDateObj = new Date(newRes.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDateObj < today) {
+    // Validation: Check date is not in the past (string compare; new Date('YYYY-MM-DD') is UTC)
+    if (newRes.date < format(new Date(), 'yyyy-MM-dd')) {
       alert('Please select a future date for the booking');
       return;
     }
 
-    const selectedCourse = courses.find(c => c.id === newRes.courseId);
+    const selectedCourse = courses.find(c => c.id === newRes.courseId) ?? courses[0];
+    if (!selectedCourse) {
+      alert('Please create a cooking class first (Courses tab).');
+      return;
+    }
 
     // Validation: Check capacity not exceeded
-    if (selectedCourse && guestNum > selectedCourse.maxCapacity) {
+    if (guestNum > selectedCourse.maxCapacity) {
       alert(`Max capacity for this course is ${selectedCourse.maxCapacity} guests. You selected ${guestNum}.`);
       return;
     }
@@ -400,10 +408,10 @@ export default function AdminPage() {
       studentName: newRes.studentName.trim(),
       email: newRes.email.trim(),
       phone: newRes.phone.trim(),
-      courseId: newRes.courseId,
-      courseTitle: selectedCourse?.title || 'Cooking Class',
+      courseId: selectedCourse.id,
+      courseTitle: selectedCourse.title,
       date: newRes.date,
-      time: newRes.time,
+      time: selectedCourse.id === newRes.courseId ? newRes.time : (selectedCourse.timeSlot || newRes.time),
       guests: guestNum,
       totalPrice,
       currency: 'EUR',
@@ -411,6 +419,13 @@ export default function AdminPage() {
       paymentStatus: newRes.paymentStatus,
       notes: (newRes.notes || '').trim(),
       dietaryRestrictions: (newRes.dietaryRestrictions || '').trim()
+    }).then((result) => {
+      if (!result.ok) {
+        alert(`Booking was not saved: ${result.error}`);
+      } else if (isConfirmed(result.reservation.status) && !blockedDates.includes(result.reservation.date)) {
+        // Same rule as confirming an existing booking: the day gets blocked.
+        toggleBlockedDate(result.reservation.date);
+      }
     });
 
     setShowAddResModal(false);
@@ -1609,6 +1624,9 @@ export default function AdminPage() {
               <LogoUploadManager currentLogoUrl="/logo.png" />
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <NewsletterSubscribers />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-mindelo-dark">Site Information</h2>
                 <form onSubmit={handleSaveSettings} className="space-y-4">
@@ -2106,11 +2124,8 @@ function EditReservationModal({
       return;
     }
 
-    // Validation: Check date is not in the past
-    const selectedDateObj = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDateObj < today) {
+    // Validation: only a newly chosen date must be in the future, so past bookings stay editable
+    if (date !== reservation.date && date < format(new Date(), 'yyyy-MM-dd')) {
       alert('Please select a future date for the booking');
       return;
     }

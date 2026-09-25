@@ -237,7 +237,9 @@ export function AdminGalleryManager() {
     try {
       const data = new FormData();
       data.append('title', formData.title);
-      data.append('category', formData.category);
+      // The select shows the first category when the stored value isn't in the list.
+      const category = categories.includes(formData.category) ? formData.category : categories[0] || 'General';
+      data.append('category', category);
       data.append('type', formData.type);
 
       if (formData.file) {

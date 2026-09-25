@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { isAdminRequest } from '@/lib/auth';
+import { MUSIC_TRACKS_TABLE_SQL } from '@/lib/media';
 
 async function runMigration() {
   const migrations = [
@@ -140,6 +142,20 @@ async function runMigration() {
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_active (active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS app_settings (
+      id VARCHAR(100) PRIMARY KEY,
+      value TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id VARCHAR(255) PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    MUSIC_TRACKS_TABLE_SQL,
   ];
 
   const results = [];
@@ -162,11 +178,12 @@ async function runMigration() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { secret } = body;
+    const body = await request.json().catch(() => ({}));
+    const secret = body?.secret;
 
-    // Simple protection
-    if (secret !== process.env.ADMIN_SECRET && secret !== 'mindelo-2026') {
+    // Logged-in admin, or the ADMIN_SECRET env value (for curl from the server).
+    const secretOk = !!process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET;
+    if (!secretOk && !(await isAdminRequest(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -198,12 +215,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json(
     {
-      message: 'POST to this endpoint with { secret: "mindelo-2026" } to run migrations',
-      example: {
-        method: 'POST',
-        url: '/api/admin/migrate',
-        body: { secret: 'mindelo-2026' },
-      },
+      message: 'POST while logged in as admin, or with { secret: <ADMIN_SECRET env> }, to run migrations',
     },
     { status: 200 }
   );

@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSiteContent } from '@/lib/useSiteContent';
 
-export function FAQ() {
-  const faqs = [
+const DEFAULT_FAQS = [
     {
       question: 'Where do the cooking classes take place?',
       answer: 'The classes take place at Cátia\'s home kitchen in Fonte Francês, Mindelo. When included in the class, we meet first for a guided tour of the Municipal Market and Fish Market, followed by traditional local transport to Cátia\'s home. Exact directions are sent upon booking confirmation.'
@@ -26,7 +26,15 @@ export function FAQ() {
       question: 'What is the maximum group size?',
       answer: 'To ensure an intimate, hands-on atmosphere with personalized attention for every guest, our classes are limited to a maximum of 8 participants.'
     }
-  ];
+];
+
+export function FAQ() {
+  // FAQs added in the admin Content Editor replace the default list.
+  const stored = useSiteContent('faq');
+  const fromAdmin = (stored || [])
+    .filter((f) => f.title && (f.body || f.description))
+    .map((f) => ({ question: f.title, answer: f.body || f.description }));
+  const faqs = fromAdmin.length > 0 ? fromAdmin : DEFAULT_FAQS;
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 

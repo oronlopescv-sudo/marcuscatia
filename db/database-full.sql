@@ -167,6 +167,16 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- music_tracks (musica de fundo carregada no admin)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS music_tracks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- SEED / DADOS INICIAIS
 -- ============================================================
@@ -175,8 +185,7 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 -- (tab "Courses & Classes").
 
 -- PIN inicial do painel admin (padrão 1234; trocável em /admin > Settings)
-INSERT INTO app_settings (id, value) VALUES ('admin_pin', '1234')
-ON DUPLICATE KEY UPDATE value = VALUES(value);
+INSERT IGNORE INTO app_settings (id, value) VALUES ('admin_pin', '1234');
 
 -- Sem conteúdo de demonstração: FAQ e depoimentos são geridos no Content Editor.
 

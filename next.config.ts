@@ -36,6 +36,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Files uploaded after the build aren't served from /public by `next start`;
+  // fall back to a route handler that reads them from disk.
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [
+        { source: '/uploads/:path*', destination: '/api/media/uploads/:path*' },
+        { source: '/gallery/:path+', destination: '/api/media/gallery/:path+' },
+        { source: '/music/:path*', destination: '/api/media/music/:path*' },
+      ],
+    };
+  },
   output: 'standalone',
   transpilePackages: ['motion'],
 };

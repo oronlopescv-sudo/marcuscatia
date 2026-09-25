@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
 import { randomBytes } from 'crypto';
+import { IMAGE_EXTENSIONS } from '@/lib/media';
 
 const UPLOAD_DIR = 'public/uploads';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -17,8 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'Only images allowed' }, { status: 400 });
+    const ext = IMAGE_EXTENSIONS[file.type];
+    if (!ext) {
+      return NextResponse.json({ error: 'Only JPEG, PNG, WebP or GIF images are allowed' }, { status: 400 });
     }
 
     // Validate size
@@ -44,7 +46,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Generic upload: unique filename under public/uploads
-    const ext = file.name.split('.').pop();
     const filename = `${randomBytes(8).toString('hex')}.${ext}`;
     const filepath = join(process.cwd(), UPLOAD_DIR, filename);
 
@@ -86,8 +87,9 @@ export async function DELETE(request: NextRequest) {
       const publicDir = join(process.cwd(), 'public');
       const filepath = join(publicDir, rel);
 
-      // Proteção contra path traversal
-      if (filepath.startsWith(publicDir)) {
+      // Only files this app uploaded; never logo.png or build assets.
+      const allowed = ['uploads', 'gallery', 'music'].some((d) => filepath.startsWith(join(publicDir, d) + '/'));
+      if (allowed) {
         try {
           await unlink(filepath);
         } catch {

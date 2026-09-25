@@ -54,7 +54,7 @@ interface AdminStoreState {
   blockedDates: string[]; // ['2026-09-20', ...]
 
   // Actions
-  addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<Reservation | null>;
+  addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<{ ok: true; reservation: Reservation } | { ok: false; error: string }>;
   updateReservation: (id: string, updates: Partial<Reservation>) => void;
   updateReservationStatus: (id: string, status: Reservation['status']) => void;
   updateReservationPayment: (id: string, status: Reservation['paymentStatus']) => void;
@@ -115,21 +115,26 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
         body: JSON.stringify(trimmedRes),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
       if (response.ok) {
         const newRes: Reservation = {
           ...trimmedRes,
           id: result.id,
+          courseTitle: result.courseTitle ?? trimmedRes.courseTitle,
+          time: result.time ?? trimmedRes.time,
+          totalPrice: result.totalPrice ?? trimmedRes.totalPrice,
+          status: result.status ?? trimmedRes.status,
+          paymentStatus: result.paymentStatus ?? trimmedRes.paymentStatus,
           createdAt: new Date().toISOString(),
         };
         set({ reservations: [newRes, ...get().reservations] });
-        return newRes;
+        return { ok: true, reservation: newRes };
       }
+      return { ok: false, error: result.error || 'Could not save the booking' };
     } catch (error) {
       console.error('Error saving reservation:', error);
+      return { ok: false, error: 'Network error. Please try again.' };
     }
-
-    return null as any;
   },
 
       updateReservation: (id, updates) => {
@@ -208,15 +213,18 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
       },
 
       addCourse: (courseData) => {
+        const slug = courseData.title
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || 'course';
+        // Two classes with the same title must not share an id (primary key).
+        const taken = get().courses.some((c) => c.id === slug);
         const newCourse: Course = {
           ...courseData,
-          id: courseData.title
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '') || `curso-${Date.now()}`,
+          id: taken ? `${slug}-${Date.now().toString(36)}` : slug,
         };
         set({ courses: [...get().courses, newCourse] });
 

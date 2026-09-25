@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { audioExtension, ensureMusicTable } from '@/lib/media';
 
 // GET - Listar faixas de música
 export async function GET() {
   try {
+    await ensureMusicTable();
     const results: any = await query(
       'SELECT * FROM music_tracks ORDER BY created_at DESC'
     );
@@ -37,21 +39,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validar tipo de áudio
-    const name = file.name.toLowerCase();
-    const allowedTypes = [
-      'audio/mpeg',
-      'audio/mp3',
-      'audio/wav',
-      'audio/x-wav',
-      'audio/ogg',
-      'audio/mp4',
-      'audio/aac',
-      'audio/x-m4a',
-      'audio/webm',
-    ];
-    const hasAllowedExt = /\.(mp3|wav|ogg|m4a|aac|webm)$/.test(name);
-    if (!allowedTypes.includes(file.type) && !hasAllowedExt) {
+    const ext = audioExtension(file);
+    if (!ext) {
       return NextResponse.json(
         { error: 'Only MP3, WAV, OGG, M4A, AAC or WebM audio files are allowed' },
         { status: 400 }
@@ -74,8 +63,8 @@ export async function POST(req: NextRequest) {
       await mkdir(uploadDir, { recursive: true });
     }
 
+    await ensureMusicTable();
     const timestamp = Date.now();
-    const ext = name.split('.').pop() || 'mp3';
     const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
     const filepath = join(uploadDir, filename);
 
@@ -107,6 +96,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
 
+    await ensureMusicTable();
     await query('DELETE FROM music_tracks WHERE id = ?', [id]);
     return NextResponse.json({ success: true });
   } catch (error) {

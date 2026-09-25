@@ -17,14 +17,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { date, reason } = body;
 
-    if (!date) {
-      return NextResponse.json({ error: 'Date is required' }, { status: 400 });
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Date is required (YYYY-MM-DD)' }, { status: 400 });
     }
 
     const id = `block-${Date.now()}`;
     
     await query(
-      'INSERT INTO blockedDates (id, date, reason) VALUES (?, ?, ?)',
+      'INSERT IGNORE INTO blockedDates (id, date, reason) VALUES (?, ?, ?)',
       [id, date, reason || '']
     );
     

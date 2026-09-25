@@ -41,7 +41,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   // para cursos "fantasma" hardcoded.
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/courses?all=1')
+    fetch('/api/courses')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -174,8 +174,9 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
     setIsSubmitting(false);
 
-    if (!saved) {
-      setSubmitErrorMessage('Sorry, we could not send your booking request. Please try again or contact Cátia directly via WhatsApp.');
+    if (!saved.ok) {
+      setLastSubmitTime(0);
+      setSubmitErrorMessage(`${saved.error.replace(/\.$/, '')}. If the problem continues, contact Cátia directly via WhatsApp.`);
       setSubmitStatus('error');
       return;
     }
@@ -322,10 +323,17 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       href="https://wa.me/2385953973"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md"
+                      className="block w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md"
                     >
                       Contact via WhatsApp
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => setSubmitStatus('idle')}
+                      className="mt-3 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors"
+                    >
+                      Try again
+                    </button>
                   </div>
                 ) : submitStatus === 'success' ? (
                   <div className="text-center py-6">

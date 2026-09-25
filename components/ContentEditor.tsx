@@ -40,7 +40,16 @@ function parseFields(raw: string): StoredFields {
   }
 }
 
+const FIELD_LABELS: Record<ContentEditorProps['category'], { title: string; description: string; body: string; hint?: string }> = {
+  faq: { title: 'Question', description: 'Short summary (optional)', body: 'Answer', hint: 'While this list is empty, the site shows the default FAQ.' },
+  testimonial: { title: 'Guest name', description: 'Where they are from (e.g. "Traveler from France")', body: 'Testimonial text', hint: 'The testimonials section is hidden until you add one.' },
+  hero: { title: 'Headline', description: 'Tagline', body: 'Intro paragraph', hint: 'Only the first item is used. Empty fields keep the default text.' },
+  features: { title: 'Title', description: 'Description', body: 'Content' },
+  social: { title: 'Title', description: 'Description', body: 'Content' },
+};
+
 export function ContentEditor({ category, title }: ContentEditorProps) {
+  const labels = FIELD_LABELS[category];
   const [items, setItems] = useState<ContentRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<StoredFields>({ title: '', description: '', body: '' });
@@ -173,7 +182,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
       {editingId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{labels.title}</label>
             <input
               type="text"
               value={formData.title}
@@ -184,7 +193,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{labels.description}</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -195,7 +204,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Content</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{labels.body}</label>
             <textarea
               value={formData.body}
               onChange={(e) => setFormData({ ...formData, body: e.target.value })}
@@ -228,7 +237,7 @@ export function ContentEditor({ category, title }: ContentEditorProps) {
       {/* Items List */}
       <div className="space-y-3">
         {items.length === 0 ? (
-          <p className="text-gray-600 text-center py-8">No items yet</p>
+          <p className="text-gray-600 text-center py-8">No items yet.{labels.hint ? ` ${labels.hint}` : ''}</p>
         ) : (
           items.map((item) => {
             const fields = parseFields(item.content);

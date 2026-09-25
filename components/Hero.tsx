@@ -4,8 +4,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { useSiteContent } from '@/lib/useSiteContent';
 
 export function Hero() {
+  // Optional override from the admin Content Editor (Hero Section): Title =
+  // headline, Description = tagline, Content = intro paragraph.
+  const hero = useSiteContent('hero')?.[0];
+
   return (
     <section className="relative bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] overflow-hidden py-8 sm:py-12 lg:py-16">
       {/* Decorative top line */}
@@ -46,8 +51,14 @@ export function Hero() {
           >
             {/* Main Headline */}
             <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-[44px] xl:text-[50px] font-serif font-black text-mindelo-dark leading-[1.12] tracking-tight mb-4 sm:mb-6">
-              Tradition, Flavor and Mindelo
-              <span className="block text-mindelo-blue">On Your Plate</span>
+              {hero?.title ? (
+                hero.title
+              ) : (
+                <>
+                  Tradition, Flavor and Mindelo
+                  <span className="block text-mindelo-blue">On Your Plate</span>
+                </>
+              )}
             </h1>
 
             {/* Decorative line */}
@@ -55,12 +66,12 @@ export function Hero() {
 
             {/* Tagline */}
             <p className="text-base sm:text-lg md:text-xl text-mindelo-blue font-semibold mb-4 sm:mb-6">
-              Where flavor meets style
+              {hero?.description || 'Where flavor meets style'}
             </p>
 
             {/* Description */}
             <p className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed mb-3 sm:mb-4 max-w-lg">
-              Join Cátia for an authentic culinary journey through the heart of Mindelo. From the vibrant local markets to our kitchen overlooking the Atlantic, discover the true essence of Cape Verdean cuisine.
+              {hero?.body || 'Join Cátia for an authentic culinary journey through the heart of Mindelo. From the vibrant local markets to our kitchen overlooking the Atlantic, discover the true essence of Cape Verdean cuisine.'}
             </p>
 
             {/* Secondary Description */}

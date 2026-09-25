@@ -1,15 +1,14 @@
+'use client';
+
 import { Star } from 'lucide-react';
-import Image from 'next/image';
+import { useSiteContent } from '@/lib/useSiteContent';
 
 export function Testimonials() {
-  // Sem depoimentos de demonstração. Os depoimentos reais são geridos no
-  // painel admin (Content Editor) e podem ser adicionados quando houver.
-  const testimonials: {
-    name: string;
-    role: string;
-    content: string;
-    image: string;
-  }[] = [];
+  // Managed in the admin Content Editor: Title = name, Description = where
+  // they are from, Content = the testimonial text. Hidden when there are none.
+  const testimonials = (useSiteContent('testimonial') || [])
+    .filter((t) => t.title && t.body)
+    .map((t) => ({ name: t.title, role: t.description, content: t.body }));
 
   if (testimonials.length === 0) {
     return null;
@@ -31,14 +30,8 @@ export function Testimonials() {
           {testimonials.map((testimonial, idx) => (
             <div key={idx} className="bg-mindelo-cream/30 p-8 rounded-2xl border border-blue-50 relative mt-8">
               <div className="absolute -top-10 left-1/2 transform -translate-x-1/2">
-                <div className="relative w-20 h-20 rounded-full border-4 border-white overflow-hidden shadow-md">
-                  <Image 
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    fill
-                    className="object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="w-20 h-20 rounded-full border-4 border-white shadow-md bg-mindelo-blue text-white flex items-center justify-center text-2xl font-serif font-bold">
+                  {testimonial.name.trim().charAt(0).toUpperCase()}
                 </div>
               </div>
               

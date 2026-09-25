@@ -24,6 +24,8 @@ async function createPool() {
       connectionLimit: 10,
       queueLimit: 0,
       dateStrings: true,
+      // Return DECIMAL columns (prices) as numbers, not strings, so sums work.
+      decimalNumbers: true,
     });
   } catch (err) {
     console.warn('⚠️ mysql2/promise not available (normal in local dev)');

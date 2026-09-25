@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { IMAGE_EXTENSIONS } from '@/lib/media';
 
 // GET - Listar todos os items da galeria
 export async function GET(req: NextRequest) {
@@ -44,6 +45,10 @@ export async function POST(req: NextRequest) {
     let src = '';
     let type = 'photo';
 
+    if (youtubeId && !/^[A-Za-z0-9_-]{6,20}$/.test(youtubeId)) {
+      return NextResponse.json({ error: 'Invalid YouTube ID' }, { status: 400 });
+    }
+
     // YouTube video
     if (youtubeId) {
       src = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
@@ -52,10 +57,10 @@ export async function POST(req: NextRequest) {
     // Photo upload
     else if (file) {
       // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      const ext = IMAGE_EXTENSIONS[file.type];
+      if (!ext) {
         return NextResponse.json(
-          { error: 'Only JPEG, PNG and WebP are allowed' },
+          { error: 'Only JPEG, PNG, WebP and GIF are allowed' },
           { status: 400 }
         );
       }
@@ -80,7 +85,6 @@ export async function POST(req: NextRequest) {
 
       // Generate unique filename
       const timestamp = Date.now();
-      const ext = file.name.split('.').pop() || 'jpg';
       const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
       const filepath = join(uploadDir, filename);
 
@@ -137,6 +141,9 @@ export async function PATCH(req: NextRequest) {
       values.push(type);
     }
     if (typeof youtubeId === 'string' && type === 'video') {
+      if (!/^[A-Za-z0-9_-]{6,20}$/.test(youtubeId)) {
+        return NextResponse.json({ error: 'Invalid YouTube ID' }, { status: 400 });
+      }
       fields.push('youtubeId = ?');
       fields.push('src = ?');
       values.push(youtubeId);
