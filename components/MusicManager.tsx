@@ -37,6 +37,7 @@ export function MusicManager() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- state is only set after the fetch resolves
     fetchTracks();
   }, [fetchTracks]);
 
@@ -134,7 +135,7 @@ export function MusicManager() {
         <div>
           <h2 className="text-2xl font-bold text-mindelo-dark">Music Player</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Upload background music (morna/funaná) played by the site's mini player.
+            Upload background music (morna/funaná) played by the site&apos;s mini player.
           </p>
         </div>
         {!showForm && (

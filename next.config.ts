@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   // fall back to a route handler that reads them from disk.
   async rewrites() {
     return {
-      beforeFiles: [],
+      beforeFiles: [{ source: '/logo.png', destination: '/api/logo' }],
       afterFiles: [],
       fallback: [
         { source: '/uploads/:path*', destination: '/api/media/uploads/:path*' },

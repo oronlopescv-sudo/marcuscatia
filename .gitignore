@@ -9,6 +9,7 @@ coverage/
 # Uploads (ficheiros carregados pelo admin em runtime — não vão para o git)
 public/gallery/
 public/music/
+public/uploads/
 *.jpg
 *.jpeg
 *.png

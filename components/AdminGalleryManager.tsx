@@ -87,6 +87,7 @@ export function AdminGalleryManager() {
 
   // Load gallery + categories on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- state is only set after the fetch resolves
     fetchGallery();
     fetchCategories();
   }, [fetchGallery, fetchCategories]);

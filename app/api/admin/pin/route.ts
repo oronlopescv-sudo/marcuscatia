@@ -8,15 +8,15 @@ export async function POST(request: Request) {
     const { currentPin, newPin } = await request.json();
 
     if (!currentPin || typeof currentPin !== 'string') {
-      return NextResponse.json({ ok: false, error: 'Informe o PIN atual' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'Enter the current PIN' }, { status: 400 });
     }
     if (!newPin || typeof newPin !== 'string' || newPin.trim().length < 4) {
-      return NextResponse.json({ ok: false, error: 'O novo PIN deve ter pelo menos 4 caracteres' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'The new PIN must have at least 4 characters' }, { status: 400 });
     }
 
     const stored = (await getSetting('admin_pin')) || DEFAULT_PIN;
     if (currentPin !== stored) {
-      return NextResponse.json({ ok: false, error: 'PIN atual incorreto' }, { status: 403 });
+      return NextResponse.json({ ok: false, error: 'Current PIN is incorrect' }, { status: 403 });
     }
 
     await setSetting('admin_pin', newPin.trim());
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Admin PIN change error:', error);
     return NextResponse.json(
-      { ok: false, error: 'Falha ao alterar o PIN' },
+      { ok: false, error: 'Could not change the PIN' },
       { status: 500 }
     );
   }

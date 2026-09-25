@@ -54,6 +54,39 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'reservations' | 'courses' | 'messages' | 'calendar' | 'gallery' | 'content' | 'settings' | 'music'>('overview');
 
+  // Store hooks
+  const { 
+    reservations, 
+    courses, 
+    messages, 
+    blockedDates,
+    updateReservation,
+    updateReservationStatus, 
+    updateReservationPayment,
+    deleteReservation, 
+    addReservation,
+    addCourse,
+    updateCourse,
+    toggleCourseActive,
+    deleteCourse,
+    markMessageRead,
+    deleteMessage,
+    toggleBlockedDate,
+    hydrate
+  } = useAdminStore();
+
+  // Site Information (Settings) state
+  const [siteInfo, setSiteInfo] = useState({
+    site_title: 'Cátia Cooking Mindelo',
+    site_email: 'info@catiamindelo.com',
+    site_whatsapp: '+238 595 3973',
+    site_location: 'Mindelo, Cape Verde',
+    notify_whatsapp: '+238 595 3973',
+    notify_email: '',
+  });
+  const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
   // Ask the server whether this browser already has a valid admin session.
   useEffect(() => {
     fetch('/api/admin/login')
@@ -135,26 +168,6 @@ export default function AdminPage() {
     };
   }, [isAuthenticated]);
 
-  // Store hooks
-  const { 
-    reservations, 
-    courses, 
-    messages, 
-    blockedDates,
-    updateReservation,
-    updateReservationStatus, 
-    updateReservationPayment,
-    deleteReservation, 
-    addReservation,
-    addCourse,
-    updateCourse,
-    toggleCourseActive,
-    deleteCourse,
-    markMessageRead,
-    deleteMessage,
-    toggleBlockedDate,
-    hydrate
-  } = useAdminStore();
 
   // Search & Filters for Reservations
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,17 +186,6 @@ export default function AdminPage() {
   const [pinSaving, setPinSaving] = useState(false);
   const [pinMessage, setPinMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  // Site Information (Settings) state
-  const [siteInfo, setSiteInfo] = useState({
-    site_title: 'Cátia Cooking Mindelo',
-    site_email: 'info@catiamindelo.com',
-    site_whatsapp: '+238 595 3973',
-    site_location: 'Mindelo, Cape Verde',
-    notify_whatsapp: '+238 595 3973',
-    notify_email: '',
-  });
-  const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
-  const [settingsSaving, setSettingsSaving] = useState(false);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,15 +222,15 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        setPinMessage({ type: 'ok', text: 'PIN atualizado com sucesso.' });
+        setPinMessage({ type: 'ok', text: 'PIN updated.' });
         setPinCurrent('');
         setPinNew('');
       } else {
-        setPinMessage({ type: 'err', text: data.error || 'Não foi possível alterar o PIN.' });
+        setPinMessage({ type: 'err', text: data.error || 'Could not change the PIN.' });
       }
     } catch (err) {
       console.error('Change PIN failed:', err);
-      setPinMessage({ type: 'err', text: 'Erro de conexão ao trocar o PIN.' });
+      setPinMessage({ type: 'err', text: 'Network error while changing the PIN.' });
     } finally {
       setPinSaving(false);
     }
@@ -1650,12 +1652,12 @@ export default function AdminPage() {
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp number to receive new reservation notifications</label>
                       <input type="tel" value={siteInfo.notify_whatsapp} onChange={(e) => setSiteInfo({ ...siteInfo, notify_whatsapp: e.target.value })} placeholder="+238 595 3973" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                      <p className="text-xs text-gray-500 mt-1">Este número recebe o aviso automático de "Nova Reserva" por WhatsApp (requer credenciais da WhatsApp Cloud API no servidor).</p>
+                      <p className="text-xs text-gray-500 mt-1">This number gets an automatic WhatsApp alert for each new booking (requires WhatsApp Cloud API credentials on the server).</p>
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Email to receive reservations & site notifications</label>
                       <input type="email" value={siteInfo.notify_email} onChange={(e) => setSiteInfo({ ...siteInfo, notify_email: e.target.value })} placeholder="admin@example.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                      <p className="text-xs text-gray-500 mt-1">Este email recebe os avisos de novas reservas e mensagens de contacto. Se ficar vazio, usa a variável NOTIFY_EMAIL do servidor.</p>
+                      <p className="text-xs text-gray-500 mt-1">This email receives alerts for new bookings and contact messages. If empty, the server&apos;s NOTIFY_EMAIL setting is used.</p>
                     </div>
                   </div>
                   {settingsMsg && (

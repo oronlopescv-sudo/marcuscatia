@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
 
 // Visitor-facing endpoints. Everything else under /api needs an admin session.
-const PUBLIC_ANY = ['/api/admin/login', '/api/admin/migrate', '/api/media'];
+const PUBLIC_ANY = ['/api/admin/login', '/api/admin/migrate', '/api/media', '/api/logo'];
 const PUBLIC_GET = [
   '/api/courses',
   '/api/gallery',

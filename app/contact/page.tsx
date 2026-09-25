@@ -34,6 +34,7 @@ export default function ContactPage() {
 
   const onSubmit = async (data: ContactFormValues) => {
     // Rate limiting check
+    // eslint-disable-next-line react-hooks/purity -- runs in the submit handler, not during render
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
       setSubmitErrorMessage('Please wait 30 seconds before trying again.');

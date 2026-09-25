@@ -30,17 +30,20 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Logo uploads overwrite the site's fixed /logo.png so every page
-    // that references it (Header, Hero, Footer, etc.) picks it up
-    // immediately — no extra DB write or component change needed.
+    // The uploaded logo lives in public/uploads (not in git); /logo.png is
+    // rewritten to /api/logo, which serves it in place of the default.
     if (type === 'logo') {
-      const logoPath = join(process.cwd(), 'public', 'logo.png');
-      await writeFile(logoPath, buffer);
+      const dir = join(process.cwd(), UPLOAD_DIR);
+      await mkdir(dir, { recursive: true });
+      for (const oldExt of Object.values(IMAGE_EXTENSIONS)) {
+        await unlink(join(dir, `site-logo.${oldExt}`)).catch(() => {});
+      }
+      await writeFile(join(dir, `site-logo.${ext}`), buffer);
 
       return NextResponse.json({
         success: true,
         url: '/logo.png',
-        filename: 'logo.png',
+        filename: `site-logo.${ext}`,
         size: file.size,
       }, { status: 201 });
     }

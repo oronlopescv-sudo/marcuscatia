@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
     for (const k of KEYS) {
       if (typeof body[k] === 'string') {

@@ -266,7 +266,7 @@ export default function MusicPlayer() {
 
             {audioError && (
               <p className="px-3 pb-1 text-[10px] text-amber-300">
-                ⚠️ Não foi possível carregar esta faixa.
+                ⚠️ This track could not be loaded.
               </p>
             )}
           </div>
