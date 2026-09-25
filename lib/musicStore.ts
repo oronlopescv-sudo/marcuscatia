@@ -35,13 +35,12 @@ export const useMusicStore = create<MusicStore>()(
         set({
           tracks,
           currentTrack: tracks.length > 0 ? tracks[0] : null,
-          isPlaying: false,
+          // Autoplay: ao carregar a playlist, começa a tocar a primeira faixa.
+          isPlaying: tracks.length > 0,
         }),
 
-      setCurrentTrack: (track) => {
-        set({ currentTrack: track });
-        set({ isPlaying: !!track });
-      },
+      setCurrentTrack: (track) =>
+        set({ currentTrack: track, isPlaying: !!track }),
 
       setIsPlaying: (playing) => set({ isPlaying: playing }),
 
