@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
-import { useAdminStore, INITIAL_COURSES } from '@/lib/store';
+import { useAdminStore } from '@/lib/store';
 
 const reservationSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
@@ -32,6 +32,32 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const unwrappedParams = use(params);
   
   const { courses, addReservation, blockedDates, hydrate } = useAdminStore();
+  // Só mostra "a carregar" se o store ainda não tiver cursos (navegação direta).
+  // Ao vir da listagem, o store já está hidratado e mostramos o curso de imediato.
+  const [loadingCourse, setLoadingCourse] = useState(courses.length === 0);
+
+  // Carrega os cursos do banco para que links diretos (ex.: partilhados) a um
+  // curso funcionem mesmo sem passar pela página de listagem. Sem fallback
+  // para cursos "fantasma" hardcoded.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/courses?all=1')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : data?.courses;
+        if (Array.isArray(list)) {
+          hydrate({ courses: list });
+        }
+      })
+      .catch((err) => console.error('Failed to load courses:', err))
+      .finally(() => {
+        if (!cancelled) setLoadingCourse(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrate]);
 
   // Load blocked dates from the database so admin-blocked days are actually
   // disabled in the booking calendar for visitors.
@@ -52,10 +78,8 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     };
   }, [hydrate]);
   
-  // Find from store or fallback to initial
-  const course = courses.find((c) => c.id === unwrappedParams.id) || 
-    INITIAL_COURSES.find((c) => c.id === unwrappedParams.id) || 
-    INITIAL_COURSES[0];
+  // Encontra o curso apenas no banco (sem fallback hardcoded).
+  const course = courses.find((c) => c.id === unwrappedParams.id);
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [dateError, setDateError] = useState<string | null>(null);
@@ -76,6 +100,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   });
 
   const onSubmit = async (data: ReservationFormValues) => {
+    if (!course) return;
     // Rate limiting check
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
@@ -169,6 +194,37 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     const dateStr = format(date, 'yyyy-MM-dd');
     return blockedDates.includes(dateStr);
   };
+
+  if (loadingCourse) {
+    return (
+      <div className="min-h-screen flex flex-col font-sans bg-gray-50">
+        <Header />
+        <main className="flex-grow flex items-center justify-center py-24">
+          <p className="text-gray-500">Loading course…</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen flex flex-col font-sans bg-gray-50">
+        <Header />
+        <main className="flex-grow flex flex-col items-center justify-center py-24 text-center px-4">
+          <h1 className="text-2xl font-serif font-bold text-mindelo-dark mb-3">Course not found</h1>
+          <p className="text-gray-600 mb-6">This class may have been removed or the link is incorrect.</p>
+          <Link
+            href="/courses"
+            className="bg-mindelo-blue hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm transition"
+          >
+            Browse all classes
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50">

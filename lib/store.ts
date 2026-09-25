@@ -88,47 +88,6 @@ function mergeById<T extends { id: string | number }>(local: T[], server: T[] | 
   return out;
 }
 
-export const INITIAL_COURSES: Course[] = [
-  {
-    id: 'cooking-course',
-    title: 'Traditional Cooking Class',
-    description: 'A guided visit to the Municipal Market and Fish Market of Mindelo, traditional local transport to our family home in Fonte Francês, and a hands-on Cape Verdean cooking class in a warm, welcoming environment.',
-    image: 'https://static.wixstatic.com/media/f4fd80_4ae355554a644923a2290e145fe89000~mv2.jpg',
-    duration: '2h 30min',
-    maxCapacity: 8,
-    price: '€45',
-    priceNumber: 45,
-    active: true,
-    timeSlot: '10:00 - 12:30',
-    includes: [
-      'Guided tour of Mindelo Municipal Market & Fish Market',
-      'Traditional collective transport to Fonte Francês',
-      'Hands-on Cape Verdean cooking masterclass with Cátia',
-      'Complete home-cooked lunch and group tasting',
-      'Welcome drinks and printed souvenir recipe booklet'
-    ]
-  },
-  {
-    id: 'vegetarian-creole',
-    title: 'Vegetarian / Vegan Cooking Class',
-    description: 'As featured on German television cooking shows! A comprehensive plant-based masterclass celebrating São Vicente vegetables: slow-simmered bean & squash Cachupa, sweet potato, manioc, and rich aromatic Creole sofrito.',
-    image: 'https://static.wixstatic.com/media/f4fd80_df372cb7dc234c4b876dbbfda91d0f56~mv2.jpg',
-    duration: '2h 30min',
-    maxCapacity: 8,
-    price: '€40',
-    priceNumber: 40,
-    active: true,
-    timeSlot: '15:00 - 17:30',
-    includes: [
-      '100% plant-based fresh market produce and island herbs',
-      'Plant-based Cachupa and vegetable Creole recipes',
-      'Flavor building and traditional seasoning techniques',
-      'Full sit-down meal with tropical fruit juices & local punch',
-      'Printed vegetarian & vegan recipe cards to take home'
-    ]
-  }
-];
-
 export const INITIAL_RESERVATIONS: Reservation[] = [];
 
 export const INITIAL_MESSAGES: Message[] = [];
@@ -403,7 +362,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
       resetToDefaults: () => {
         set({
           reservations: INITIAL_RESERVATIONS,
-          courses: INITIAL_COURSES,
+          courses: [],
           messages: INITIAL_MESSAGES,
           blockedDates: [],
         });

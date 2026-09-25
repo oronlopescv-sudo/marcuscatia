@@ -18,63 +18,6 @@ interface GalleryItem {
   youtubeId?: string;
 }
 
-const DEFAULT_GALLERY_ITEMS: GalleryItem[] = [
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_ec9272a13451476a845b928470b355eb~mv2.jpg',
-    title: 'Hands-on cooking class with Cátia and enthusiastic students',
-    category: 'Hands-On Class',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_4ae355554a644923a2290e145fe89000~mv2.jpg',
-    title: 'Traditional Cape Verdean dish plated with style and care',
-    category: 'Tasting',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_2b55881c018d431e93f168054ac1a22a~mv2.jpg',
-    title: 'Guided tour of the Mindelo Municipal Market and Fish Market',
-    category: 'Market Tour',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_d539e27b44eb44299b751dfa7af7219d~mv2.jpg',
-    title: 'Selecting authentic island spices, hominy, and fresh ingredients',
-    category: 'Ingredients',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_eff5a4e083fe40478fb642ec935dfd8c~mv2.jpg',
-    title: 'Traditional Cachupa Rica simmering gently on the stove',
-    category: 'Kitchen',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_df722da0f9d64552824877d9974b8511~mv2.jpg',
-    title: 'Crispy pastry and savory spiced filling of Tuna Pastels',
-    category: 'Pastries',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_df372cb7dc234c4b876dbbfda91d0f56~mv2.jpg',
-    title: 'Warm, welcoming home kitchen environment in Fonte Francês',
-    category: 'Ambiance',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_e7fc2953b4884fd3a51eb8db30d3516b~mv2.jpg',
-    title: 'Moments of joy, laughter, and morabeza around the stove',
-    category: 'Moments',
-    type: 'photo'
-  },
-  {
-    src: 'https://static.wixstatic.com/media/f4fd80_5b31e58350534d69bcc87999a830c300~mv2.jpg',
-    title: 'Authentic flavors and textures of the islands ready to savor',
-    category: 'Tasting',
-    type: 'photo'
-  },
-];
-
 export default function GalleryPage() {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
@@ -103,9 +46,9 @@ export default function GalleryPage() {
     });
   }, [galleryItems, selectedCategory, searchQuery]);
 
-  // Load photos/videos uploaded by the admin. Only fall back to the default
-  // showcase set when the API is unreachable (never when the gallery is
-  // simply empty, so that deletions always stick).
+  // Load photos/videos uploaded by the admin. O banco é a única fonte de
+  // verdade — se a API falhar, a galeria fica simplesmente vazia (sem fotos
+  // "fantasma" hardcoded).
   useEffect(() => {
     let cancelled = false;
 
@@ -118,9 +61,6 @@ export default function GalleryPage() {
       })
       .catch((err) => {
         console.error('Failed to load gallery:', err);
-        if (!cancelled) {
-          setGalleryItems(DEFAULT_GALLERY_ITEMS);
-        }
       });
 
     return () => {
