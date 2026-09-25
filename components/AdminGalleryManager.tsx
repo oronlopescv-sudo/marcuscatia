@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Plus, Trash2, Upload, X, Pencil, Tag } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Pencil, Tag, Check } from 'lucide-react';
 
 interface GalleryItem {
   id: number;
@@ -34,6 +34,10 @@ export function AdminGalleryManager() {
 
   // Categoria nova (gestão de categorias)
   const [newCategory, setNewCategory] = useState('');
+
+  // Renomear categoria
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
 
   // Edição
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
@@ -143,6 +147,48 @@ export function AdminGalleryManager() {
       setCategories(result.categories);
     } catch (err) {
       setError('Error removing category');
+    }
+  };
+
+  const startRenameCategory = (name: string) => {
+    setEditingCategory(name);
+    setEditCategoryName(name);
+    setError('');
+    setSuccess('');
+  };
+
+  const cancelRenameCategory = () => {
+    setEditingCategory(null);
+    setEditCategoryName('');
+  };
+
+  const handleRenameCategory = async () => {
+    const oldName = editingCategory;
+    const newName = editCategoryName.trim();
+    if (!oldName || !newName) return;
+    if (newName.toLowerCase() === oldName.toLowerCase()) {
+      cancelRenameCategory();
+      return;
+    }
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch('/api/gallery/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldName, newName }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || 'Failed to rename category');
+        return;
+      }
+      setCategories(result.categories);
+      cancelRenameCategory();
+      setSuccess('✅ Category renamed');
+      setTimeout(() => setSuccess(''), 2500);
+    } catch (err) {
+      setError('Error renaming category');
     }
   };
 
@@ -372,22 +418,69 @@ export function AdminGalleryManager() {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          {categories.map((cat) => (
-            <span
-              key={cat}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 shadow-sm"
-            >
-              {cat}
-              <button
-                onClick={() => handleDeleteCategory(cat)}
-                className="text-gray-400 hover:text-red-600 transition-colors"
-                aria-label={`Remove category ${cat}`}
-                title={`Remove ${cat}`}
+          {categories.map((cat) =>
+            editingCategory === cat ? (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-mindelo-blue text-sm shadow-sm"
               >
-                <X size={14} />
-              </button>
-            </span>
-          ))}
+                <input
+                  type="text"
+                  value={editCategoryName}
+                  onChange={(e) => setEditCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleRenameCategory();
+                    } else if (e.key === 'Escape') {
+                      cancelRenameCategory();
+                    }
+                  }}
+                  className="w-32 px-2 py-0.5 border border-gray-300 rounded focus:ring-2 focus:ring-mindelo-blue focus:border-transparent text-sm"
+                  autoFocus
+                />
+                <button
+                  onClick={handleRenameCategory}
+                  className="text-green-600 hover:text-green-700"
+                  aria-label="Save category name"
+                  title="Save"
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  onClick={cancelRenameCategory}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Cancel rename"
+                  title="Cancel"
+                >
+                  <X size={14} />
+                </button>
+              </span>
+            ) : (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 shadow-sm"
+              >
+                {cat}
+                <button
+                  onClick={() => startRenameCategory(cat)}
+                  className="text-gray-400 hover:text-mindelo-blue transition-colors"
+                  aria-label={`Rename category ${cat}`}
+                  title={`Rename ${cat}`}
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(cat)}
+                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  aria-label={`Remove category ${cat}`}
+                  title={`Remove ${cat}`}
+                >
+                  <X size={14} />
+                </button>
+              </span>
+            )
+          )}
           {categories.length === 0 && (
             <span className="text-sm text-gray-500">No categories yet.</span>
           )}

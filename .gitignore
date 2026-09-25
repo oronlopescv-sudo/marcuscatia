@@ -5,11 +5,15 @@ coverage/
 *.log
 .env*
 !.env.example
-gallery/
+
+# Uploads (ficheiros carregados pelo admin em runtime — não vão para o git)
+public/gallery/
+public/music/
 *.jpg
 *.jpeg
 *.png
 *.webp
+*.mp3
 
 # secrets
 *_key*
