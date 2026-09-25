@@ -135,7 +135,7 @@ export const INITIAL_MESSAGES: Message[] = [];
 
 export const useAdminStore = create<AdminStoreState>((set, get) => ({
   reservations: INITIAL_RESERVATIONS,
-  courses: INITIAL_COURSES,
+  courses: [],
   messages: INITIAL_MESSAGES,
   blockedDates: [],
 
@@ -380,7 +380,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           reservations: mergeById(get().reservations, data.reservations),
           messages: mergeById(get().messages, data.messages),
           blockedDates: Array.from(new Set([...get().blockedDates, ...(data.blockedDates || [])])),
-          courses: mergeById(get().courses, data.courses),
+          courses: Array.isArray(data.courses) ? data.courses : [],
         });
       },
 
