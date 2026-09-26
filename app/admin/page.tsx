@@ -1760,13 +1760,10 @@ export default function AdminPage() {
         )}
 
         {/* ============================================================ */}
-        {/* TAB 7: CONTENT EDITOR (FAQ, TESTIMONIALS, ETC)               */}
+        {/* TAB 7: CONTENT EDITOR (TESTIMONIALS, HERO, MENU, REVIEWS)      */}
         {/* ============================================================ */}
         {activeTab === 'content' && (
           <div className="space-y-8">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-              <ContentEditor category="faq" title="FAQ Management" />
-            </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <ContentEditor category="testimonial" title="Testimonials" />
             </div>

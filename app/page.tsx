@@ -7,7 +7,7 @@ import { BrandFeatureCards } from '@/components/BrandFeatureCards';
 import { CourseCard } from '@/components/CourseCard';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Testimonials } from '@/components/Testimonials';
-import { FAQ } from '@/components/FAQ';
+import { HomeGallery } from '@/components/HomeGallery';
 import { Newsletter } from '@/components/Newsletter';
 import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
@@ -100,7 +100,7 @@ export default function Home() {
 
         <div className="py-8 sm:py-12 md:py-16"></div>
 
-        <FAQ />
+        <HomeGallery />
 
         <div className="py-8 sm:py-12 md:py-16"></div>
 
