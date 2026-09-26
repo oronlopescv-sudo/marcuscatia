@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Upload, X, Trash2 } from 'lucide-react';
+import { compressImage } from '@/lib/compressImage';
 
 interface CoursePhotoUploadProps {
   courseId: string;
@@ -50,18 +51,19 @@ export function CoursePhotoUpload({
     }
   };
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (original: File) => {
     setError('');
     setSuccess('');
 
     // Validate
-    if (!file.type.startsWith('image/')) {
+    if (!original.type.startsWith('image/')) {
       setError('Only image files allowed');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File too large (max 5MB)');
+    const file = await compressImage(original);
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File too large (max 10MB)');
       return;
     }
 
@@ -93,7 +95,7 @@ export function CoursePhotoUpload({
         return;
       }
 
-      setSuccess(`✅ Photo uploaded: ${data.filename}`);
+      setSuccess('✅ Photo uploaded. Save the class to keep it.');
       if (onImageUpdate) {
         onImageUpdate(data.url);
       }
@@ -107,33 +109,14 @@ export function CoursePhotoUpload({
     }
   };
 
-  const handleRemove = async () => {
-    if (!currentImageUrl) return;
-
-    if (!confirm('Remove this photo?')) return;
-
-    setIsUploading(true);
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: currentImageUrl }),
-      });
-
-      if (response.ok) {
-        setPreview('');
-        setSuccess('✅ Photo removed');
-        if (onImageUpdate) {
-          onImageUpdate('');
-        }
-        setTimeout(() => setSuccess(''), 3000);
-      } else {
-        setError('Failed to remove photo');
-      }
-    } catch (err) {
-      setError('Network error during deletion');
-    } finally {
-      setIsUploading(false);
+  // Only clears the photo in the form; the old photo is deleted from the
+  // database when the course is saved (so cancelling the form keeps it).
+  const handleRemove = () => {
+    if (!preview) return;
+    setPreview('');
+    setError('');
+    if (onImageUpdate) {
+      onImageUpdate('');
     }
   };
 
@@ -141,7 +124,7 @@ export function CoursePhotoUpload({
     <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div>
         <h4 className="font-semibold text-gray-800 mb-2">📸 Course Photo</h4>
-        <p className="text-xs text-gray-600">PNG, JPG, WebP - Max 5MB</p>
+        <p className="text-xs text-gray-600">PNG, JPG, WebP — phone photos are resized automatically</p>
       </div>
 
       {/* Preview */}
@@ -154,6 +137,7 @@ export function CoursePhotoUpload({
             className="object-cover"
           />
           <button
+            type="button"
             onClick={handleRemove}
             disabled={isUploading}
             className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50"
@@ -196,7 +180,7 @@ export function CoursePhotoUpload({
             <p className="font-semibold text-gray-700">
               {isUploading ? 'Uploading...' : 'Click to upload or drag & drop'}
             </p>
-            <p className="text-xs text-gray-500">PNG, JPG, WebP (max 5MB)</p>
+            <p className="text-xs text-gray-500">PNG, JPG, WebP</p>
           </div>
         </label>
       </div>

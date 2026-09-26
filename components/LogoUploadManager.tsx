@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Upload, X } from 'lucide-react';
+import { compressImage } from '@/lib/compressImage';
 
 interface LogoUploadManagerProps {
   currentLogoUrl?: string;
@@ -18,18 +19,18 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
     setError('');
     setSuccess('');
     
-    const file = e.currentTarget.files?.[0];
-    if (!file) return;
+    const original = e.currentTarget.files?.[0];
+    if (!original) return;
 
-    // Validar tipo
-    if (!file.type.startsWith('image/')) {
+    if (!original.type.startsWith('image/')) {
       setError('Only image files allowed');
       return;
     }
 
-    // Validar tamanho (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File too large (max 5MB)');
+    // PNG output keeps a transparent background
+    const file = await compressImage(original, { maxSize: 1024, keepTransparency: true });
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File too large (max 10MB)');
       return;
     }
 
@@ -60,7 +61,7 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
         return;
       }
 
-      setSuccess(`✅ Logo uploaded: ${data.filename}`);
+      setSuccess('Logo saved. Reloading…');
       
       // Reload para usar nova logo
       setTimeout(() => {
@@ -75,17 +76,34 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
     }
   };
 
-  const handleReset = () => {
-    setPreview(currentLogoUrl);
+  const handleRestoreDefault = async () => {
+    if (!confirm('Go back to the original logo?')) return;
     setError('');
-    setSuccess('');
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'logo' }),
+      });
+      if (!res.ok) {
+        setError('Could not restore the default logo');
+        return;
+      }
+      setSuccess('Default logo restored. Reloading…');
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      setError('Network error');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
       <div>
         <h2 className="text-2xl font-bold text-mindelo-dark mb-2">Logo Management</h2>
-        <p className="text-gray-600">Upload a new logo for your site (PNG, JPG, WebP - max 5MB)</p>
+        <p className="text-gray-600">Upload a new logo for your site (PNG, JPG or WebP). It is saved in the database.</p>
       </div>
 
       {/* Current Logo Preview */}
@@ -93,9 +111,10 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
         <label className="block text-sm font-semibold text-gray-700">Current Logo</label>
         <div className="relative w-32 h-32 rounded-lg border-2 border-gray-300 overflow-hidden bg-gray-50">
           <Image
-            src={preview}
+            src={currentLogoUrl}
             alt="Current Logo"
             fill
+            unoptimized
             className="object-contain p-2"
           />
         </div>
@@ -154,17 +173,18 @@ export function LogoUploadManager({ currentLogoUrl = '/logo.png' }: LogoUploadMa
       {/* Actions */}
       <div className="flex gap-3 pt-4">
         <button
-          onClick={handleReset}
+          type="button"
+          onClick={handleRestoreDefault}
           disabled={isUploading}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors disabled:opacity-50"
+          className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors disabled:opacity-50"
         >
-          Reset
+          Restore default logo
         </button>
       </div>
 
       {/* Info */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-        <p>💡 <strong>Tip:</strong> The logo updates across the whole site automatically after upload.</p>
+        <p>💡 <strong>Tip:</strong> The logo updates across the whole site after upload (pages already open may take up to a minute).</p>
       </div>
     </div>
   );

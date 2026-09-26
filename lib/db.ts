@@ -17,6 +17,7 @@ async function createPool() {
     
     return mysql.createPool({
       host,
+      port: Number(process.env.DB_PORT) || 3306,
       user,
       password,
       database,
@@ -46,7 +47,7 @@ export async function getConnection() {
   return p.getConnection();
 }
 
-export async function query(sql: string, values?: (string | number | boolean | null)[]) {
+export async function query(sql: string, values?: (string | number | boolean | null | Buffer)[]) {
   const connection = await getConnection();
   try {
     const [results] = await connection.execute(sql, values || []);

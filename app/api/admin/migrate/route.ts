@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { isAdminRequest } from '@/lib/auth';
-import { MUSIC_TRACKS_TABLE_SQL } from '@/lib/media';
+import { MEDIA_FILES_TABLE_SQL, MUSIC_TRACKS_TABLE_SQL } from '@/lib/media';
 
 async function runMigration() {
   const migrations = [
@@ -156,6 +156,8 @@ async function runMigration() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
     MUSIC_TRACKS_TABLE_SQL,
+
+    MEDIA_FILES_TABLE_SQL,
   ];
 
   const results = [];

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { deleteMediaByUrl, isLostLocalUpload } from '@/lib/media';
 
 // A coluna `includes` é guardada como JSON; devolve sempre array.
 function parseIncludes(v: unknown): string[] {
@@ -28,6 +29,8 @@ export async function GET(request: Request) {
       ...c,
       includes: parseIncludes(c.includes),
       active: !!c.active,
+      // photos uploaded before media moved to MySQL were deleted by a deploy
+      image: isLostLocalUpload(c.image) ? '' : c.image,
     }));
     return NextResponse.json({ courses }, { status: 200 });
   } catch (error) {
@@ -49,7 +52,7 @@ export async function POST(request: Request) {
 
     await query(
       'INSERT INTO courses (id, title, description, price, priceNumber, maxCapacity, level, duration, image, timeSlot, includes, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, title, description || '', price, priceNumber || 0, maxCapacity || 8, level || 'Beginner', duration || '', image || '', timeSlot || '', JSON.stringify(includes || []), activeVal]
+      [id, title, description || '', price ?? '', priceNumber || 0, maxCapacity || 8, level || 'Beginner', duration || '', image || '', timeSlot || '', JSON.stringify(includes || []), activeVal]
     );
 
     return NextResponse.json({ success: true }, { status: 201 });
@@ -103,6 +106,11 @@ export async function PATCH(request: Request) {
       ]
     );
 
+    // The photo was replaced or removed: drop the old one from the database.
+    if (image !== undefined && image !== c.image) {
+      await deleteMediaByUrl(c.image);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating course:', error);
@@ -116,7 +124,9 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ error: 'Missing course id' }, { status: 400 });
     }
+    const rows: any = await query('SELECT image FROM courses WHERE id = ?', [id]);
     await query('DELETE FROM courses WHERE id = ?', [id]);
+    await deleteMediaByUrl(rows?.[0]?.image);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting course:', error);

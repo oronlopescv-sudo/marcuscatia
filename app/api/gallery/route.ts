@@ -1,17 +1,13 @@
 import { query } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { IMAGE_EXTENSIONS } from '@/lib/media';
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, deleteMediaByUrl, isLostLocalUpload, saveMedia } from '@/lib/media';
 
 // GET - Listar todos os items da galeria
 export async function GET(req: NextRequest) {
   try {
-    const results = await query(
-      'SELECT * FROM gallery_items ORDER BY created_at DESC'
-    );
-    return NextResponse.json(results);
+    const results = (await query('SELECT * FROM gallery_items ORDER BY created_at DESC')) as { type: string; src: string }[];
+    // Photos uploaded before media moved to MySQL were deleted by a deploy.
+    return NextResponse.json(results.filter((item) => item.type === 'video' || !isLostLocalUpload(item.src)));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
@@ -22,13 +18,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get('file');
     const title = formData.get('title') as string;
     const category = formData.get('category') as string;
     const youtubeId = formData.get('youtubeId') as string;
 
     // Validate file or YouTube
-    if (!file && !youtubeId) {
+    if (!(file instanceof File) && !youtubeId) {
       return NextResponse.json(
         { error: 'Please provide a photo or a YouTube ID' },
         { status: 400 }
@@ -54,53 +50,36 @@ export async function POST(req: NextRequest) {
       src = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
       type = 'video';
     }
-    // Photo upload
-    else if (file) {
-      // Validate file type
-      const ext = IMAGE_EXTENSIONS[file.type];
-      if (!ext) {
+    // Photo upload (stored in MySQL)
+    else if (file instanceof File) {
+      if (!IMAGE_TYPES.includes(file.type)) {
         return NextResponse.json(
           { error: 'Only JPEG, PNG, WebP and GIF are allowed' },
           { status: 400 }
         );
       }
-
-      // Validate size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > MAX_IMAGE_BYTES) {
         return NextResponse.json(
           { error: 'File cannot be larger than 10MB' },
           { status: 400 }
         );
       }
-
-      // Save file
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      // Create directory if it doesn't exist
-      const uploadDir = join(process.cwd(), 'public', 'gallery');
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-      const filepath = join(uploadDir, filename);
-
-      // Save file to disk
-      await writeFile(filepath, buffer);
-
-      src = `/gallery/${filename}`;
+      src = await saveMedia(Buffer.from(await file.arrayBuffer()), file.type);
       type = 'photo';
     }
 
-    // Save to DB
-    const result = await query(
-      `INSERT INTO gallery_items (src, title, category, type, youtubeId, created_at)
-       VALUES (?, ?, ?, ?, ?, NOW())`,
-      [src, title, category, type, youtubeId || null]
-    );
+    // Save to DB (and don't leave an orphaned photo if that fails)
+    let result;
+    try {
+      result = await query(
+        `INSERT INTO gallery_items (src, title, category, type, youtubeId, created_at)
+         VALUES (?, ?, ?, ?, ?, NOW())`,
+        [src, title, category, type, youtubeId || null]
+      );
+    } catch (error) {
+      if (type === 'photo') await deleteMediaByUrl(src);
+      throw error;
+    }
 
     return NextResponse.json(
       { success: true, src, id: result.insertId },
@@ -175,8 +154,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
 
-    const result = await query('DELETE FROM gallery_items WHERE id = ?', [id]);
-    return NextResponse.json({ success: true, result });
+    const rows = (await query('SELECT src, type FROM gallery_items WHERE id = ?', [id])) as { src: string; type: string }[];
+    await query('DELETE FROM gallery_items WHERE id = ?', [id]);
+    if (rows[0]?.type === 'photo') await deleteMediaByUrl(rows[0].src);
+    return NextResponse.json({ success: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });

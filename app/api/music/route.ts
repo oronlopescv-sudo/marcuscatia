@@ -1,22 +1,18 @@
 import { query } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { audioExtension, ensureMusicTable } from '@/lib/media';
+import { MAX_AUDIO_BYTES, audioMimeType, deleteMediaByUrl, ensureMusicTable, isLostLocalUpload, saveMedia } from '@/lib/media';
 
-// GET - Listar faixas de música
+type TrackRow = { id: number; title: string; url: string };
+
+// GET - list music tracks
 export async function GET() {
   try {
     await ensureMusicTable();
-    const results: any = await query(
-      'SELECT * FROM music_tracks ORDER BY created_at DESC'
-    );
-    const tracks = (Array.isArray(results) ? results : []).map((r: any) => ({
-      id: String(r.id),
-      title: r.title,
-      url: r.url,
-    }));
+    const results = (await query('SELECT * FROM music_tracks ORDER BY created_at DESC')) as TrackRow[];
+    const tracks = (Array.isArray(results) ? results : [])
+      // tracks uploaded before media moved to MySQL were deleted by a deploy
+      .filter((r) => !isLostLocalUpload(r.url))
+      .map((r) => ({ id: String(r.id), title: r.title, url: r.url }));
     return NextResponse.json(tracks);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -25,61 +21,37 @@ export async function GET() {
   }
 }
 
-// POST - Fazer upload de uma faixa de música (MP3/WAV/OGG/M4A)
+// POST - upload a track (MP3/WAV/OGG/M4A/AAC/WebM), stored in MySQL
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get('file');
     const title = String(formData.get('title') ?? '').trim();
 
-    if (!file || !title) {
-      return NextResponse.json(
-        { error: 'File and title are required' },
-        { status: 400 }
-      );
+    if (!(file instanceof File) || !title) {
+      return NextResponse.json({ error: 'File and title are required' }, { status: 400 });
     }
 
-    const ext = audioExtension(file);
-    if (!ext) {
+    const mime = audioMimeType(file);
+    if (!mime) {
       return NextResponse.json(
         { error: 'Only MP3, WAV, OGG, M4A, AAC or WebM audio files are allowed' },
         { status: 400 }
       );
     }
-
-    // Máx 20MB
-    if (file.size > 20 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'File cannot be larger than 20MB' },
-        { status: 400 }
-      );
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadDir = join(process.cwd(), 'public', 'music');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (file.size > MAX_AUDIO_BYTES) {
+      return NextResponse.json({ error: 'File cannot be larger than 25MB' }, { status: 400 });
     }
 
     await ensureMusicTable();
-    const timestamp = Date.now();
-    const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-    const filepath = join(uploadDir, filename);
-
-    await writeFile(filepath, buffer);
-
-    const url = `/music/${filename}`;
-    const result: any = await query(
-      'INSERT INTO music_tracks (title, url, created_at) VALUES (?, ?, NOW())',
-      [title, url]
-    );
-
-    return NextResponse.json(
-      { success: true, id: result?.insertId, title, url },
-      { status: 201 }
-    );
+    const url = await saveMedia(Buffer.from(await file.arrayBuffer()), mime);
+    try {
+      const result = (await query('INSERT INTO music_tracks (title, url, created_at) VALUES (?, ?, NOW())', [title, url])) as { insertId: number };
+      return NextResponse.json({ success: true, id: result?.insertId, title, url }, { status: 201 });
+    } catch (error) {
+      await deleteMediaByUrl(url);
+      throw error;
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('POST /api/music error:', message);
@@ -87,17 +59,18 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE - Remover faixa de música (?id=...)
+// DELETE - remove a track (?id=...)
 export async function DELETE(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
+    const id = new URL(req.url).searchParams.get('id');
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
 
     await ensureMusicTable();
+    const rows = (await query('SELECT url FROM music_tracks WHERE id = ?', [id])) as { url: string }[];
     await query('DELETE FROM music_tracks WHERE id = ?', [id]);
+    await deleteMediaByUrl(rows[0]?.url);
     return NextResponse.json({ success: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

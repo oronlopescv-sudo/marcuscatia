@@ -1,31 +1,35 @@
 import { NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { CONTENT_TYPES, IMAGE_EXTENSIONS } from '@/lib/media';
+import { query } from '@/lib/db';
+import { getSetting } from '@/lib/settings';
+import { ensureMediaTable, mediaIdFromUrl } from '@/lib/media';
 
-// Serves the logo uploaded in the admin (public/uploads/site-logo.*),
-// falling back to the default public/logo.png.
+// /logo.png is rewritten here: serves the logo uploaded in the admin (stored
+// in MySQL), or the default public/logo.png.
 export async function GET() {
-  const publicDir = join(process.cwd(), 'public');
-  const candidates = [
-    ...Array.from(new Set(Object.values(IMAGE_EXTENSIONS))).map((ext) => join(publicDir, 'uploads', `site-logo.${ext}`)),
-    join(publicDir, 'logo.png'),
-  ];
+  const headers = {
+    'Cache-Control': 'public, max-age=0, must-revalidate',
+    'X-Content-Type-Options': 'nosniff',
+  };
 
-  for (const path of candidates) {
-    try {
-      const data = await readFile(path);
-      const ext = path.split('.').pop() as string;
-      return new NextResponse(new Uint8Array(data), {
-        headers: {
-          'Content-Type': CONTENT_TYPES[ext],
-          'Cache-Control': 'public, max-age=0, must-revalidate',
-          'X-Content-Type-Options': 'nosniff',
-        },
-      });
-    } catch {
-      // try the next candidate
+  try {
+    const id = mediaIdFromUrl(await getSetting('site_logo'));
+    if (id) {
+      await ensureMediaTable();
+      const rows = (await query('SELECT mime, data FROM media_files WHERE id = ?', [id])) as { mime: string; data: Buffer }[];
+      if (rows?.length) {
+        return new NextResponse(new Uint8Array(rows[0].data), { headers: { ...headers, 'Content-Type': rows[0].mime } });
+      }
     }
+  } catch (error) {
+    console.error('GET /api/logo error (using default logo):', error);
   }
-  return new NextResponse('Not found', { status: 404 });
+
+  try {
+    const data = await readFile(join(process.cwd(), 'public', 'logo.png'));
+    return new NextResponse(new Uint8Array(data), { headers: { ...headers, 'Content-Type': 'image/png' } });
+  } catch {
+    return new NextResponse('Not found', { status: 404 });
+  }
 }

@@ -177,6 +177,18 @@ CREATE TABLE IF NOT EXISTS music_tracks (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- media_files (fotos, logo e musicas carregadas no admin; ficam na base de
+-- dados porque cada deploy da Hostinger apaga os ficheiros do servidor)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS media_files (
+  id VARCHAR(40) PRIMARY KEY,
+  mime VARCHAR(100) NOT NULL,
+  size INT UNSIGNED NOT NULL,
+  data LONGBLOB NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- SEED / DADOS INICIAIS
 -- ============================================================

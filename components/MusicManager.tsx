@@ -52,8 +52,8 @@ export function MusicManager() {
       return;
     }
 
-    if (f.size > 20 * 1024 * 1024) {
-      setError('File cannot be larger than 20MB');
+    if (f.size > 25 * 1024 * 1024) {
+      setError('File cannot be larger than 25MB');
       return;
     }
 
@@ -193,7 +193,7 @@ export function MusicManager() {
                 <p className="font-semibold text-gray-700">
                   {fileName || 'Click to choose an audio file'}
                 </p>
-                <p className="text-xs text-gray-500">MP3, WAV, OGG, M4A, AAC, WebM — up to 20MB</p>
+                <p className="text-xs text-gray-500">MP3, WAV, OGG, M4A, AAC, WebM — up to 25MB</p>
               </label>
             </div>
           </div>

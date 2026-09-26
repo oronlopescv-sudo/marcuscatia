@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { compressImage } from '@/lib/compressImage';
 import { Plus, Trash2, Upload, X, Pencil, Tag, Check } from 'lucide-react';
 
 interface GalleryItem {
@@ -195,27 +196,32 @@ export function AdminGalleryManager() {
   };
 
   // ---- Adicionar item ----
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const original = e.target.files?.[0];
+    if (!original) return;
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Only JPEG, PNG and WebP are allowed');
+    if (!original.type.startsWith('image/')) {
+      setError('Please choose a photo');
       return;
     }
 
+    // Phone photos are resized in the browser before upload.
+    const file = await compressImage(original);
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setError('This photo format is not supported. Please use JPEG, PNG or WebP.');
+      return;
+    }
     if (file.size > 10 * 1024 * 1024) {
       setError('File cannot be larger than 10MB');
       return;
     }
 
-    setFormData({ ...formData, file });
+    setFormData((prev) => ({ ...prev, file }));
     setError('');
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
+    reader.onload = (ev) => {
+      setPreviewUrl(ev.target?.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -575,7 +581,7 @@ export function AdminGalleryManager() {
                 <label htmlFor="photo-input" className="cursor-pointer">
                   <Upload size={32} className="mx-auto mb-2 text-mindelo-blue" />
                   <p className="font-semibold text-gray-700">Click to upload or drag and drop</p>
-                  <p className="text-xs text-gray-500">PNG, JPG, WebP up to 10MB</p>
+                  <p className="text-xs text-gray-500">PNG, JPG, WebP — phone photos are resized automatically</p>
                 </label>
               </div>
 

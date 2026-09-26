@@ -36,18 +36,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Files uploaded after the build aren't served from /public by `next start`;
-  // fall back to a route handler that reads them from disk.
+  // /logo.png serves the logo uploaded in the admin (stored in MySQL).
   async rewrites() {
     return {
       beforeFiles: [{ source: '/logo.png', destination: '/api/logo' }],
       afterFiles: [],
-      fallback: [
-        { source: '/uploads/:path*', destination: '/api/media/uploads/:path*' },
-        { source: '/gallery/:path+', destination: '/api/media/gallery/:path+' },
-        { source: '/music/:path*', destination: '/api/media/music/:path*' },
-      ],
+      fallback: [],
     };
+  },
+  experimental: {
+    // Uploads pass through middleware, which otherwise cuts request bodies at 10MB.
+    middlewareClientMaxBodySize: '30mb',
   },
   output: 'standalone',
   transpilePackages: ['motion'],
