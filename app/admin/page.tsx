@@ -40,6 +40,7 @@ import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
 import { MusicManager } from '@/components/MusicManager';
 import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
 import { ReviewsManager } from '@/components/ReviewsManager';
+import { HeroPhotoManager } from '@/components/HeroPhotoManager';
 import { RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
 import { DEFAULT_SITE_INFO } from '@/lib/siteInfo';
 import { format, addMonths, startOfMonth, getDay, getDaysInMonth } from 'date-fns';
@@ -83,7 +84,10 @@ export default function AdminPage() {
 
   // Site Information (Settings) state
   const [siteInfo, setSiteInfo] = useState({
-    ...DEFAULT_SITE_INFO,
+    site_title: DEFAULT_SITE_INFO.site_title,
+    site_email: DEFAULT_SITE_INFO.site_email,
+    site_whatsapp: DEFAULT_SITE_INFO.site_whatsapp,
+    site_location: DEFAULT_SITE_INFO.site_location,
     notify_whatsapp: DEFAULT_SITE_INFO.site_whatsapp,
     notify_email: '',
   });
@@ -1785,6 +1789,9 @@ export default function AdminPage() {
           <div className="space-y-8">
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <LogoUploadManager currentLogoUrl="/logo.png" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <HeroPhotoManager />
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <NewsletterSubscribers />

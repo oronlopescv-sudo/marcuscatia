@@ -112,7 +112,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const onSubmit = async (data: ReservationFormValues) => {
     if (!course) return;
     // Rate limiting check
-    // eslint-disable-next-line react-hooks/purity -- runs in the submit handler, not during render
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
       setSubmitErrorMessage('Please wait 30 seconds before submitting another booking request.');
@@ -248,23 +247,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       <Header />
       
       <main className="flex-grow">
-        {/* Logo Section */}
-        <div className="bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] py-8 sm:py-12">
-          <div className="max-w-2xl mx-auto px-4 text-center">
-            <Image
-              src="/logo.png"
-              alt="Catia Cooking Mindelo - Flavors of Cape Verde"
-              width={180}
-              height={180}
-              className="w-44 h-44 sm:w-52 sm:h-52 mx-auto drop-shadow-lg"
-            />
-          </div>
-        </div>
-
         {/* Hero Image */}
-        <div className="relative min-h-[40vh] md:min-h-[50vh] w-full bg-mindelo-dark flex items-end">
+        <div className="relative min-h-[32vh] md:min-h-[38vh] w-full bg-mindelo-dark flex items-end">
           <Image
-            src={course.image || '/catia-cooking.jpg'}
+            src={course.image || '/catia-cutting-fish.jpg'}
             alt={course.title}
             fill
             className="object-cover opacity-60 mix-blend-overlay"
@@ -272,7 +258,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-          <div className="relative w-full px-5 pt-24 pb-8 sm:p-8 md:p-16 text-white max-w-7xl mx-auto">
+          <div className="relative w-full px-5 pt-20 pb-8 sm:p-8 md:px-16 md:py-12 text-white max-w-7xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4">{course.title}</h1>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">

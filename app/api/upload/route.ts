@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSetting, setSetting } from '@/lib/settings';
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, deleteMediaByUrl, saveMedia } from '@/lib/media';
 
-// POST - upload an image (course photo, or the site logo with type=logo).
+// Images tracked by a setting instead of by the record that uses them.
+const SETTING_FOR_TYPE: Record<string, string> = { logo: 'site_logo', hero: 'hero_image' };
+
+// POST - upload an image (course photo; type=logo for the site logo,
+// type=hero for the home page photo).
 // Stored in MySQL; returns the URL to use in the site.
 export async function POST(request: NextRequest) {
   try {
@@ -22,12 +26,13 @@ export async function POST(request: NextRequest) {
 
     const url = await saveMedia(Buffer.from(await file.arrayBuffer()), file.type);
 
-    // The logo is served at /logo.png (see /api/logo); remember which upload it is.
-    if (type === 'logo') {
-      const previous = await getSetting('site_logo');
-      await setSetting('site_logo', url);
+    const settingKey = typeof type === 'string' ? SETTING_FOR_TYPE[type] : undefined;
+    if (settingKey) {
+      const previous = await getSetting(settingKey);
+      await setSetting(settingKey, url);
       await deleteMediaByUrl(previous);
-      return NextResponse.json({ success: true, url: '/logo.png', size: file.size }, { status: 201 });
+      // The logo is served at /logo.png (see /api/logo).
+      return NextResponse.json({ success: true, url: type === 'logo' ? '/logo.png' : url, size: file.size }, { status: 201 });
     }
 
     return NextResponse.json({ success: true, url, size: file.size }, { status: 201 });
@@ -43,9 +48,10 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
-    if (body?.type === 'logo') {
-      const previous = await getSetting('site_logo');
-      await setSetting('site_logo', '');
+    const settingKey = SETTING_FOR_TYPE[body?.type];
+    if (settingKey) {
+      const previous = await getSetting(settingKey);
+      await setSetting(settingKey, '');
       await deleteMediaByUrl(previous);
       return NextResponse.json({ success: true });
     }

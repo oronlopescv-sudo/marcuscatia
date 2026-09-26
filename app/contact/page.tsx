@@ -195,7 +195,7 @@ export default function ContactPage() {
                 className="h-64 bg-gray-200 rounded-2xl overflow-hidden relative border border-gray-300 flex items-center justify-center group cursor-pointer shadow-sm hover:shadow-md transition-shadow block"
                 title="Open in Google Maps"
               >
-                 <div className="absolute inset-0 bg-[url('/catia-cooking.jpg')] bg-cover bg-center opacity-60 grayscale group-hover:scale-105 transition-transform duration-500"></div>
+                 <div className="absolute inset-0 bg-[url('/catia-cutting-fish.jpg')] bg-cover bg-center opacity-60 grayscale group-hover:scale-105 transition-transform duration-500"></div>
                  <div className="relative z-10 bg-white/95 group-hover:bg-[#0A3D78] group-hover:text-white transition-colors duration-200 backdrop-blur-sm px-6 py-3 rounded-full shadow-md text-sm font-bold text-mindelo-dark flex items-center gap-2">
                    <MapPin size={16} className="text-mindelo-blue group-hover:text-white transition-colors" />
                    <span>View on Google Maps (Fonte Francês)</span>

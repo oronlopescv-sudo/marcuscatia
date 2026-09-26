@@ -10,7 +10,7 @@ export const RESTAURANT_DINNER: Course = {
   title: 'Restaurant Dinner',
   description:
     'A three-course Cape Verdean dinner at Cátia’s family table in Fonte Francês: starter, main course and dessert, cooked with fresh produce from the Mindelo market.',
-  image: '/catia-cooking.jpg',
+  image: '/catia-cutting-fish.jpg',
   duration: 'From 19:00',
   maxCapacity: RESTAURANT_MAX_GUESTS,
   price: '€20',

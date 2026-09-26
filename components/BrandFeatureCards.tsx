@@ -15,7 +15,7 @@ const cards = [
     href: '/about',
     icon: (
       <span className="relative block w-full h-full rounded-full overflow-hidden">
-        <Image src="/catia-cooking.jpg" alt="Cátia Sofia de Andrade" fill sizes="48px" className="object-cover" />
+        <Image src="/catia-cutting-fish.jpg" alt="Cátia Sofia de Andrade" fill sizes="48px" className="object-cover" />
       </span>
     ),
   },

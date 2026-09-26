@@ -15,6 +15,7 @@ function load(): Promise<SiteInfo> {
         site_email: data.site_email || DEFAULT_SITE_INFO.site_email,
         site_whatsapp: data.site_whatsapp || DEFAULT_SITE_INFO.site_whatsapp,
         site_location: data.site_location || DEFAULT_SITE_INFO.site_location,
+        hero_image: data.hero_image || DEFAULT_SITE_INFO.hero_image,
       }))
       .catch(() => DEFAULT_SITE_INFO);
   }
