@@ -40,9 +40,6 @@ export default function Home() {
         <Hero />
         <div className="py-8 sm:py-12 md:py-16"></div>
 
-        <BrandFeatureCards />
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
         {/* Featured Courses Section */}
         <section className="-mt-8 py-14 sm:py-24 md:py-32 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,6 +105,8 @@ export default function Home() {
         <div className="py-8 sm:py-12 md:py-16"></div>
 
         <Newsletter />
+
+        <BrandFeatureCards />
       </main>
 
       <Footer />
