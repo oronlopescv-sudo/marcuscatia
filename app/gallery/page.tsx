@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { whatsappLink } from '@/lib/siteInfo';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Watermark } from '@/components/Watermark';
@@ -29,6 +31,7 @@ export default function GalleryPage() {
 
 function GalleryContent() {
   const router = useRouter();
+  const site = useSiteInfo();
   const tab: 'photos' | 'videos' = useSearchParams().get('tab') === 'videos' ? 'videos' : 'photos';
   const isVideos = tab === 'videos';
   const [allItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -397,7 +400,7 @@ function GalleryContent() {
                 <span>Book a Class</span>
               </Link>
               <a
-                href="https://wa.me/2385953973?text=Hello%20C%C3%A1tia!%20I%20saw%20the%20photos%20in%20your%20gallery%20and%20would%20love%20to%20book%20a%20class%20for%20our%20group."
+                href={whatsappLink(site.site_whatsapp, 'Hello Cátia! I saw the photos in your gallery and would love to book a class for our group.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3.5 rounded-full font-bold text-sm transition-all"

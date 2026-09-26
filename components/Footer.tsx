@@ -1,9 +1,14 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react';
 import { MindeloWeatherWidget } from '@/components/MindeloWeatherWidget';
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { phoneDigits } from '@/lib/siteInfo';
 
 export function Footer() {
+  const site = useSiteInfo();
   return (
     <footer className="bg-[#0A2240] text-white relative overflow-hidden">
       {/* Top decorative line */}
@@ -64,15 +69,15 @@ export function Footer() {
             <ul className="space-y-1 sm:space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <Phone size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
-                <a href="tel:+2385953973" className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors">+238 595 3973</a>
+                <a href={`tel:+${phoneDigits(site.site_whatsapp)}`} className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors">{site.site_whatsapp}</a>
               </li>
               <li className="flex items-start gap-2">
                 <Mail size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
-                <a href="mailto:deandradeleukelcatiasofia@gmail.com" className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors break-all">deandradeleukelcatiasofia@gmail.com</a>
+                <a href={`mailto:${site.site_email}`} className="inline-block py-1.5 -my-1.5 sm:py-0 sm:my-0 text-blue-100 hover:text-white transition-colors break-all">{site.site_email}</a>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="text-mindelo-gold flex-shrink-0 mt-0.5" />
-                <span className="text-blue-100">Fonte Francês, Mindelo, São Vicente, Cabo Verde</span>
+                <span className="text-blue-100">{site.site_location}</span>
               </li>
             </ul>
           </div>

@@ -1,11 +1,14 @@
 'use client';
 
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { whatsappLink } from '@/lib/siteInfo';
 import { motion } from 'motion/react';
 
 export function WhatsAppButton() {
+  const { site_whatsapp } = useSiteInfo();
   return (
     <motion.a
-      href="https://wa.me/2385953973"
+      href={whatsappLink(site_whatsapp)}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg hover:shadow-2xl hover:bg-[#20bd5a] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366]"

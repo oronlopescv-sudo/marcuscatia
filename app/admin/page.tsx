@@ -39,8 +39,10 @@ import { ContentEditor } from '@/components/ContentEditor';
 import { CoursePhotoUpload } from '@/components/CoursePhotoUpload';
 import { MusicManager } from '@/components/MusicManager';
 import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
+import { ReviewsManager } from '@/components/ReviewsManager';
 import { RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
-import { format } from 'date-fns';
+import { DEFAULT_SITE_INFO } from '@/lib/siteInfo';
+import { format, addMonths, startOfMonth, getDay, getDaysInMonth } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
 export default function AdminPage() {
@@ -81,11 +83,8 @@ export default function AdminPage() {
 
   // Site Information (Settings) state
   const [siteInfo, setSiteInfo] = useState({
-    site_title: 'Cátia Cooking Mindelo',
-    site_email: 'info@catiamindelo.com',
-    site_whatsapp: '+238 595 3973',
-    site_location: 'Mindelo, Cape Verde',
-    notify_whatsapp: '+238 595 3973',
+    ...DEFAULT_SITE_INFO,
+    notify_whatsapp: DEFAULT_SITE_INFO.site_whatsapp,
     notify_email: '',
   });
   const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -176,6 +175,7 @@ export default function AdminPage() {
   // Search & Filters for Reservations
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
   const [typeFilter, setTypeFilter] = useState<'all' | 'classes' | 'restaurant'>('all');
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
@@ -348,8 +348,9 @@ export default function AdminPage() {
   });
 
   // Today and upcoming
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
   const upcomingReservations = [...reservations]
-    .filter(r => !isCancelled(r.status))
+    .filter(r => !isCancelled(r.status) && !isCompleted(r.status) && r.date >= todayStr)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
 
@@ -1652,55 +1653,75 @@ export default function AdminPage() {
                 Availability & Date Blocking
               </h2>
               <p className="text-xs text-slate-500 mb-6">
-                Click on any date to block or unblock new enrollments (e.g. municipal holidays, cultural events, or family rest days)
+                Tap any day to block or unblock it for new bookings (holidays, events, rest days). Blocked days can&apos;t be chosen on the website.
               </p>
 
-              {/* Sample date blocking grid for upcoming dates */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center text-xs">
-                {Array.from({ length: 14 }).map((_, i) => {
-                  const day = new Date();
-                  day.setDate(day.getDate() + i);
+              {/* Month calendar: block/unblock any future day */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={() => setCalendarMonth((m) => addMonths(m, -1))}
+                  disabled={calendarMonth <= startOfMonth(new Date())}
+                  className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+                  aria-label="Previous month"
+                >
+                  <ChevronRight size={18} className="rotate-180" />
+                </button>
+                <span className="font-bold text-slate-900">{format(calendarMonth, 'MMMM yyyy', { locale: enUS })}</span>
+                <button
+                  type="button"
+                  onClick={() => setCalendarMonth((m) => addMonths(m, 1))}
+                  className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
+                  aria-label="Next month"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[11px] font-bold uppercase text-slate-400 mb-1">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+                  <div key={d}>{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 text-xs">
+                {Array.from({ length: (getDay(calendarMonth) + 6) % 7 }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+                {Array.from({ length: getDaysInMonth(calendarMonth) }).map((_, i) => {
+                  const day = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), i + 1);
                   const dateStr = format(day, 'yyyy-MM-dd');
+                  const isPastDay = dateStr < format(new Date(), 'yyyy-MM-dd');
                   const isBlocked = blockedDates.includes(dateStr);
                   const dayReservations = reservations.filter(r => r.date === dateStr && !isCancelled(r.status));
-                  const studentCount = dayReservations.reduce((acc, r) => acc + r.guests, 0);
+                  const guestCount = dayReservations.reduce((acc, r) => acc + r.guests, 0);
 
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={dateStr}
+                      disabled={isPastDay}
                       onClick={() => toggleBlockedDate(dateStr)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer text-left ${
-                        isBlocked 
-                          ? 'bg-rose-50 border-rose-200 text-rose-800' 
+                      title={isBlocked ? 'Blocked — tap to unblock' : 'Tap to block this day'}
+                      className={`min-h-14 sm:min-h-20 p-1.5 sm:p-2 rounded-lg sm:rounded-xl border transition-all text-left flex flex-col disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isBlocked
+                          ? 'bg-rose-50 border-rose-200 text-rose-800'
                           : dayReservations.length > 0
                             ? 'bg-blue-50/70 border-blue-200 text-slate-800'
                             : 'bg-white border-slate-200 hover:border-mindelo-blue'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs">
-                          {format(day, 'MMM d', { locale: enUS })}
-                        </span>
-                        <span className="text-[10px] uppercase font-bold text-slate-400">
-                          {format(day, 'EEE', { locale: enUS })}
-                        </span>
-                      </div>
-
+                      <span className="font-bold text-sm">{i + 1}</span>
                       {isBlocked ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600">
+                        <span className="mt-auto inline-flex items-center gap-0.5 text-[10px] font-bold text-rose-600">
                           <CalendarX size={10} />
-                          Blocked
+                          <span className="hidden sm:inline">Blocked</span>
                         </span>
-                      ) : studentCount > 0 ? (
-                        <div className="text-[11px] font-bold text-mindelo-blue">
-                          {studentCount} student(s)
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-emerald-600 font-medium">
-                          Available
+                      ) : guestCount > 0 ? (
+                        <span className="mt-auto text-[10px] sm:text-[11px] font-bold text-mindelo-blue">
+                          {guestCount}<span className="hidden sm:inline"> guest{guestCount > 1 ? 's' : ''}</span>
                         </span>
-                      )}
-                    </div>
+                      ) : null}
+                    </button>
                   );
                 })}
               </div>
@@ -1712,7 +1733,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-mindelo-blue"></span>
-                  <span>With enrolled students</span>
+                  <span>Has bookings (number of guests)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-rose-500"></span>
@@ -1744,6 +1765,9 @@ export default function AdminPage() {
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <ContentEditor category="testimonial" title="Testimonials" />
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+              <ReviewsManager />
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
               <ContentEditor category="hero" title="Hero Section" />

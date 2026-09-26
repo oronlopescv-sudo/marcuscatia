@@ -1,4 +1,5 @@
 import { Header } from '@/components/Header';
+import { WhatsAppLink } from '@/components/WhatsAppLink';
 import { Footer } from '@/components/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -92,15 +93,10 @@ export default function AboutPage() {
                   <ArrowRight size={16} />
                 </Link>
 
-                <a
-                  href="https://wa.me/2385953973?text=Hello%20C%C3%A1tia!%20I%20read%20your%20story%20and%20would%20love%20to%20know%20more%20about%20your%20cooking%20classes."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-5 py-3 rounded-full font-bold text-sm transition-all"
-                >
+                <WhatsAppLink text={'Hello Cátia! I read your story and would love to know more about your cooking classes.'} className="inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-5 py-3 rounded-full font-bold text-sm transition-all">
                   <Phone size={15} />
                   <span>Cátia on WhatsApp</span>
-                </a>
+                </WhatsAppLink>
               </div>
             </div>
           </div>

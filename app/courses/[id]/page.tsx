@@ -14,6 +14,8 @@ import * as z from 'zod';
 import Link from 'next/link';
 import { useAdminStore } from '@/lib/store';
 import { useSiteContent } from '@/lib/useSiteContent';
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { whatsappLink } from '@/lib/siteInfo';
 import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 
 const reservationSchema = z.object({
@@ -34,6 +36,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const unwrappedParams = use(params);
   
   const { courses, addReservation, blockedDates, hydrate } = useAdminStore();
+  const site = useSiteInfo();
   const isDinner = isRestaurantBooking(unwrappedParams.id);
   const storedMenu = useSiteContent('restaurant_menu');
   const menuFromAdmin = (storedMenu || []).filter((m) => m.title || m.description);
@@ -362,7 +365,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       {submitErrorMessage || 'Please wait 30 seconds before submitting another booking request. You can also contact Cátia directly via WhatsApp for faster confirmation.'}
                     </p>
                     <Link
-                      href="https://wa.me/2385953973"
+                      href={whatsappLink(site.site_whatsapp)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md"
@@ -389,7 +392,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
                     <div className="space-y-3">
                       <a
-                        href={`https://wa.me/2385953973?text=${encodeURIComponent(`Hello Cátia! I have just submitted a booking request on your site for ${isDinner ? 'a dinner' : `the cooking class "${course.title}"`} on ${submittedData?.date} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`)}`}
+                        href={whatsappLink(site.site_whatsapp, (`Hello Cátia! I have just submitted a booking request on your site for ${isDinner ? 'a dinner' : `the cooking class "${course.title}"`} on ${submittedData?.date} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`))}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"

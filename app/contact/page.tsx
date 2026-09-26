@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAdminStore } from '@/lib/store';
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { phoneDigits, whatsappLink } from '@/lib/siteInfo';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
@@ -24,6 +26,7 @@ export default function ContactPage() {
   const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const addMessage = useAdminStore((state) => state.addMessage);
+  const site = useSiteInfo();
   
   // Rate limit: max 1 submission per 30 seconds
   const RATE_LIMIT_MS = 30000;
@@ -133,10 +136,10 @@ export default function ContactPage() {
                     <div>
                       <h3 className="font-bold text-mindelo-dark text-lg">Phone / WhatsApp</h3>
                       <p className="text-gray-600 mt-1">
-                        <a href="tel:+2385953973" className="hover:text-mindelo-blue transition-colors font-semibold">+238 5953973</a>
+                        <a href={`tel:+${phoneDigits(site.site_whatsapp)}`} className="hover:text-mindelo-blue transition-colors font-semibold">{site.site_whatsapp}</a>
                       </p>
                       <a 
-                        href="https://wa.me/2385953973?text=Hello%20C%C3%A1tia!%20I%20would%20like%20information%20about%20cooking%20classes%20in%20Mindelo." 
+                        href={whatsappLink(site.site_whatsapp, 'Hello Cátia! I would like information about cooking classes in Mindelo.')} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 mt-2 px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors"
@@ -153,7 +156,7 @@ export default function ContactPage() {
                     <div>
                       <h3 className="font-bold text-mindelo-dark text-lg">Email</h3>
                       <p className="text-gray-600 mt-1">
-                        <a href="mailto:deandradeleukelcatiasofia@gmail.com" className="hover:text-mindelo-blue transition-colors text-sm break-all">deandradeleukelcatiasofia@gmail.com</a>
+                        <a href={`mailto:${site.site_email}`} className="hover:text-mindelo-blue transition-colors text-sm break-all">{site.site_email}</a>
                       </p>
                     </div>
                   </div>
@@ -165,9 +168,7 @@ export default function ContactPage() {
                     <div>
                       <h3 className="font-bold text-mindelo-dark text-lg">Location</h3>
                       <p className="text-gray-600 mt-1">
-                        Fonte Francês<br />
-                        Mindelo, São Vicente<br />
-                        Cape Verde
+                        {site.site_location}
                       </p>
                     </div>
                   </div>

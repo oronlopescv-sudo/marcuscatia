@@ -1,147 +1,83 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface WeatherData {
-  condition: string;
-  temperature: number;
-  description: string;
+// Live weather for Mindelo from Open-Meteo (free, no API key).
+const URL =
+  'https://api.open-meteo.com/v1/forecast?latitude=16.8866&longitude=-24.9956' +
+  '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day' +
+  '&timezone=Atlantic%2FCape_Verde';
+
+const CACHE_TTL_MS = 15 * 60 * 1000;
+let cached: { body: Record<string, unknown>; timestamp: number } | null = null;
+
+type Current = {
+  temperature_2m: number;
+  relative_humidity_2m: number;
+  wind_speed_10m: number;
+  wind_direction_10m: number;
+  weather_code: number;
+};
+
+// WMO weather codes → text and the widget's icon type
+function describe(code: number, wind: number): { condition: string; iconType: string } {
+  if (code === 0) return { condition: wind >= 30 ? 'Clear and windy' : 'Clear sky', iconType: wind >= 30 ? 'windy' : 'sunny' };
+  if (code <= 2) return { condition: 'Partly cloudy', iconType: 'partly-cloudy' };
+  if (code === 3) return { condition: 'Overcast', iconType: 'cloudy' };
+  if (code === 45 || code === 48) return { condition: 'Hazy', iconType: 'cloudy' };
+  if (code >= 51 && code <= 67) return { condition: 'Light rain', iconType: 'rainy' };
+  if (code >= 80 && code <= 82) return { condition: 'Rain showers', iconType: 'rainy' };
+  if (code >= 95) return { condition: 'Thunderstorms', iconType: 'rainy' };
+  return { condition: 'Mixed weather', iconType: 'partly-cloudy' };
 }
 
-// In-memory cache to prevent excessive API calls while keeping weather fresh
-let cachedData: {
-  weather: WeatherData;
-  sources: Array<{ title: string; url: string }>;
-  timestamp: number;
-} | null = null;
+function compass(deg: number): string {
+  return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8];
+}
 
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+function tip(temp: number, iconType: string): string {
+  if (iconType === 'rainy') return 'A rare rainy day in Mindelo — bring a light jacket for the walk to the market.';
+  if (temp >= 28) return 'Hot day in Mindelo: wear light clothes, a hat and bring water for the market tour.';
+  if (iconType === 'windy') return 'Windy day on the bay — hold on to your hat at the fish market!';
+  return 'Pleasant weather in Mindelo for cooking! Bring comfortable clothes and enjoy the ocean breeze.';
+}
 
 export async function GET() {
+  const now = Date.now();
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return NextResponse.json({ ...cached.body, cached: true });
+  }
+
   try {
-    const now = Date.now();
-    if (cachedData && (now - cachedData.timestamp < CACHE_TTL_MS)) {
-      return NextResponse.json({
-        ...cachedData,
-        cached: true,
-      });
-    }
+    const res = await fetch(URL, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`Open-Meteo responded ${res.status}`);
+    const current = (await res.json()).current as Current;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error: 'GEMINI_API_KEY not configured',
-          weather: getFallbackWeather(),
-          sources: [],
-          cached: false,
-        },
-        { status: 200 }
-      );
-    }
+    const temp = Math.round(current.temperature_2m);
+    const wind = Math.round(current.wind_speed_10m);
+    const { condition, iconType } = describe(current.weather_code, wind);
 
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (CatiaCooking/1.0)',
-        },
+    const body = {
+      weather: {
+        temperature: `${temp}°C`,
+        condition,
+        conditionEnglish: condition,
+        wind: `${wind} km/h ${compass(current.wind_direction_10m)}`,
+        humidity: `${Math.round(current.relative_humidity_2m)}%`,
+        iconType,
+        studentTip: tip(temp, iconType),
+        comfortLevel: temp >= 28 ? 'Hot — stay in the shade between activities.' : 'Warm and comfortable, ideal for the market walk.',
       },
-    });
-
-    const prompt = `What is the current live weather right now in Mindelo, São Vicente, Cape Verde?
-Search Google for the latest weather conditions in Mindelo today.
-Provide the response strictly in valid JSON format in English with these exact fields:
-{
-  "temperature": "26°C",
-  "condition": "Sunny with ocean breeze",
-  "conditionEnglish": "Sunny with ocean breeze",
-  "wind": "22 km/h NE",
-  "humidity": "65%",
-  "iconType": "sunny", // one of: "sunny", "cloudy", "partly-cloudy", "rainy", "windy"
-  "studentTip": "Wonderful weather in Mindelo for visiting the Municipal Market and selecting fresh fish with Cátia!",
-  "comfortLevel": "Pleasant and breezy with classic trade winds over the Bay of Mindelo"
-}
-Only output the JSON object without any backticks, markdown, or extra prose.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-      },
-    });
-
-    const text = response.text || '';
-    
-    // Extract search grounding sources if present
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: Array<{ title: string; url: string }> = [];
-    
-    for (const chunk of chunks) {
-      if (chunk.web?.uri) {
-        sources.push({
-          title: chunk.web.title || 'Google Search',
-          url: chunk.web.uri,
-        });
-      }
-    }
-
-    let parsedWeather = null;
-    try {
-      // Clean potential markdown formatting
-      const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-      parsedWeather = JSON.parse(cleaned);
-    } catch {
-      // Try regex matching JSON
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          parsedWeather = JSON.parse(jsonMatch[0]);
-        } catch {
-          parsedWeather = null;
-        }
-      }
-    }
-
-    if (!parsedWeather || !parsedWeather.temperature) {
-      parsedWeather = getFallbackWeather();
-    }
-
-    const result = {
-      weather: parsedWeather,
-      sources: sources.slice(0, 3), // top 3 search sources
+      sources: [{ title: 'Open-Meteo', url: 'https://open-meteo.com' }],
       timestamp: now,
     };
-
-    cachedData = result;
-
-    return NextResponse.json({
-      ...result,
-      cached: false,
-    });
+    cached = { body, timestamp: now };
+    return NextResponse.json({ ...body, cached: false });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error fetching weather';
-    return NextResponse.json({
-      weather: getFallbackWeather(),
-      sources: [],
-      error: message,
-      cached: false,
-    });
+    console.error('Weather fetch failed:', error);
+    // Last known reading if we have one; otherwise no weather (the widget shows "—").
+    if (cached) return NextResponse.json({ ...cached.body, cached: true });
+    return NextResponse.json({ weather: null, sources: [], error: 'Weather unavailable' });
   }
-}
-
-function getFallbackWeather() {
-  return {
-    temperature: '26°C',
-    condition: 'Sunny with ocean breeze',
-    conditionEnglish: 'Sunny with ocean breeze',
-    wind: '22 km/h NE',
-    humidity: '68%',
-    iconType: 'partly-cloudy',
-    studentTip: 'Pleasant weather in Mindelo for cooking! Bring comfortable clothes and enjoy the fresh ocean breeze.',
-    comfortLevel: 'Warm and comfortable, ideal for walking to the market and cooking together.',
-  };
 }

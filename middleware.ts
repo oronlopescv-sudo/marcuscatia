@@ -11,6 +11,7 @@ const PUBLIC_GET = [
   '/api/blocked-dates',
   '/api/weather',
   '/api/comments',
+  '/api/settings/public',
 ];
 const PUBLIC_POST = ['/api/reservations', '/api/messages', '/api/newsletter', '/api/comments'];
 

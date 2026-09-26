@@ -25,7 +25,7 @@ interface WeatherData {
 }
 
 interface WeatherResponse {
-  weather: WeatherData;
+  weather: WeatherData | null;
   sources: Array<{ title: string; url: string }>;
   timestamp: number;
   cached?: boolean;
@@ -99,14 +99,14 @@ export function MindeloWeatherWidget({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-full bg-amber-400/20 text-amber-300">
-              {getWeatherIcon(data?.weather.iconType, "w-4 h-4")}
+              {getWeatherIcon(data?.weather?.iconType, "w-4 h-4")}
             </span>
             <div>
               <span className="text-xs uppercase font-bold tracking-wider text-blue-200 block">
                 Mindelo Weather
               </span>
               <span className="text-sm font-semibold text-white">
-                {loading ? 'Loading...' : `${data?.weather.temperature || '26°C'} · ${data?.weather.condition || 'Sunny'}`}
+                {loading ? 'Loading...' : data?.weather ? `${data.weather.temperature} · ${data.weather.condition}` : 'Weather unavailable'}
               </span>
             </div>
           </div>
@@ -114,7 +114,7 @@ export function MindeloWeatherWidget({
             onClick={handleRefresh}
             disabled={refreshing}
             className="p-2.5 -m-1 rounded-full hover:bg-white/10 text-blue-200 hover:text-white transition-colors"
-            title="Refresh weather with Google Search"
+            title="Refresh weather"
             aria-label="Refresh weather"
           >
             <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
@@ -139,7 +139,7 @@ export function MindeloWeatherWidget({
             <div className="pt-1 flex items-center justify-between text-[10px] text-blue-300/70">
               <span className="flex items-center gap-1">
                 <Sparkles size={10} className="text-amber-300" />
-                Google Search Grounding
+                Source: Open-Meteo
               </span>
               {data.sources && data.sources[0] && (
                 <a
@@ -165,18 +165,18 @@ export function MindeloWeatherWidget({
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200/80 shadow-2xs text-xs font-medium text-[#0A3D78] transition-all duration-200 group"
         aria-label="View Mindelo weather for students"
-        title={loading ? 'Mindelo weather' : `${data?.weather.condition || 'Sunny'} — ${data?.weather.temperature || '26°C'}`}
+        title={loading ? 'Mindelo weather' : data?.weather ? `${data.weather.condition} — ${data.weather.temperature}` : 'Mindelo weather'}
       >
         <span className="flex items-center justify-center">
           {loading ? (
             <RefreshCw size={12} className="animate-spin text-blue-500" />
           ) : (
-            getWeatherIcon(data?.weather.iconType, "w-3.5 h-3.5")
+            getWeatherIcon(data?.weather?.iconType, "w-3.5 h-3.5")
           )}
         </span>
 
         <span className="font-semibold text-gray-800 whitespace-nowrap">
-          {loading ? '...' : (data?.weather.temperature || '26°C')}
+          {loading ? '...' : (data?.weather?.temperature || '—')}
         </span>
       </button>
 
@@ -201,14 +201,14 @@ export function MindeloWeatherWidget({
               <div className="flex items-start justify-between pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
-                    {getWeatherIcon(data?.weather.iconType, "w-5 h-5")}
+                    {getWeatherIcon(data?.weather?.iconType, "w-5 h-5")}
                   </div>
                   <div>
                     <h4 className="font-serif font-bold text-sm text-mindelo-dark leading-tight">
                       Mindelo, São Vicente
                     </h4>
                     <p className="text-[11px] text-gray-500">
-                      Live weather via Google Search
+                      Live weather via Open-Meteo
                     </p>
                   </div>
                 </div>
@@ -238,19 +238,19 @@ export function MindeloWeatherWidget({
                 <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-100/50">
                   <span className="text-[10px] text-gray-500 block uppercase font-medium">Temperature</span>
                   <span className="text-base font-bold text-mindelo-dark">
-                    {data?.weather.temperature || '26°C'}
+                    {data?.weather?.temperature || '—'}
                   </span>
                 </div>
                 <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-100/50">
                   <span className="text-[10px] text-gray-500 block uppercase font-medium">Wind</span>
                   <span className="text-xs font-bold text-sky-800 line-clamp-1">
-                    {data?.weather.wind || '22 km/h NE'}
+                    {data?.weather?.wind || '—'}
                   </span>
                 </div>
                 <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-100/50">
                   <span className="text-[10px] text-gray-500 block uppercase font-medium">Humidity</span>
                   <span className="text-xs font-bold text-blue-900">
-                    {data?.weather.humidity || '68%'}
+                    {data?.weather?.humidity || '—'}
                   </span>
                 </div>
               </div>
@@ -262,10 +262,10 @@ export function MindeloWeatherWidget({
                   <span>Tip for Students & Visitors</span>
                 </div>
                 <p className="text-xs text-amber-950 leading-relaxed">
-                  {data?.weather.studentTip || 
+                  {data?.weather?.studentTip || 
                     'Pleasant weather in Mindelo for cooking! Bring comfortable clothes and enjoy the ocean breeze.'}
                 </p>
-                {data?.weather.comfortLevel && (
+                {data?.weather?.comfortLevel && (
                   <p className="text-[11px] text-amber-800/80 mt-1">
                     {data.weather.comfortLevel}
                   </p>
@@ -276,7 +276,7 @@ export function MindeloWeatherWidget({
               <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
                 <span className="flex items-center gap-1 text-mindelo-blue font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Google Search Grounded
+                  Source: Open-Meteo
                 </span>
 
                 {data?.sources && data.sources.length > 0 ? (

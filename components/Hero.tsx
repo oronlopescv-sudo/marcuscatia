@@ -1,5 +1,7 @@
 'use client';
 
+import { useSiteInfo } from '@/lib/useSiteInfo';
+import { whatsappLink } from '@/lib/siteInfo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
@@ -10,6 +12,7 @@ export function Hero() {
   // Optional override from the admin Content Editor (Hero Section): Title =
   // headline, Description = tagline, Content = intro paragraph.
   const hero = useSiteContent('hero')?.[0];
+  const { site_whatsapp } = useSiteInfo();
 
   return (
     <section className="relative bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] overflow-hidden py-8 sm:py-12 lg:py-16">
@@ -89,7 +92,7 @@ export function Hero() {
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
-                href="https://wa.me/2385953973"
+                href={whatsappLink(site_whatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 md:px-8 py-3.5 sm:py-3 md:py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-base sm:text-sm md:text-base rounded-lg sm:rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
