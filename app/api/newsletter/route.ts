@@ -15,7 +15,7 @@ async function ensureTable() {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
-  if (isRateLimited('newsletter', clientIp(request), 8, 15 * 60 * 1000)) {
+  if (await isRateLimited('newsletter', clientIp(request), 8, 15 * 60 * 1000)) {
     return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
   }
   try {

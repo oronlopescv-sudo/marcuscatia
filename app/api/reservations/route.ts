@@ -143,7 +143,7 @@ export async function POST(request: Request) {
   const isAdmin = await isAdminRequest(request);
   // Admin manual entries aren't rate-limited — the risk here is a script
   // hitting the public booking form, not the site owner using her own panel.
-  if (!isAdmin && isRateLimited('reservations', clientIp(request), 8, 15 * 60 * 1000)) {
+  if (!isAdmin && (await isRateLimited('reservations', clientIp(request), 8, 15 * 60 * 1000))) {
     return NextResponse.json({ error: 'Too many booking attempts. Please try again later or contact us on WhatsApp.' }, { status: 429 });
   }
   try {

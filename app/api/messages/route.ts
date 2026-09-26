@@ -14,7 +14,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (isRateLimited('messages', clientIp(request), 8, 15 * 60 * 1000)) {
+  if (await isRateLimited('messages', clientIp(request), 8, 15 * 60 * 1000)) {
     return NextResponse.json({ error: 'Too many messages sent. Please try again later.' }, { status: 429 });
   }
   try {

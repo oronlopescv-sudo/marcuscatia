@@ -2,54 +2,18 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual, createHash } from 'crypto';
 import { getSetting } from '@/lib/settings';
 import { SESSION_COOKIE, SESSION_MAX_AGE, createSessionToken, isAdminRequest } from '@/lib/auth';
+import { clientIp, isLoginLockedOut, recordLoginFailure, clearLoginFailures } from '@/lib/rateLimit';
 
 const DEFAULT_PIN = '1234';
 
-// Brute-force guard: max failed attempts per IP per window (in-memory).
-const MAX_FAILURES = 10;
+// Brute-force guard: max failed attempts per IP per window, plus a backstop
+// across all IPs combined (against an attacker rotating a spoofed
+// X-Forwarded-For to dodge the per-IP limit). Backed by MySQL, not
+// in-memory — this app can run as more than one worker process, and
+// separate processes don't share a plain in-memory counter.
+const MAX_FAILURES_PER_IP = 10;
+const MAX_FAILURES_GLOBAL = 50;
 const WINDOW_MS = 15 * 60 * 1000;
-const failures = new Map<string, { count: number; first: number }>();
-
-// Backstop against an attacker rotating a spoofed X-Forwarded-For to dodge
-// the per-IP limit above: also cap total failures across ALL IPs combined.
-const GLOBAL_MAX_FAILURES = 50;
-let globalFailureCount = 0;
-let globalWindowStart = 0;
-
-function clientIp(request: Request): string {
-  // x-real-ip is normally set by the reverse proxy itself to the true peer
-  // address (not attacker-controlled); x-forwarded-for can have arbitrary
-  // client-supplied entries prepended, so it's only a fallback.
-  const realIp = request.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
-}
-
-function isLockedOut(ip: string): boolean {
-  if (Date.now() - globalWindowStart > WINDOW_MS) {
-    globalWindowStart = Date.now();
-    globalFailureCount = 0;
-  }
-  if (globalFailureCount >= GLOBAL_MAX_FAILURES) return true;
-
-  const entry = failures.get(ip);
-  if (!entry) return false;
-  if (Date.now() - entry.first > WINDOW_MS) {
-    failures.delete(ip);
-    return false;
-  }
-  return entry.count >= MAX_FAILURES;
-}
-
-function recordFailure(ip: string) {
-  globalFailureCount++;
-  const entry = failures.get(ip);
-  if (!entry || Date.now() - entry.first > WINDOW_MS) {
-    failures.set(ip, { count: 1, first: Date.now() });
-  } else {
-    entry.count++;
-  }
-}
 
 // Fixed-length digests sidestep timingSafeEqual's "buffers must be the same
 // length" requirement (which would otherwise leak the real PIN's length via
@@ -68,7 +32,7 @@ export async function GET(request: Request) {
 // POST — log in with the PIN; sets the session cookie.
 export async function POST(request: Request) {
   const ip = clientIp(request);
-  if (isLockedOut(ip)) {
+  if (await isLoginLockedOut(ip, MAX_FAILURES_PER_IP, MAX_FAILURES_GLOBAL, WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many attempts. Try again in 15 minutes.' },
       { status: 429 }
@@ -83,11 +47,11 @@ export async function POST(request: Request) {
 
     const stored = (await getSetting('admin_pin')) || DEFAULT_PIN;
     if (!pinsMatch(pin, stored)) {
-      recordFailure(ip);
+      await recordLoginFailure(ip);
       return NextResponse.json({ ok: false });
     }
 
-    failures.delete(ip);
+    await clearLoginFailures(ip);
     const res = NextResponse.json({ ok: true });
     res.cookies.set(SESSION_COOKIE, await createSessionToken(), {
       httpOnly: true,

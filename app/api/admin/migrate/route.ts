@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { isAdminRequest } from '@/lib/auth';
 import { MEDIA_FILES_TABLE_SQL, MUSIC_TRACKS_TABLE_SQL } from '@/lib/media';
+import { RATE_LIMIT_TABLE_SQL } from '@/lib/rateLimit';
 
 async function runMigration() {
   const migrations = [
@@ -158,6 +159,8 @@ async function runMigration() {
     MUSIC_TRACKS_TABLE_SQL,
 
     MEDIA_FILES_TABLE_SQL,
+
+    RATE_LIMIT_TABLE_SQL,
   ];
 
   const results = [];

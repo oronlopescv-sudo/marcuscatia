@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
 // POST — a visitor leaves a review; it waits for the admin's approval.
 export async function POST(request: NextRequest) {
-  if (isRateLimited('comments', clientIp(request), 8, 15 * 60 * 1000)) {
+  if (await isRateLimited('comments', clientIp(request), 8, 15 * 60 * 1000)) {
     return NextResponse.json({ error: 'Too many reviews sent. Please try again later.' }, { status: 429 });
   }
   try {

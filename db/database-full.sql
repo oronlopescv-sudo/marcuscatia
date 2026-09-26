@@ -191,6 +191,17 @@ CREATE TABLE IF NOT EXISTS media_files (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Backs lib/rateLimit.ts: per-IP request counters for public POST endpoints
+-- and the admin login guard. In MySQL (not in-memory) because this app can
+-- run as more than one worker process, which wouldn't share a plain counter.
+CREATE TABLE IF NOT EXISTS rate_limit_hits (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  bucket VARCHAR(64) NOT NULL,
+  rate_key VARCHAR(100) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_bucket_key_time (bucket, rate_key, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- SEED / DADOS INICIAIS
 -- ============================================================
