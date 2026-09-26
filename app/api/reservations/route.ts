@@ -6,6 +6,7 @@ import { sendEmail, esc } from '@/lib/email';
 import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
 import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { clientIp, isRateLimited } from '@/lib/rateLimit';
 
 // An early schema had reservations.courseId REFERENCES courses(id). The
 // restaurant dinner books with courseId='restaurant-dinner', a virtual
@@ -139,11 +140,16 @@ export async function GET() {
 // POST — criar reserva (cliente). Avisa o admin e confirma ao cliente.
 // ---------------------------------------------------------------
 export async function POST(request: Request) {
+  const isAdmin = await isAdminRequest(request);
+  // Admin manual entries aren't rate-limited — the risk here is a script
+  // hitting the public booking form, not the site owner using her own panel.
+  if (!isAdmin && isRateLimited('reservations', clientIp(request), 8, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many booking attempts. Please try again later or contact us on WhatsApp.' }, { status: 429 });
+  }
   try {
     await ensureNoLegacyCourseFk();
     const body = await request.json();
     const { studentName, email, phone, courseId, date, notes, dietaryRestrictions } = body;
-    const isAdmin = await isAdminRequest(request);
 
     const name = typeof studentName === 'string' ? studentName.trim() : '';
     const mail = typeof email === 'string' ? email.trim() : '';
