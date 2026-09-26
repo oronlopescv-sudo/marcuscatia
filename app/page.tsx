@@ -38,16 +38,16 @@ export default function Home() {
       
       <main className="flex-grow">
         <Hero />
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
         {/* Featured Courses Section */}
-        <section className="-mt-8 py-14 sm:py-24 md:py-32 bg-white">
+        <section className="-mt-8 py-14 sm:py-24 md:py-32 bg-gradient-to-b from-blue-50/50 via-white to-white border-y border-blue-100/60 relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-mindelo-dark via-mindelo-blue to-mindelo-red"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 sm:mb-16 gap-4">
               <div className="max-w-2xl">
                 <h2 className="text-3xl md:text-4xl font-serif font-bold text-mindelo-dark mb-4 sm:mb-8">
                   Classes &amp; Dinner
                 </h2>
+                <div className="w-12 h-1 bg-mindelo-red rounded-full mb-4 sm:mb-6"></div>
                 <p className="text-base sm:text-lg text-gray-600">
                   Learn traditional recipes step by step, or sit down to a three-course Cape Verdean dinner at our family table.
                 </p>
@@ -69,11 +69,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
         <HowItWorks />
-
-        <div className="py-8 sm:py-12 md:py-16"></div>
 
         {/* Final CTA Section */}
         <section className="py-16 sm:py-20 md:py-24 bg-mindelo-blue relative overflow-hidden">
@@ -94,15 +90,9 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
         <Testimonials />
 
-        <div className="py-8 sm:py-12 md:py-16"></div>
-
         <HomeGallery />
-
-        <div className="py-8 sm:py-12 md:py-16"></div>
 
         <Newsletter />
 

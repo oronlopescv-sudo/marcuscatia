@@ -184,6 +184,27 @@ export async function POST(request: Request) {
       if (blocked?.length) {
         return NextResponse.json({ error: 'This date is no longer available. Please choose another date.' }, { status: 409 });
       }
+
+      // maxCapacity above only checked THIS booking's own guest count; without
+      // this, two separate bookings of e.g. 8 guests each could both go
+      // through for the same 8-person class/date, silently double-booking it.
+      const existing: any = await query(
+        `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
+         WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
+        [String(courseId), date]
+      );
+      const alreadyBooked = Number(existing?.[0]?.total) || 0;
+      if (alreadyBooked + guests > maxCapacity) {
+        const remaining = Math.max(0, maxCapacity - alreadyBooked);
+        return NextResponse.json(
+          {
+            error: remaining > 0
+              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
+              : 'This date is fully booked. Please choose another date.',
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const courseTitle: string = course.title;

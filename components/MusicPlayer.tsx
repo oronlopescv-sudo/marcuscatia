@@ -71,8 +71,17 @@ export default function MusicPlayer() {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
     }
-    errorCountRef.current = 0;
     setAudioError(false);
+  };
+
+  // Only a real, sustained "playing" event proves the track actually works —
+  // resetting the error budget on loadedmetadata (which fires even for a
+  // track whose header parses but whose data then fails) let a run of
+  // "metadata OK, data fails" tracks dodge the guard below and loop through
+  // the whole playlist forever, since the counter kept getting zeroed out
+  // right before each next failure.
+  const handlePlaying = () => {
+    errorCountRef.current = 0;
   };
 
   const handleEnded = () => {
@@ -130,6 +139,7 @@ export default function MusicPlayer() {
         src={currentTrack.url}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onPlaying={handlePlaying}
         onEnded={handleEnded}
         onError={handleError}
       />

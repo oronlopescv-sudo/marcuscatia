@@ -113,7 +113,7 @@ async function runMigration() {
       currency VARCHAR(10) DEFAULT 'EUR',
       notes TEXT,
       dietaryRestrictions TEXT,
-      status VARCHAR(50) DEFAULT 'confirmed',
+      status VARCHAR(50) DEFAULT 'pending',
       paymentStatus VARCHAR(50) DEFAULT 'pending',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_date (date),

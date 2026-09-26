@@ -30,7 +30,8 @@ import {
   CalendarX,
   Lock,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { useAdminStore, Reservation, Course, Message } from '@/lib/store';
 import { AdminGalleryManager } from '@/components/AdminGalleryManager';
@@ -76,7 +77,9 @@ export default function AdminPage() {
     markMessageRead,
     deleteMessage,
     toggleBlockedDate,
-    hydrate
+    hydrate,
+    lastError,
+    clearError,
   } = useAdminStore();
 
   // Everything a reservation can be for: the classes plus the restaurant dinner.
@@ -174,6 +177,13 @@ export default function AdminPage() {
       cancelled = true;
     };
   }, [isAuthenticated]);
+
+  // Auto-dismiss the error toast so it doesn't linger forever if unnoticed.
+  useEffect(() => {
+    if (!lastError) return;
+    const timer = setTimeout(clearError, 8000);
+    return () => clearTimeout(timer);
+  }, [lastError, clearError]);
 
 
   // Search & Filters for Reservations
@@ -617,7 +627,25 @@ export default function AdminPage() {
   // -------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      
+
+      {/* Error toast: a background save (approve/decline, edit, delete...)
+          was rejected by the server and the optimistic UI change was
+          reverted. Without this, a failed action could look successful. */}
+      {lastError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)] bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3">
+          <XCircle size={18} className="shrink-0" />
+          <span className="text-sm font-semibold">{lastError}</span>
+          <button
+            type="button"
+            onClick={clearError}
+            className="shrink-0 p-1 -m-1 hover:bg-white/20 rounded-full"
+            aria-label="Dismiss"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Top Admin Navigation Bar */}
       <header className="bg-[#0A2240] text-white sticky top-0 z-30 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

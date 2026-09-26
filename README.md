@@ -1,17 +1,17 @@
 # Catia Cooking Mindelo 👨‍🍳
 
-Website para aulas de culinária cabo-verdiana em Mindelo, São Vicente.
+Website para aulas de culinária cabo-verdiana e jantares no restaurante, em Mindelo, São Vicente.
 
-**🌐 Site:** https://lightskyblue-bat-697565.hostingersite.com  
-**📍 Local:** Fonte Francês, Mindelo, Cabo Verde  
-**📞 Contacto:** +238 5953973  
-**✉️ Email:** deandradeleukelcatiasofia@gmail.com
+**🌐 Site:** https://catiacookingmindelo.cv
+**📍 Local:** Fonte Francês, Mindelo, Cabo Verde
+
+Contactos e restantes dados públicos são geridos em Admin → Settings, não ficam fixos no código.
 
 ---
 
 ## 🛠️ Setup Local
 
-**Pré-requisitos:** Node.js 18+
+**Pré-requisitos:** Node.js 20+
 
 1. **Clonar repositório:**
    ```bash
@@ -20,15 +20,7 @@ Website para aulas de culinária cabo-verdiana em Mindelo, São Vicente.
    npm install
    ```
 
-2. **Configurar variáveis de ambiente** (`.env.local`):
-   ```
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
-   MYSQL_HOST=auth-db2121.hstgr.io
-   MYSQL_USER=u128759105_Marcuscatia
-   MYSQL_PASSWORD=SEU_DB_PASSWORD
-   MYSQL_DATABASE=u128759105_Catia
-   GEMINI_API_KEY=seu_api_key_aqui
-   ```
+2. **Configurar variáveis de ambiente:** copiar `.env.example` para `.env.local` e preencher com as tuas próprias credenciais (nunca commitar `.env.local`).
 
 3. **Correr localmente:**
    ```bash
@@ -38,14 +30,11 @@ Website para aulas de culinária cabo-verdiana em Mindelo, São Vicente.
 
 ---
 
-## 📦 Deploy no Hostinger
+## 📦 Deploy
 
-```bash
-cd /home/u128759105/public_html
-git pull origin main
-npm run build
-npm start
-```
+O deploy é automático: um `git push` para `main` é suficiente — a Hostinger deteta o push e faz o build/deploy sozinha (uns 2 minutos). Não é preciso SSH nem `npm run build` manual para publicar.
+
+Alterações ao esquema da base de dados aplicam-se sozinhas na próxima reserva/mensagem processada pelo servidor (ver `ensureMediaTable`/`ensureMusicTable` em `lib/media.ts` e o padrão equivalente em `app/api/reservations/route.ts`), ou manualmente por um admin autenticado em `POST /api/admin/migrate`.
 
 ---
 
@@ -53,8 +42,8 @@ npm start
 
 - **Frontend:** Next.js 15, React 19, TailwindCSS
 - **Backend:** Next.js API Routes
-- **Database:** MySQL (Hostinger)
-- **Storage:** Public gallery para fotos
+- **Database:** MySQL/MariaDB
+- **Media:** fotos, logo e músicas carregadas no admin ficam em MySQL (`media_files`, servidas por `/api/media/<id>`) — não no disco, que é substituído a cada deploy
 - **UI Components:** Lucide React, React Hook Form, Zod
 
 ---
@@ -62,26 +51,24 @@ npm start
 ## 🗂️ Estrutura do Projeto
 
 ```
-src/
-├── app/
-│   ├── page.tsx           ← Homepage
-│   ├── admin/page.tsx     ← Painel de Admin
-│   ├── cursos/            ← Página de cursos
-│   ├── galeria/           ← Galeria de fotos
-│   ├── sobre/             ← Sobre nós
-│   ├── api/               ← API Routes
-│   │   ├── content/       ← CMS (editar textos)
-│   │   ├── gallery/       ← Upload de fotos
-│   │   ├── reservations/  ← Reservas
-│   │   ├── notifications/ ← Notificações
-│   │   └── weather/       ← Dados de clima
-├── components/            ← React Components
-├── hooks/                 ← Custom Hooks
-├── lib/                   ← Utilitários
-└── db/                    ← SQL Migrations
+app/
+├── page.tsx              ← Homepage
+├── admin/page.tsx        ← Painel de Admin
+├── courses/              ← Página de cursos e do jantar do restaurante
+├── gallery/               ← Galeria de fotos e vídeos
+├── about/                 ← Sobre nós
+├── contact/               ← Contacto
+└── api/                   ← API Routes
+    ├── content/           ← CMS (editar textos, testemunhos, menu)
+    ├── gallery/           ← Fotos e vídeos
+    ├── media/[id]/        ← Serve ficheiros guardados em MySQL
+    ├── reservations/      ← Reservas (aulas + restaurante)
+    ├── comments/          ← Avaliações de clientes
+    └── weather/           ← Tempo em Mindelo (Open-Meteo)
 
-public/
-└── gallery/               ← Fotos carregadas (não versionadas)
+components/                ← React Components
+lib/                        ← Utilitários (db, auth, email, whatsapp, ...)
+db/                          ← SQL de referência (schema canónico)
 ```
 
 ---
@@ -89,19 +76,11 @@ public/
 ## ✨ Features
 
 - ✅ **CMS Dinâmico:** Admin pode editar textos do site sem código
-- ✅ **Upload de Fotos:** Galeria com fotos do dispositivo
-- ✅ **Sistema de Reservas:** Formulário com notificações
+- ✅ **Reservas:** Aulas de culinária e jantar no restaurante, com aprovação no admin
+- ✅ **Galeria e Vídeos:** Upload de fotos e vídeos do YouTube
+- ✅ **Avaliações de clientes:** moderadas no admin antes de publicar
 - ✅ **Responsive:** Mobile-first design
-- ✅ **MySQL Integrado:** Persistência de dados
-- ✅ **Admin Dashboard:** Gerir conteúdo, fotos, reservas
-
----
-
-## 📝 Notas
-
-- Fotos da galeria são guardadas em `public/gallery/` (não versionadas no git)
-- MySQL Hostinger: `auth-db2121.hstgr.io`
-- Todas as cores seguem tema Mindelo (azul, vermelho, ouro, creme)
+- ✅ **MySQL Integrado:** Persistência de dados e de media
 
 ---
 

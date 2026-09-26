@@ -52,6 +52,11 @@ interface AdminStoreState {
   courses: Course[];
   messages: Message[];
   blockedDates: string[]; // ['2026-09-20', ...]
+  // Set when a background save to the server fails (e.g. the admin session
+  // expired, or a network/server error) after an optimistic UI update was
+  // already reverted. Surfaced by the admin UI so a failed action is never
+  // silently mistaken for a successful one.
+  lastError: string | null;
 
   // Actions
   addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<{ ok: true; reservation: Reservation } | { ok: false; error: string }>;
@@ -72,6 +77,31 @@ interface AdminStoreState {
   toggleBlockedDate: (dateStr: string) => void;
   hydrate: (data: { reservations?: Reservation[]; messages?: Message[]; blockedDates?: string[]; courses?: Course[] }) => void;
   resetToDefaults: () => void;
+  clearError: () => void;
+}
+
+// Persists a background change; if the server rejects it (HTTP error) or the
+// request fails outright, reverts the optimistic update and records a
+// visible error instead of leaving the UI silently out of sync with the
+// server (e.g. showing "Confirmed" after a PATCH the server never applied).
+function persist(
+  set: (partial: Partial<AdminStoreState>) => void,
+  url: string,
+  options: RequestInit,
+  revertTo: Partial<AdminStoreState>,
+  errorMessage: string
+) {
+  fetch(url, options)
+    .then((res) => {
+      if (!res.ok) {
+        console.error(`${errorMessage} (HTTP ${res.status})`);
+        set({ ...revertTo, lastError: errorMessage });
+      }
+    })
+    .catch((err) => {
+      console.error(errorMessage, err);
+      set({ ...revertTo, lastError: errorMessage });
+    });
 }
 
 // Junta arrays já existentes (session) com dados vindos do servidor, sem
@@ -97,6 +127,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
   courses: [],
   messages: INITIAL_MESSAGES,
   blockedDates: [],
+  lastError: null,
 
   addReservation: async (res) => {
     const trimmedRes = {
@@ -138,27 +169,33 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
   },
 
       updateReservation: (id, updates) => {
+        const previous = get().reservations;
         set({
-          reservations: get().reservations.map((r) =>
+          reservations: previous.map((r) =>
             r.id === id ? { ...r, ...updates } : r
           ),
         });
-        fetch('/api/reservations', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, ...updates }),
-        }).catch((err) => console.error('Error persisting reservation update:', err));
+        persist(
+          set,
+          '/api/reservations',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...updates }) },
+          { reservations: previous },
+          'Could not save the booking changes. Please try again.'
+        );
       },
 
       updateReservationStatus: (id, status) => {
         const reservation = get().reservations.find((r) => r.id === id);
+        if (!reservation) return;
+
+        const previousReservations = get().reservations;
+        const previousBlockedDates = get().blockedDates;
+
         set({
-          reservations: get().reservations.map((r) =>
+          reservations: previousReservations.map((r) =>
             r.id === id ? { ...r, status } : r
           ),
         });
-
-        if (!reservation) return;
 
         const nowConfirmed = status === 'confirmed' || status === 'confirmada';
         const nowCancelled = status === 'cancelled' || status === 'cancelada';
@@ -180,36 +217,47 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
         }
 
         // Persist the change so the admin approval reaches the server
-        // (which also triggers the confirmation email to the customer).
-        fetch('/api/reservations', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: reservation.id, status }),
-        }).catch((err) => console.error('Error persisting reservation status:', err));
+        // (which also triggers the confirmation email to the customer). If
+        // this fails (e.g. the admin session expired), undo the status AND
+        // the auto block/unblock above, so the UI never claims success for
+        // an action the server rejected.
+        persist(
+          set,
+          '/api/reservations',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: reservation.id, status }) },
+          { reservations: previousReservations, blockedDates: previousBlockedDates },
+          'Could not update the booking status. Please try again.'
+        );
       },
 
       updateReservationPayment: (id, paymentStatus) => {
+        const previous = get().reservations;
         set({
-          reservations: get().reservations.map((r) =>
+          reservations: previous.map((r) =>
             r.id === id ? { ...r, paymentStatus } : r
           ),
         });
-        fetch('/api/reservations', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, paymentStatus }),
-        }).catch((err) => console.error('Error persisting payment status:', err));
+        persist(
+          set,
+          '/api/reservations',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, paymentStatus }) },
+          { reservations: previous },
+          'Could not update the payment status. Please try again.'
+        );
       },
 
       deleteReservation: (id) => {
+        const previous = get().reservations;
         set({
-          reservations: get().reservations.filter((r) => r.id !== id),
+          reservations: previous.filter((r) => r.id !== id),
         });
-        fetch('/api/reservations', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        }).catch((err) => console.error('Error deleting reservation:', err));
+        persist(
+          set,
+          '/api/reservations',
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) },
+          { reservations: previous },
+          'Could not delete the booking. Please try again.'
+        );
       },
 
       addCourse: (courseData) => {
@@ -226,54 +274,66 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           ...courseData,
           id: taken ? `${slug}-${Date.now().toString(36)}` : slug,
         };
-        set({ courses: [...get().courses, newCourse] });
+        const previous = get().courses;
+        set({ courses: [...previous, newCourse] });
 
-        fetch('/api/courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newCourse),
-        }).catch((err) => console.error('Error persisting course:', err));
+        persist(
+          set,
+          '/api/courses',
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newCourse) },
+          { courses: previous },
+          'Could not save the new class. Please try again.'
+        );
 
         return newCourse;
       },
 
       updateCourse: (id, updates) => {
+        const previous = get().courses;
         set({
-          courses: get().courses.map((c) =>
+          courses: previous.map((c) =>
             c.id === id ? { ...c, ...updates } : c
           ),
         });
-        fetch('/api/courses', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, ...updates }),
-        }).catch((err) => console.error('Error persisting course update:', err));
+        persist(
+          set,
+          '/api/courses',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...updates }) },
+          { courses: previous },
+          'Could not save the class changes. Please try again.'
+        );
       },
 
       toggleCourseActive: (id) => {
-        const course = get().courses.find((c) => c.id === id);
+        const previous = get().courses;
+        const course = previous.find((c) => c.id === id);
         const active = course ? !course.active : false;
         set({
-          courses: get().courses.map((c) =>
+          courses: previous.map((c) =>
             c.id === id ? { ...c, active } : c
           ),
         });
-        fetch('/api/courses', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, active }),
-        }).catch((err) => console.error('Error persisting course active state:', err));
+        persist(
+          set,
+          '/api/courses',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, active }) },
+          { courses: previous },
+          'Could not update the class visibility. Please try again.'
+        );
       },
 
       deleteCourse: (id) => {
+        const previous = get().courses;
         set({
-          courses: get().courses.filter((c) => c.id !== id),
+          courses: previous.filter((c) => c.id !== id),
         });
-        fetch('/api/courses', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        }).catch((err) => console.error('Error deleting course:', err));
+        persist(
+          set,
+          '/api/courses',
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) },
+          { courses: previous },
+          'Could not delete the class. Please try again.'
+        );
       },
 
       addMessage: async (msg) => {
@@ -312,50 +372,53 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
       },
 
       markMessageRead: (id) => {
+        const previous = get().messages;
         set({
-          messages: get().messages.map((m) =>
+          messages: previous.map((m) =>
             m.id === id ? { ...m, read: true } : m
           ),
         });
-        fetch('/api/messages', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, read: true }),
-        }).catch((err) => console.error('Error persisting message read:', err));
+        persist(
+          set,
+          '/api/messages',
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, read: true }) },
+          { messages: previous },
+          'Could not mark the message as read. Please try again.'
+        );
       },
 
       deleteMessage: (id) => {
+        const previous = get().messages;
         set({
-          messages: get().messages.filter((m) => m.id !== id),
+          messages: previous.filter((m) => m.id !== id),
         });
-        fetch(`/api/messages?id=${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-        }).catch((err) => console.error('Error deleting message:', err));
+        persist(
+          set,
+          `/api/messages?id=${encodeURIComponent(id)}`,
+          { method: 'DELETE' },
+          { messages: previous },
+          'Could not delete the message. Please try again.'
+        );
       },
 
       toggleBlockedDate: (dateStr) => {
         const current = get().blockedDates;
         const isBlocked = current.includes(dateStr);
-        if (isBlocked) {
-          set({ blockedDates: current.filter((d) => d !== dateStr) });
-        } else {
-          set({ blockedDates: [...current, dateStr] });
-        }
+        set({ blockedDates: isBlocked ? current.filter((d) => d !== dateStr) : [...current, dateStr] });
 
         // Persist to the database so the block survives a refresh and is
-        // seen by visitors booking from other browsers (best-effort).
-        try {
-          fetch('/api/blocked-dates', {
+        // seen by visitors booking from other browsers.
+        persist(
+          set,
+          '/api/blocked-dates',
+          {
             method: isBlocked ? 'DELETE' : 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              date: dateStr,
-              ...(isBlocked ? {} : { reason: 'Blocked via admin' }),
-            }),
-          }).catch((err) => console.error('Failed to persist blocked date:', err));
-        } catch (err) {
-          console.error('Failed to persist blocked date:', err);
-        }
+            body: JSON.stringify({ date: dateStr, ...(isBlocked ? {} : { reason: 'Blocked via admin' }) }),
+          },
+          { blockedDates: current },
+          'Could not save the date change. Please try again.'
+        );
       },
 
       hydrate: (data) => {
@@ -377,5 +440,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           blockedDates: [],
         });
       },
+
+      clearError: () => set({ lastError: null }),
     })
 );
