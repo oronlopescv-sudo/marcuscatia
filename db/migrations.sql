@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS reservations (
   dietaryRestrictions TEXT,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE SET NULL,
+  -- No FK to courses(id) on purpose: the restaurant dinner is booked with
+  -- courseId='restaurant-dinner', a virtual course that is never a row in
+  -- the courses table (see lib/restaurant.ts).
   INDEX idx_status (status),
   INDEX idx_date (date),
   INDEX idx_email (email),

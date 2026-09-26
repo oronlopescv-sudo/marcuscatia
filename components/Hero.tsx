@@ -8,12 +8,16 @@ import { motion } from 'motion/react';
 import { ChefHat, UtensilsCrossed, MessageCircle } from 'lucide-react';
 import { RESTAURANT_DINNER } from '@/lib/restaurant';
 import { useSiteContent } from '@/lib/useSiteContent';
+import { useAdminStore } from '@/lib/store';
 
 export function Hero() {
   // Optional override from the admin Content Editor (Hero Section): Title =
   // headline, Description = tagline, Content = intro paragraph.
   const hero = useSiteContent('hero')?.[0];
   const { site_whatsapp, hero_image } = useSiteInfo();
+  // With a single class, "Cooking Classes" goes straight to its booking page.
+  const activeCourses = useAdminStore((state) => state.courses).filter((c) => c.active !== false);
+  const classesHref = activeCourses.length === 1 ? `/courses/${activeCourses[0].id}` : '/courses';
 
   return (
     <section className="relative bg-gradient-to-b from-[#F3F8FC] via-white to-[#F8FAFC] overflow-hidden py-8 sm:py-12 lg:py-16">
@@ -82,7 +86,7 @@ export function Hero() {
             <p className="text-sm font-bold uppercase tracking-wider text-mindelo-dark mb-3">What would you like to book?</p>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-lg">
               <Link
-                href="/courses"
+                href={classesHref}
                 className="group flex flex-col items-center lg:items-start text-center lg:text-left gap-1.5 p-4 sm:p-5 rounded-2xl bg-mindelo-blue hover:bg-mindelo-dark text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
                 <ChefHat size={30} className="shrink-0" />

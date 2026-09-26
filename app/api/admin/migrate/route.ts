@@ -175,6 +175,33 @@ async function runMigration() {
     }
   }
 
+  // Fix for older databases: an early schema had a foreign key from
+  // reservations.courseId to courses.id. The restaurant dinner is booked
+  // with courseId='restaurant-dinner', a virtual course that intentionally
+  // never has a row in `courses` (see lib/restaurant.ts), so that
+  // constraint makes every dinner booking fail with "Failed to create
+  // reservation". Drop it if present; safe to run repeatedly.
+  try {
+    const fk = (await query(
+      `SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations'
+         AND COLUMN_NAME = 'courseId' AND REFERENCED_TABLE_NAME = 'courses'
+       LIMIT 1`
+    )) as { CONSTRAINT_NAME: string }[];
+    if (fk?.[0]?.CONSTRAINT_NAME) {
+      await query(`ALTER TABLE reservations DROP FOREIGN KEY \`${fk[0].CONSTRAINT_NAME}\``);
+      results.push({ success: true, migration: 'Removed legacy FK reservations.courseId -> courses.id...' });
+    } else {
+      results.push({ success: true, migration: 'FK reservations.courseId -> courses.id already removed...' });
+    }
+  } catch (error) {
+    results.push({
+      success: false,
+      migration: 'Removed legacy FK reservations.courseId -> courses.id...',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+
   return results;
 }
 

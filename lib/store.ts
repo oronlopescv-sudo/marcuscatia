@@ -363,7 +363,9 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           reservations: mergeById(get().reservations, data.reservations),
           messages: mergeById(get().messages, data.messages),
           blockedDates: Array.from(new Set([...get().blockedDates, ...(data.blockedDates || [])])),
-          courses: Array.isArray(data.courses) ? data.courses : [],
+          // Only replace the courses when the caller loaded them; hydrating
+          // just the blocked dates must not wipe the course list.
+          ...(Array.isArray(data.courses) ? { courses: data.courses } : {}),
         });
       },
 

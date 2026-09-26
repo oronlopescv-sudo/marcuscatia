@@ -322,6 +322,33 @@ export default function AdminPage() {
   const isCompleted = (status: Reservation['status']) => status === 'completed' || status === 'concluida';
   const isCancelled = (status: Reservation['status']) => status === 'cancelled' || status === 'cancelada';
 
+  // Bookings made on the website arrive as "pending" and wait for Cátia's approval.
+  const approveReservation = (res: Reservation) => updateReservationStatus(res.id, 'confirmed');
+  const declineReservation = (res: Reservation) => {
+    if (confirm(`Decline the booking of ${res.studentName} on ${res.date}? The customer will be told by email.`)) {
+      updateReservationStatus(res.id, 'cancelled');
+    }
+  };
+  const approvalButtons = (res: Reservation, size: 'sm' | 'lg' = 'lg') =>
+    isPending(res.status) ? (
+      <div className={`grid grid-cols-2 gap-2 ${size === 'sm' ? 'mt-2' : ''}`}>
+        <button
+          type="button"
+          onClick={() => approveReservation(res)}
+          className={`${size === 'sm' ? 'h-9 text-xs' : 'h-11 text-sm'} px-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center justify-center gap-1.5`}
+        >
+          <CheckCircle size={size === 'sm' ? 14 : 18} /> Approve
+        </button>
+        <button
+          type="button"
+          onClick={() => declineReservation(res)}
+          className={`${size === 'sm' ? 'h-9 text-xs' : 'h-11 text-sm'} px-3 rounded-xl font-bold bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 inline-flex items-center justify-center gap-1.5`}
+        >
+          <XCircle size={size === 'sm' ? 14 : 18} /> Decline
+        </button>
+      </div>
+    ) : null;
+
   // Calculations
   const totalReservations = reservations.length;
   const confirmedReservations = reservations.filter(r => isConfirmed(r.status));
@@ -865,6 +892,23 @@ export default function AdminPage() {
                 </button>
               </div>
 
+              {pendingReservations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter('pending');
+                    setActiveTab('reservations');
+                  }}
+                  className="relative z-10 mt-4 w-full sm:w-auto text-left flex items-center gap-3 bg-amber-400 hover:bg-amber-300 text-amber-950 px-4 py-3 rounded-xl font-bold shadow-md"
+                >
+                  <Clock size={18} className="shrink-0" />
+                  <span>
+                    {pendingReservations.length} booking{pendingReservations.length > 1 ? 's' : ''} waiting for your approval — review now
+                  </span>
+                  <ChevronRight size={16} className="ml-auto shrink-0" />
+                </button>
+              )}
+
               {/* Background watermark */}
               <div className="absolute -right-8 -bottom-8 w-60 h-60 opacity-10 pointer-events-none">
                 <Image src="/logo.png" alt="Logo Watermark" fill className="object-cover" referrerPolicy="no-referrer" />
@@ -994,6 +1038,7 @@ export default function AdminPage() {
                               €{res.totalPrice} ({getPaymentLabel(res.paymentStatus)})
                             </span>
                           </div>
+                          {approvalButtons(res, 'sm')}
                         </div>
 
                         <div className="flex items-center gap-2 self-end sm:self-center">
@@ -1203,6 +1248,8 @@ export default function AdminPage() {
                         )}
                       </div>
 
+                      {approvalButtons(res)}
+
                       <div className="grid grid-cols-2 gap-2">
                         <select
                           value={isConfirmed(res.status) ? 'confirmed' : isPending(res.status) ? 'pending' : isCompleted(res.status) ? 'completed' : 'cancelled'}
@@ -1363,6 +1410,7 @@ export default function AdminPage() {
                               <option value="completed">🎉 Completed</option>
                               <option value="cancelled">❌ Cancelled</option>
                             </select>
+                            {approvalButtons(res, 'sm')}
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">

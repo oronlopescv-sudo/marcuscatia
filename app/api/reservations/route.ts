@@ -7,6 +7,35 @@ import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
 import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 
+// An early schema had reservations.courseId REFERENCES courses(id). The
+// restaurant dinner books with courseId='restaurant-dinner', a virtual
+// course that intentionally never has a row in `courses` (see
+// lib/restaurant.ts), so that constraint made every dinner booking fail
+// with a foreign key error ("Failed to create reservation"). Self-heals the
+// live database once per server start, the same way lib/media.ts's
+// ensureMediaTable() adds tables it needs.
+let fkCheckDone = false;
+async function ensureNoLegacyCourseFk() {
+  if (fkCheckDone) return;
+  fkCheckDone = true;
+  try {
+    const fk = (await query(
+      `SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations'
+         AND COLUMN_NAME = 'courseId' AND REFERENCED_TABLE_NAME = 'courses'
+       LIMIT 1`
+    )) as { CONSTRAINT_NAME: string }[];
+    if (fk?.[0]?.CONSTRAINT_NAME) {
+      await query(`ALTER TABLE reservations DROP FOREIGN KEY \`${fk[0].CONSTRAINT_NAME}\``);
+      console.log('Removed legacy FK reservations.courseId -> courses.id');
+    }
+  } catch (error) {
+    // Don't block bookings if this check itself fails; just retry next call.
+    fkCheckDone = false;
+    console.error('ensureNoLegacyCourseFk failed:', error);
+  }
+}
+
 type ResData = {
   studentName: string;
   email: string;
@@ -79,6 +108,14 @@ function approveToCustomer(r: ResData) {
   );
 }
 
+function declineToCustomer(r: ResData) {
+  sendEmail(
+    r.email,
+    `Booking update - ${r.courseTitle}`,
+    detailsHtml(r, `<p style="margin-top:16px;background:#fef2f2;padding:12px;border-radius:8px;">Unfortunately we can't confirm this booking. Please choose another date on our website or contact Cátia on WhatsApp — we'd love to have you another day.</p>`, 'en')
+  );
+}
+
 function todayInCapeVerde(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Atlantic/Cape_Verde' }).format(new Date());
 }
@@ -103,6 +140,7 @@ export async function GET() {
 // ---------------------------------------------------------------
 export async function POST(request: Request) {
   try {
+    await ensureNoLegacyCourseFk();
     const body = await request.json();
     const { studentName, email, phone, courseId, date, notes, dietaryRestrictions } = body;
     const isAdmin = await isAdminRequest(request);
@@ -209,6 +247,7 @@ export async function POST(request: Request) {
 // ---------------------------------------------------------------
 export async function PATCH(request: Request) {
   try {
+    await ensureNoLegacyCourseFk();
     const body = await request.json();
     const {
       id, studentName, email, phone, courseId, courseTitle, date, time,
@@ -255,6 +294,21 @@ export async function PATCH(request: Request) {
 
     const wasConfirmed = r.status === 'confirmed' || r.status === 'confirmada';
     const nowConfirmed = newStatus === 'confirmed' || newStatus === 'confirmada';
+    const wasPending = r.status === 'pending' || r.status === 'pendente';
+    const nowCancelled = newStatus === 'cancelled' || newStatus === 'cancelada';
+    if (wasPending && nowCancelled) {
+      declineToCustomer({
+        studentName: studentName ?? r.studentName,
+        email: email ?? r.email,
+        phone: (phone ?? r.phone) || '',
+        courseTitle: courseTitle ?? r.courseTitle,
+        date: date ?? r.date,
+        time: (time ?? r.time) || '',
+        guests: (guests ?? r.guests) || 1,
+        totalPrice: Number(totalPrice ?? r.totalPrice) || 0,
+        currency: (currency ?? r.currency) || 'EUR',
+      });
+    }
     if (nowConfirmed && !wasConfirmed) {
       approveToCustomer({
         studentName: studentName ?? r.studentName,
