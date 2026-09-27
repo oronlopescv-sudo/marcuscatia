@@ -27,9 +27,6 @@ function RestaurantOffer() {
     <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-blue-50 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-2">
       <div className="relative h-56 sm:h-72 md:h-auto min-h-[14rem] bg-gray-100">
         <Image src={RESTAURANT_DINNER.image} alt="Dinner at Cátia's table" fill className="object-cover" sizes="(min-width: 768px) 50vw, 100vw" />
-        <div className="absolute top-4 right-4 bg-white/95 px-3 py-1 rounded-full shadow-sm">
-          <span className="text-mindelo-dark font-bold text-sm">€{RESTAURANT_DINNER.priceNumber} / person</span>
-        </div>
       </div>
 
       <div className="p-5 sm:p-8 flex flex-col">

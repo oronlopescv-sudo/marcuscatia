@@ -27,8 +27,11 @@ export const RESTAURANT_DINNER: Course = {
   image: '/catia-cutting-fish.jpg',
   duration: 'Evening seatings',
   maxCapacity: RESTAURANT_MAX_GUESTS,
-  price: '€20',
-  priceNumber: 20,
+  // No price on the site: the dinner follows the menu of the day and is
+  // settled with Cátia in person. An empty price makes the price tags and
+  // totals disappear (see lib/pricing.ts) instead of showing €0.
+  price: '',
+  priceNumber: 0,
   active: true,
   timeSlot: DEFAULT_RESTAURANT_TIME_SLOTS[0],
   includes: ['Starter', 'Main course', 'Dessert'],

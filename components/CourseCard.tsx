@@ -35,9 +35,11 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-            <span className="text-mindelo-dark font-bold text-sm">{course.price}{isRestaurantBooking(course.id) ? ' / person' : ''}</span>
-          </div>
+          {course.price && (
+            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+              <span className="text-mindelo-dark font-bold text-sm">{course.price}{isRestaurantBooking(course.id) ? ' / person' : ''}</span>
+            </div>
+          )}
         </div>
         
         <div className="flex flex-col flex-1 p-4 sm:p-5 md:p-6">

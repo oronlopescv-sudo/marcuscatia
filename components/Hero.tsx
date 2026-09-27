@@ -99,7 +99,7 @@ export function Hero() {
               >
                 <UtensilsCrossed size={30} className="shrink-0" />
                 <span className="font-bold text-base sm:text-lg leading-tight">Restaurant</span>
-                <span className="text-xs sm:text-sm text-red-100 leading-snug">3-course dinner · €{RESTAURANT_DINNER.priceNumber}/person</span>
+                <span className="text-xs sm:text-sm text-red-100 leading-snug">3-course Cape Verdean dinner</span>
               </Link>
             </div>
             <a

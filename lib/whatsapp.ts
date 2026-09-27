@@ -67,8 +67,8 @@ Olá ${message.studentName}!
 📍 Class: ${message.courseTitle}
 📅 Date: ${message.date}
 🕐 Time: ${message.time}
-👥 Guests: ${message.guests}
-💰 Total: €${message.totalPrice}
+👥 Guests: ${message.guests}${Number(message.totalPrice) > 0 ? `
+💰 Total: €${message.totalPrice}` : ''}
 
 If you need to reschedule or have questions, please reply to this message or contact us.
 
@@ -102,8 +102,8 @@ export async function sendWhatsAppNewReservation(
 📍 Curso: ${r.courseTitle}
 📅 Data: ${r.date}
 🕐 Horário: ${r.time}
-👥 Convidados: ${r.guests}
-💰 Total: €${r.totalPrice}
+👥 Convidados: ${r.guests}${Number(r.totalPrice) > 0 ? `
+💰 Total: €${r.totalPrice}` : ''}
 
 Aceda ao painel admin para confirmar ou recusar esta reserva.
 `.trim();

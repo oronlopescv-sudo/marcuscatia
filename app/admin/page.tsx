@@ -43,6 +43,7 @@ import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
 import { ReviewsManager } from '@/components/ReviewsManager';
 import { HeroPhotoManager } from '@/components/HeroPhotoManager';
 import { RESTAURANT_DINNER, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
+import { unitPriceOf, priceLabel } from '@/lib/pricing';
 import { DEFAULT_SITE_INFO } from '@/lib/siteInfo';
 import { format, addMonths, startOfMonth, getDay, getDaysInMonth } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -468,18 +469,9 @@ export default function AdminPage() {
       return;
     }
     
-    // Safe price parsing
-    let unitPrice = 45;
-    if (selectedCourse?.priceNumber && !isNaN(selectedCourse.priceNumber) && selectedCourse.priceNumber > 0) {
-      unitPrice = selectedCourse.priceNumber;
-    } else if (selectedCourse?.price) {
-      const parsed = parseInt(selectedCourse.price.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        unitPrice = parsed;
-      }
-    }
-    
-    const totalPrice = unitPrice * guestNum;
+    // Classes carry a price; the dinner doesn't, so it totals 0 (the admin can
+    // still type a total in Edit Booking once the menu of the day is settled).
+    const totalPrice = unitPriceOf(selectedCourse) * guestNum;
 
     addReservation({
       studentName: newRes.studentName.trim(),
@@ -1088,7 +1080,7 @@ export default function AdminPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <DollarSign size={12} />
-                              €{res.totalPrice} ({getPaymentLabel(res.paymentStatus)})
+                              {priceLabel(res.totalPrice, 'No fixed price')} ({getPaymentLabel(res.paymentStatus)})
                             </span>
                           </div>
                           {approvalButtons(res, 'sm')}
@@ -1292,7 +1284,7 @@ export default function AdminPage() {
                           <Calendar size={14} /> {res.date} · {res.time}
                         </p>
                         <p className="flex items-center gap-1.5 text-slate-600">
-                          <Users size={14} /> {res.guests} {res.guests > 1 ? 'guests' : 'guest'} · <span className="font-bold text-slate-900">€{res.totalPrice}</span>
+                          <Users size={14} /> {res.guests} {res.guests > 1 ? 'guests' : 'guest'} · <span className="font-bold text-slate-900">{priceLabel(res.totalPrice)}</span>
                         </p>
                         {res.dietaryRestrictions && (
                           <span className="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
@@ -1436,7 +1428,7 @@ export default function AdminPage() {
                             </div>
                           </td>
                           <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900">€{res.totalPrice}</div>
+                            <div className="font-bold text-slate-900">{priceLabel(res.totalPrice)}</div>
                             <button
                               onClick={() => {
                                 const nextStatus = (res.paymentStatus === 'paid' || res.paymentStatus === 'pago') ? 'on_arrival' : 'paid';
@@ -2071,7 +2063,7 @@ export default function AdminPage() {
                 >
                   {bookable.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.title} ({c.price})
+                      {c.title}{c.price ? ` (${c.price})` : ''}
                     </option>
                   ))}
                 </select>
@@ -2213,7 +2205,7 @@ export default function AdminPage() {
                 <div>
                   <span className="text-slate-400 font-bold block text-[10px] uppercase">Guests & Price</span>
                   <span className="font-semibold">{selectedReservation.guests} guest(s)</span>
-                  <div className="font-bold text-emerald-700">€{selectedReservation.totalPrice} ({getPaymentLabel(selectedReservation.paymentStatus)})</div>
+                  <div className="font-bold text-emerald-700">{priceLabel(selectedReservation.totalPrice, 'No fixed price')} ({getPaymentLabel(selectedReservation.paymentStatus)})</div>
                 </div>
               </div>
 
@@ -2362,18 +2354,7 @@ function EditReservationModal({
     if (found) {
       if (found.timeSlot) setTime(found.timeSlot);
       
-      // Safe price parsing
-      let unit = 45;
-      if (found.priceNumber && !isNaN(found.priceNumber) && found.priceNumber > 0) {
-        unit = found.priceNumber;
-      } else if (found.price) {
-        const parsed = parseInt(found.price.replace(/[^0-9]/g, ''), 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          unit = parsed;
-        }
-      }
-      
-      setTotalPrice(unit * guests);
+      setTotalPrice(unitPriceOf(found) * guests);
     }
   };
 
@@ -2381,18 +2362,7 @@ function EditReservationModal({
     setGuests(newGuests);
     const found = courses.find(c => c.id === courseId);
     
-    // Safe price parsing
-    let unit = 45;
-    if (found?.priceNumber && !isNaN(found.priceNumber) && found.priceNumber > 0) {
-      unit = found.priceNumber;
-    } else if (found?.price) {
-      const parsed = parseInt(found.price.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        unit = parsed;
-      }
-    }
-    
-    setTotalPrice(unit * newGuests);
+    setTotalPrice(unitPriceOf(found) * newGuests);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -2438,10 +2408,11 @@ function EditReservationModal({
       return;
     }
 
-    // Validation: Check totalPrice is positive
+    // 0 is valid: a restaurant booking has no price until the menu of the day
+    // is settled. Only a negative or non-numeric total is a mistake.
     const priceNum = Number(totalPrice);
-    if (priceNum <= 0 || isNaN(priceNum)) {
-      alert('Total price must be greater than 0');
+    if (isNaN(priceNum) || priceNum < 0) {
+      alert('Total price must be 0 or more');
       return;
     }
 

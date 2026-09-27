@@ -7,6 +7,7 @@ import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
 import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
 import { clientIp, isRateLimited } from '@/lib/rateLimit';
+import { unitPriceOf } from '@/lib/pricing';
 
 // An early schema had reservations.courseId REFERENCES courses(id). The
 // restaurant dinner books with courseId='restaurant-dinner', a virtual
@@ -65,7 +66,7 @@ function detailsHtml(r: ResData, extra = '', lang: 'pt' | 'en' = 'pt') {
       <p><strong>${L.date}:</strong> ${esc(r.date)}</p>
       <p><strong>${L.time}:</strong> ${esc(r.time)}</p>
       <p><strong>${L.guests}:</strong> ${esc(r.guests)}</p>
-      <p><strong>Total:</strong> ${esc(r.totalPrice)} ${esc(r.currency)}</p>
+      ${Number(r.totalPrice) > 0 ? `<p><strong>Total:</strong> ${esc(r.totalPrice)} ${esc(r.currency)}</p>` : ''}
       ${extra}
     </div>`;
 }
@@ -245,7 +246,9 @@ export async function POST(request: Request) {
     }
 
     const courseTitle: string = course.title;
-    const unitPrice = Number(course.priceNumber) || 0;
+    // Classes are priced per guest; the dinner has no price on the site, so it
+    // stores 0 until the admin sets a total in the panel.
+    const unitPrice = unitPriceOf(course);
     const totalPrice = isAdmin && Number(body.totalPrice) > 0 ? Number(body.totalPrice) : unitPrice * guests;
     const currency = 'EUR';
     const status = isAdmin && typeof body.status === 'string' ? body.status : 'pending';

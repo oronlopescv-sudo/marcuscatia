@@ -17,6 +17,7 @@ import { useSiteContent } from '@/lib/useSiteContent';
 import { useSiteInfo } from '@/lib/useSiteInfo';
 import { whatsappLink } from '@/lib/siteInfo';
 import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
+import { unitPriceOf } from '@/lib/pricing';
 
 const reservationSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
@@ -158,18 +159,9 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     setIsSubmitting(true);
     setLastSubmitTime(now);
     
-    // Safe price parsing: course.priceNumber → parse price string → fallback to 45
-    let unitPrice = 45;
-    if (course.priceNumber && !isNaN(course.priceNumber) && course.priceNumber > 0) {
-      unitPrice = course.priceNumber;
-    } else if (course.price) {
-      const parsed = parseInt(course.price.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        unitPrice = parsed;
-      }
-    }
-    
-    const totalPrice = unitPrice * Number(data.guests);
+    // Only the classes have a price; the dinner totals 0 and is settled in
+    // person, so nothing here may invent a figure.
+    const totalPrice = unitPriceOf(course) * Number(data.guests);
 
     // Trim data and validate
     const trimmedData = {
@@ -325,7 +317,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     ))}
                   </ol>
                   <p className="mt-6 text-gray-600">
-                    €{course.priceNumber} per person · groups from {minGuests} guests · served at {timeSlots.join(' or ')}.
+                    Groups from {minGuests} guests · served at {timeSlots.join(' or ')} · the price follows the menu of the day and is settled with Cátia.
                   </p>
                 </section>
               ) : (
@@ -348,8 +340,17 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 sm:p-6 md:p-8 lg:sticky lg:top-28">
                 <div className="flex justify-between items-end mb-6 border-b border-gray-100 pb-6">
                   <div>
-                    <span className="block text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Price per guest</span>
-                    <span className="text-4xl font-bold text-mindelo-dark">{course.price}</span>
+                    {course.price ? (
+                      <>
+                        <span className="block text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Price per guest</span>
+                        <span className="text-4xl font-bold text-mindelo-dark">{course.price}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="block text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Reservation</span>
+                        <span className="text-3xl font-bold text-mindelo-dark">Book your table</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
