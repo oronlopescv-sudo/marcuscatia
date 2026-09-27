@@ -5,18 +5,32 @@ import type { Course } from '@/lib/store';
 export const RESTAURANT_MIN_GUESTS = 4;
 export const RESTAURANT_MAX_GUESTS = 20;
 
+// Unlike classes (one fixed time per course), the dinner has multiple
+// seatings the guest picks from — editable in Admin → Settings ("Site
+// Information") as a comma-separated list; this is only the fallback before
+// that setting loads / if it's never set.
+export const DEFAULT_RESTAURANT_TIME_SLOTS = ['18:00', '21:00'];
+
+export function parseTimeSlots(raw: string | undefined | null): string[] {
+  const slots = (raw || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s));
+  return slots.length > 0 ? slots : DEFAULT_RESTAURANT_TIME_SLOTS;
+}
+
 export const RESTAURANT_DINNER: Course = {
   id: 'restaurant-dinner',
   title: 'Restaurant Dinner',
   description:
     'A three-course Cape Verdean dinner at Cátia’s family table in Fonte Francês: starter, main course and dessert, cooked with fresh produce from the Mindelo market.',
   image: '/catia-cutting-fish.jpg',
-  duration: 'From 19:00',
+  duration: 'Evening seatings',
   maxCapacity: RESTAURANT_MAX_GUESTS,
   price: '€20',
   priceNumber: 20,
   active: true,
-  timeSlot: '19:00',
+  timeSlot: DEFAULT_RESTAURANT_TIME_SLOTS[0],
   includes: ['Starter', 'Main course', 'Dessert'],
 };
 

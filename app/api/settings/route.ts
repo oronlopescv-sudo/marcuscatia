@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSetting, setSetting } from '@/lib/settings';
+import { parseTimeSlots } from '@/lib/restaurant';
 
 // Chaves usadas no painel admin (Site Information)
-const KEYS = ['site_title', 'site_email', 'site_whatsapp', 'site_location', 'notify_whatsapp', 'notify_email'] as const;
+const KEYS = ['site_title', 'site_email', 'site_whatsapp', 'site_location', 'notify_whatsapp', 'notify_email', 'restaurant_time_slots'] as const;
 
 export async function GET() {
   try {
@@ -25,7 +26,13 @@ export async function POST(request: Request) {
     }
     for (const k of KEYS) {
       if (typeof body[k] === 'string') {
-        await setSetting(k, body[k].trim());
+        // The dinner seatings are stored as a normalised "HH:MM,HH:MM" list so
+        // the booking form and the server always agree on what is bookable;
+        // anything unparseable falls back to the defaults.
+        const value = k === 'restaurant_time_slots'
+          ? parseTimeSlots(body[k]).join(',')
+          : body[k].trim();
+        await setSetting(k, value);
       }
     }
     return NextResponse.json({ success: true });

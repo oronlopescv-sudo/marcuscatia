@@ -16,7 +16,7 @@ import { useAdminStore } from '@/lib/store';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { useSiteInfo } from '@/lib/useSiteInfo';
 import { whatsappLink } from '@/lib/siteInfo';
-import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
 
 const reservationSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
@@ -91,12 +91,17 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const course = isDinner ? RESTAURANT_DINNER : courses.find((c) => c.id === unwrappedParams.id);
   const minGuests = isDinner ? RESTAURANT_MIN_GUESTS : 1;
   
+  // The dinner runs in seatings the guest picks from (editable in Admin →
+  // Settings); a class has the single fixed hour stored on the course.
+  const timeSlots = parseTimeSlots(site.restaurant_time_slots);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   const [dateError, setDateError] = useState<string | null>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitErrorMessage, setSubmitErrorMessage] = useState('');
-  const [submittedData, setSubmittedData] = useState<{ name: string; date: string; guests: number } | null>(null);
+  const [submittedData, setSubmittedData] = useState<{ name: string; date: string; time: string; guests: number } | null>(null);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   
   // Rate limit: max 1 submission per 30 seconds
@@ -125,6 +130,11 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       return;
     }
 
+    if (isDinner && !selectedTime) {
+      setTimeError('Please choose the time you would like to have dinner.');
+      return;
+    }
+
     if (data.guests < minGuests) {
       setDateError(`Dinner bookings are for groups of at least ${minGuests} guests.`);
       return;
@@ -144,6 +154,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     }
 
     setDateError(null);
+    setTimeError(null);
     setIsSubmitting(true);
     setLastSubmitTime(now);
     
@@ -178,7 +189,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       courseId: course.id,
       courseTitle: course.title,
       date: formattedDate,
-      time: course.timeSlot || '10:00 - 12:30',
+      time: isDinner ? selectedTime : (course.timeSlot || '10:00 - 12:30'),
       guests: trimmedData.guests,
       totalPrice,
       currency: 'EUR',
@@ -199,6 +210,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     setSubmittedData({
       name: trimmedData.name,
       date: formattedDate,
+      time: saved.reservation.time,
       guests: trimmedData.guests,
     });
     setSubmitStatus('success');
@@ -263,7 +275,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">
                 <Clock size={20} className="text-mindelo-gold" />
-                <span>{course.duration}</span>
+                <span>{isDinner ? timeSlots.join(' or ') : course.duration}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={20} className="text-mindelo-gold" />
@@ -313,7 +325,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     ))}
                   </ol>
                   <p className="mt-6 text-gray-600">
-                    €{course.priceNumber} per person · groups from {minGuests} guests · served {course.duration.toLowerCase()}.
+                    €{course.priceNumber} per person · groups from {minGuests} guests · served at {timeSlots.join(' or ')}.
                   </p>
                 </section>
               ) : (
@@ -373,12 +385,12 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     </div>
                     <h3 className="text-xl font-bold text-mindelo-dark mb-2">Booking Request Sent!</h3>
                     <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                      Your booking request has been forwarded to Cátia for <strong className="text-mindelo-dark">{submittedData?.date}</strong> ({submittedData?.guests} guest{submittedData?.guests && submittedData.guests > 1 ? 's' : ''}).
+                      Your booking request has been forwarded to Cátia for <strong className="text-mindelo-dark">{submittedData?.date}</strong>{submittedData?.time ? <> at <strong className="text-mindelo-dark">{submittedData.time}</strong></> : null} ({submittedData?.guests} guest{submittedData?.guests && submittedData.guests > 1 ? 's' : ''}).
                     </p>
 
                     <div className="space-y-3">
                       <a
-                        href={whatsappLink(site.site_whatsapp, (`Hello Cátia! I have just submitted a booking request on your site for ${isDinner ? 'a dinner' : `the cooking class "${course.title}"`} on ${submittedData?.date} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`))}
+                        href={whatsappLink(site.site_whatsapp, (`Hello Cátia! I have just submitted a booking request on your site for ${isDinner ? 'a dinner' : `the cooking class "${course.title}"`} on ${submittedData?.date}${submittedData?.time ? ` at ${submittedData.time}` : ''} (${submittedData?.guests} guests) under the name of ${submittedData?.name}.`))}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
@@ -390,6 +402,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                         onClick={() => {
                           setSubmitStatus('idle');
                           setSelectedDate(undefined);
+                          setSelectedTime('');
                           reset();
                         }}
                         className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors block text-center"
@@ -435,8 +448,41 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       ) : null}
                     </div>
 
+                    {isDinner && (
+                      <div>
+                        <label className="block text-sm font-bold text-mindelo-dark mb-2">2. Choose Your Time</label>
+                        <div className="flex flex-wrap gap-2">
+                          {timeSlots.map((slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => {
+                                setSelectedTime(slot);
+                                setTimeError(null);
+                              }}
+                              aria-pressed={selectedTime === slot}
+                              className={`px-5 py-3 rounded-xl border font-bold text-sm transition-all ${
+                                selectedTime === slot
+                                  ? 'bg-mindelo-red border-mindelo-red text-white shadow-md'
+                                  : 'bg-white border-gray-200 text-mindelo-dark hover:border-mindelo-red'
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                        {timeError ? (
+                          <p className="text-red-500 font-medium text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle size={14} /> {timeError}
+                          </p>
+                        ) : (
+                          <p className="text-gray-500 text-xs mt-2">Each seating is served at Cátia&apos;s family table.</p>
+                        )}
+                      </div>
+                    )}
+
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-mindelo-dark mb-2">2. Your Details</label>
+                      <label className="block text-sm font-bold text-mindelo-dark mb-2">{isDinner ? '3' : '2'}. Your Details</label>
                       
                       <div>
                         <input

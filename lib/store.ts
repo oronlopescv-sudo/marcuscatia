@@ -61,6 +61,7 @@ interface AdminStoreState {
   // Actions
   addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<{ ok: true; reservation: Reservation } | { ok: false; error: string }>;
   updateReservation: (id: string, updates: Partial<Reservation>) => void;
+  resendConfirmationEmail: (id: string) => Promise<{ ok: boolean; error?: string }>;
   updateReservationStatus: (id: string, status: Reservation['status']) => void;
   updateReservationPayment: (id: string, status: Reservation['paymentStatus']) => void;
   deleteReservation: (id: string) => void;
@@ -168,6 +169,22 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
     }
   },
 
+      resendConfirmationEmail: async (id) => {
+        try {
+          const res = await fetch('/api/reservations', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, resendEmail: true }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) return { ok: false, error: data.error || 'Could not resend the email.' };
+          return { ok: true };
+        } catch (error) {
+          console.error('Error resending confirmation email:', error);
+          return { ok: false, error: 'Network error. Please try again.' };
+        }
+      },
+
       updateReservation: (id, updates) => {
         const previous = get().reservations;
         set({
@@ -189,7 +206,6 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
         if (!reservation) return;
 
         const previousReservations = get().reservations;
-        const previousBlockedDates = get().blockedDates;
 
         set({
           reservations: previousReservations.map((r) =>
@@ -197,35 +213,20 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           ),
         });
 
-        const nowConfirmed = status === 'confirmed' || status === 'confirmada';
-        const nowCancelled = status === 'cancelled' || status === 'cancelada';
-        const { blockedDates, toggleBlockedDate, reservations } = get();
-
-        if (nowConfirmed && !blockedDates.includes(reservation.date)) {
-          // Auto-block the date so no one else can book the same slot.
-          toggleBlockedDate(reservation.date);
-        } else if (nowCancelled && blockedDates.includes(reservation.date)) {
-          // Only auto-unblock if no OTHER confirmed reservation still
-          // needs that date blocked.
-          const stillNeeded = reservations.some(
-            (r) => r.id !== id && r.date === reservation.date &&
-              (r.status === 'confirmed' || r.status === 'confirmada')
-          );
-          if (!stillNeeded) {
-            toggleBlockedDate(reservation.date);
-          }
-        }
-
-        // Persist the change so the admin approval reaches the server
-        // (which also triggers the confirmation email to the customer). If
-        // this fails (e.g. the admin session expired), undo the status AND
-        // the auto block/unblock above, so the UI never claims success for
-        // an action the server rejected.
+        // Blocking a whole calendar day is a deliberate, manual admin
+        // choice (toggleBlockedDate, e.g. for a holiday) and stays that way
+        // regardless of reservations — confirming or cancelling a booking
+        // never blocks/unblocks a date automatically. A class at 10:00 and
+        // the restaurant dinner at 19:00 are different slots on the same
+        // day, so auto-blocking the whole date would wrongly stop the other
+        // one from being booked. Overbooking the SAME class/dinner on the
+        // same date is prevented separately, server-side, by the guest
+        // capacity check in POST /api/reservations.
         persist(
           set,
           '/api/reservations',
           { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: reservation.id, status }) },
-          { reservations: previousReservations, blockedDates: previousBlockedDates },
+          { reservations: previousReservations },
           'Could not update the booking status. Please try again.'
         );
       },

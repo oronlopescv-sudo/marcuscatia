@@ -5,7 +5,7 @@ import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/l
 import { sendEmail, esc } from '@/lib/email';
 import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
-import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
 import { clientIp, isRateLimited } from '@/lib/rateLimit';
 
 // An early schema had reservations.courseId REFERENCES courses(id). The
@@ -181,6 +181,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Guests must be between ${minGuests} and ${maxCapacity}` }, { status: 400 });
     }
 
+    // A class runs at one fixed hour, so its time comes from the course. The
+    // dinner has several seatings the guest picks from (configured in Admin →
+    // Settings), so the chosen one is validated against that list here — a
+    // visitor must not be able to invent a seating that isn't offered. For
+    // manual entries the admin may type any schedule.
+    let time: string = course.timeSlot || '';
+    if (isAdmin && typeof body.time === 'string' && body.time) {
+      time = body.time;
+    } else if (isDinner) {
+      const slots = parseTimeSlots(await getSetting('restaurant_time_slots'));
+      const picked = typeof body.time === 'string' ? body.time.trim() : '';
+      if (picked && !slots.includes(picked)) {
+        return NextResponse.json(
+          { error: 'That dinner seating is not available. Please choose one of the times offered.' },
+          { status: 400 }
+        );
+      }
+      time = picked || slots[0];
+    }
+
     // Visitors can't book past or blocked days; the admin may (manual entries).
     if (!isAdmin) {
       if (date < todayInCapeVerde()) {
@@ -194,19 +214,30 @@ export async function POST(request: Request) {
       // maxCapacity above only checked THIS booking's own guest count; without
       // this, two separate bookings of e.g. 8 guests each could both go
       // through for the same 8-person class/date, silently double-booking it.
-      const existing: any = await query(
-        `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
-         WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
-        [String(courseId), date]
-      );
+      // Each dinner seating (e.g. 18:00 and 21:00) is a separate sitting with
+      // its own table capacity, so they are counted apart; a class has a
+      // single time per date, so it is counted per date.
+      const existing: any = isDinner
+        ? await query(
+            `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
+             WHERE courseId = ? AND date = ? AND time = ? AND status NOT IN ('cancelled', 'cancelada')`,
+            [String(courseId), date, time]
+          )
+        : await query(
+            `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
+             WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
+            [String(courseId), date]
+          );
       const alreadyBooked = Number(existing?.[0]?.total) || 0;
       if (alreadyBooked + guests > maxCapacity) {
         const remaining = Math.max(0, maxCapacity - alreadyBooked);
+        const slot = isDinner ? 'seating' : 'date';
+        const alternative = isDinner ? 'another time or date' : 'another date';
         return NextResponse.json(
           {
             error: remaining > 0
-              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
-              : 'This date is fully booked. Please choose another date.',
+              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this ${slot}. Please choose fewer guests or ${alternative}.`
+              : `This ${slot} is fully booked. Please choose ${alternative}.`,
           },
           { status: 409 }
         );
@@ -214,7 +245,6 @@ export async function POST(request: Request) {
     }
 
     const courseTitle: string = course.title;
-    const time: string = (isAdmin && typeof body.time === 'string' && body.time) || course.timeSlot || '';
     const unitPrice = Number(course.priceNumber) || 0;
     const totalPrice = isAdmin && Number(body.totalPrice) > 0 ? Number(body.totalPrice) : unitPrice * guests;
     const currency = 'EUR';
@@ -290,6 +320,33 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
     }
     const r = rows[0];
+
+    // Manually resend the customer's email (confirmation or approval,
+    // whichever matches the current status) without changing anything else
+    // — for when the automatic one didn't arrive (e.g. a delivery issue).
+    if (body.resendEmail === true) {
+      const resData: ResData = {
+        studentName: r.studentName,
+        email: r.email,
+        phone: r.phone || '',
+        courseTitle: r.courseTitle,
+        date: r.date,
+        time: r.time || '',
+        guests: r.guests || 1,
+        totalPrice: Number(r.totalPrice) || 0,
+        currency: r.currency || 'EUR',
+      };
+      const isConfirmedNow = r.status === 'confirmed' || r.status === 'confirmada';
+      const isCancelledNow = r.status === 'cancelled' || r.status === 'cancelada';
+      if (isCancelledNow) {
+        declineToCustomer(resData);
+      } else if (isConfirmedNow) {
+        approveToCustomer(resData);
+      } else {
+        confirmToCustomer(resData);
+      }
+      return NextResponse.json({ success: true, resent: true });
+    }
 
     const newStatus = status ?? r.status;
     const newPayment = paymentStatus ?? r.paymentStatus;
