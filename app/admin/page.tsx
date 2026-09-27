@@ -213,7 +213,7 @@ export default function AdminPage() {
     setResending(false);
     setResendMessage(
       result.ok
-        ? { ok: true, text: 'Email sent again to the customer.' }
+        ? { ok: true, text: `Email sent again to ${result.email || 'the customer'}.` }
         : { ok: false, text: result.error || 'Could not resend the email.' }
     );
   };

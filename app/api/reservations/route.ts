@@ -94,7 +94,7 @@ async function notifyAdmin(r: ResData) {
 
 // Customer emails are in English (the site's language).
 function confirmToCustomer(r: ResData) {
-  sendEmail(
+  return sendEmail(
     r.email,
     `Booking request received - ${r.courseTitle}`,
     detailsHtml(r, `<p style="margin-top:16px;background:#f3f4f6;padding:12px;border-radius:8px;">Thank you! We have received your booking request. Cátia will contact you on WhatsApp to confirm it. Your booking stays <strong>pending</strong> until then.</p>`, 'en')
@@ -102,7 +102,7 @@ function confirmToCustomer(r: ResData) {
 }
 
 function approveToCustomer(r: ResData) {
-  sendEmail(
+  return sendEmail(
     r.email,
     `✔ Booking confirmed - ${r.courseTitle}`,
     detailsHtml(r, `<p style="margin-top:16px;background:#ecfdf5;padding:12px;border-radius:8px;"><strong>Your booking is confirmed!</strong> We look forward to welcoming you on ${esc(r.date)} at ${esc(r.time)}.</p>`, 'en')
@@ -110,7 +110,7 @@ function approveToCustomer(r: ResData) {
 }
 
 function declineToCustomer(r: ResData) {
-  sendEmail(
+  return sendEmail(
     r.email,
     `Booking update - ${r.courseTitle}`,
     detailsHtml(r, `<p style="margin-top:16px;background:#fef2f2;padding:12px;border-radius:8px;">Unfortunately we can't confirm this booking. Please choose another date on our website or contact Cátia on WhatsApp — we'd love to have you another day.</p>`, 'en')
@@ -325,6 +325,9 @@ export async function PATCH(request: Request) {
     // whichever matches the current status) without changing anything else
     // — for when the automatic one didn't arrive (e.g. a delivery issue).
     if (body.resendEmail === true) {
+      if (!r.email) {
+        return NextResponse.json({ error: 'This booking has no email address saved.' }, { status: 400 });
+      }
       const resData: ResData = {
         studentName: r.studentName,
         email: r.email,
@@ -338,14 +341,17 @@ export async function PATCH(request: Request) {
       };
       const isConfirmedNow = r.status === 'confirmed' || r.status === 'confirmada';
       const isCancelledNow = r.status === 'cancelled' || r.status === 'cancelada';
-      if (isCancelledNow) {
-        declineToCustomer(resData);
-      } else if (isConfirmedNow) {
-        approveToCustomer(resData);
-      } else {
-        confirmToCustomer(resData);
+      // Awaited, unlike the automatic emails: a manual resend is only useful
+      // if the panel says whether it actually went out this time.
+      const sent = isCancelledNow
+        ? await declineToCustomer(resData)
+        : isConfirmedNow
+          ? await approveToCustomer(resData)
+          : await confirmToCustomer(resData);
+      if (!sent.ok) {
+        return NextResponse.json({ error: sent.error }, { status: 502 });
       }
-      return NextResponse.json({ success: true, resent: true });
+      return NextResponse.json({ success: true, resent: true, email: r.email });
     }
 
     const newStatus = status ?? r.status;

@@ -61,7 +61,7 @@ interface AdminStoreState {
   // Actions
   addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => Promise<{ ok: true; reservation: Reservation } | { ok: false; error: string }>;
   updateReservation: (id: string, updates: Partial<Reservation>) => void;
-  resendConfirmationEmail: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  resendConfirmationEmail: (id: string) => Promise<{ ok: boolean; error?: string; email?: string }>;
   updateReservationStatus: (id: string, status: Reservation['status']) => void;
   updateReservationPayment: (id: string, status: Reservation['paymentStatus']) => void;
   deleteReservation: (id: string) => void;
@@ -178,7 +178,7 @@ export const useAdminStore = create<AdminStoreState>((set, get) => ({
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) return { ok: false, error: data.error || 'Could not resend the email.' };
-          return { ok: true };
+          return { ok: true, email: data.email };
         } catch (error) {
           console.error('Error resending confirmation email:', error);
           return { ok: false, error: 'Network error. Please try again.' };
