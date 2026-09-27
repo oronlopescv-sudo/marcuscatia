@@ -19,3 +19,4 @@ public/uploads/
 # secrets
 *_key*
 *.pem
+.env.production.local
