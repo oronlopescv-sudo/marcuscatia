@@ -314,7 +314,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     ))}
                   </ol>
                   <p className="mt-6 text-gray-600">
-                    Groups from {minGuests} guests · served at {timeSlots.join(' or ')} · the price follows the menu of the day and is settled with Cátia.
+                    Groups from {minGuests} guests · choose your preferred time · the price follows the menu of the day and is settled with Cátia.
                   </p>
                 </section>
               ) : (
