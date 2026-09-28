@@ -182,12 +182,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Guests must be between ${minGuests} and ${maxCapacity}` }, { status: 400 });
     }
 
-    // A class runs at one fixed hour from the course. The dinner has no fixed
-    // times — the guest chooses their preferred time, which Cátia will confirm
-    // or reschedule when she reviews the booking.
+    // A class runs at the course's fixed hour. Dinner guests write the time
+    // they'd like, which Cátia confirms or reschedules; manual admin entries
+    // may set any time. reservations.time is VARCHAR(100).
     let time: string = course.timeSlot || '';
-    if (isDinner) {
-      time = typeof body.time === 'string' ? body.time.trim() : '';
+    const requestedTime = typeof body.time === 'string' ? body.time.trim() : '';
+    if (requestedTime.length > 50) {
+      return NextResponse.json({ error: 'Please write the time in a short form, e.g. 19:30.' }, { status: 400 });
+    }
+    if (isAdmin && requestedTime) {
+      time = requestedTime;
+    } else if (isDinner) {
+      if (!requestedTime) {
+        return NextResponse.json({ error: 'Please tell us what time you would like to have dinner.' }, { status: 400 });
+      }
+      time = requestedTime;
     }
 
     // Visitors can't book past or blocked days; the admin may (manual entries).

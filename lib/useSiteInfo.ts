@@ -23,7 +23,6 @@ export function useSiteInfo(): SiteInfo {
           site_whatsapp: data.site_whatsapp || DEFAULT_SITE_INFO.site_whatsapp,
           site_location: data.site_location || DEFAULT_SITE_INFO.site_location,
           hero_image: data.hero_image || DEFAULT_SITE_INFO.hero_image,
-          restaurant_time_slots: data.restaurant_time_slots || DEFAULT_SITE_INFO.restaurant_time_slots,
         });
       })
       .catch(() => {

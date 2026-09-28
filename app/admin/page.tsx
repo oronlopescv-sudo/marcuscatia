@@ -42,7 +42,7 @@ import { MusicManager } from '@/components/MusicManager';
 import { NewsletterSubscribers } from '@/components/NewsletterSubscribers';
 import { ReviewsManager } from '@/components/ReviewsManager';
 import { HeroPhotoManager } from '@/components/HeroPhotoManager';
-import { RESTAURANT_DINNER, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
+import { RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
 import { unitPriceOf, priceLabel } from '@/lib/pricing';
 import { DEFAULT_SITE_INFO } from '@/lib/siteInfo';
 import { format, addMonths, startOfMonth, getDay, getDaysInMonth } from 'date-fns';
@@ -95,7 +95,6 @@ export default function AdminPage() {
     site_location: DEFAULT_SITE_INFO.site_location,
     notify_whatsapp: DEFAULT_SITE_INFO.site_whatsapp,
     notify_email: '',
-    restaurant_time_slots: DEFAULT_SITE_INFO.restaurant_time_slots,
   });
   const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -171,7 +170,6 @@ export default function AdminPage() {
           site_location: data.site_location || prev.site_location,
           notify_whatsapp: data.notify_whatsapp || prev.notify_whatsapp,
           notify_email: data.notify_email || prev.notify_email,
-          restaurant_time_slots: data.restaurant_time_slots || prev.restaurant_time_slots,
         }));
       } catch (e) {
         console.error('Failed to load settings:', e);
@@ -1911,13 +1909,6 @@ export default function AdminPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp number to receive new reservation notifications</label>
                       <input type="tel" value={siteInfo.notify_whatsapp} onChange={(e) => setSiteInfo({ ...siteInfo, notify_whatsapp: e.target.value })} placeholder="+238 595 3973" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
                       <p className="text-xs text-gray-500 mt-1">This number gets an automatic WhatsApp alert for each new booking (requires WhatsApp Cloud API credentials on the server).</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Dinner seating times</label>
-                      <input type="text" value={siteInfo.restaurant_time_slots} onChange={(e) => setSiteInfo({ ...siteInfo, restaurant_time_slots: e.target.value })} placeholder="18:00, 21:00" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                      <p className="text-xs text-gray-500 mt-1">
-                        The times guests can choose for the restaurant dinner, separated by commas (24h format, e.g. <span className="font-semibold">18:00, 21:00</span>). Each seating takes bookings up to {RESTAURANT_DINNER.maxCapacity} guests on its own. Guests will see: {parseTimeSlots(siteInfo.restaurant_time_slots).join(' · ')}
-                      </p>
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Email to receive reservations & site notifications</label>

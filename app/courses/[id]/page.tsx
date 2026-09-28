@@ -128,7 +128,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       return;
     }
 
-    if (isDinner && !selectedTime) {
+    if (isDinner && !selectedTime.trim()) {
       setTimeError('Please choose the time you would like to have dinner.');
       return;
     }
@@ -178,7 +178,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
       courseId: course.id,
       courseTitle: course.title,
       date: formattedDate,
-      time: isDinner ? selectedTime : (course.timeSlot || '10:00 - 12:30'),
+      time: isDinner ? selectedTime.trim() : (course.timeSlot || '10:00 - 12:30'),
       guests: trimmedData.guests,
       totalPrice,
       currency: 'EUR',
@@ -264,7 +264,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">
                 <Clock size={20} className="text-mindelo-gold" />
-                <span>{isDinner ? "Your chosen time" : course.duration}</span>
+                <span>{isDinner ? 'Time of your choice' : course.duration}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={20} className="text-mindelo-gold" />
@@ -458,6 +458,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                             setTimeError(null);
                           }}
                           placeholder="e.g., 19:30 or 20:00"
+                          maxLength={50}
                           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
                         />
                         {timeError ? (
