@@ -91,7 +91,8 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   // Encontra o curso apenas no banco (sem fallback hardcoded).
   const course = isDinner ? RESTAURANT_DINNER : courses.find((c) => c.id === unwrappedParams.id);
   const minGuests = isDinner ? RESTAURANT_MIN_GUESTS : 1;
-  
+
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [dateError, setDateError] = useState<string | null>(null);
   const [timeError, setTimeError] = useState<string | null>(null);
