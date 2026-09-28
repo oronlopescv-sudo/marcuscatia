@@ -51,8 +51,8 @@ type ResData = {
 };
 
 const LABELS = {
-  pt: { name: 'Nome', date: 'Data', time: 'Horário', guests: 'Convidados' },
-  en: { name: 'Name', date: 'Date', time: 'Time', guests: 'Guests' },
+  pt: { name: 'Nome', date: 'Data', time: 'Horário', guests: 'Convidados', toArrange: 'a combinar' },
+  en: { name: 'Name', date: 'Date', time: 'Time', guests: 'Guests', toArrange: 'to be arranged with Cátia' },
 };
 
 function detailsHtml(r: ResData, extra = '', lang: 'pt' | 'en' = 'pt') {
@@ -64,7 +64,7 @@ function detailsHtml(r: ResData, extra = '', lang: 'pt' | 'en' = 'pt') {
       <p><strong>Email:</strong> ${esc(r.email)}</p>
       <p><strong>WhatsApp:</strong> ${esc(r.phone)}</p>
       <p><strong>${L.date}:</strong> ${esc(r.date)}</p>
-      <p><strong>${L.time}:</strong> ${esc(r.time)}</p>
+      <p><strong>${L.time}:</strong> ${esc(r.time || L.toArrange)}</p>
       <p><strong>${L.guests}:</strong> ${esc(r.guests)}</p>
       ${Number(r.totalPrice) > 0 ? `<p><strong>Total:</strong> ${esc(r.totalPrice)} ${esc(r.currency)}</p>` : ''}
       ${extra}
@@ -176,29 +176,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'This class is not available' }, { status: 400 });
       }
     }
-    const maxCapacity = Number(course.maxCapacity) || 8;
     if (guests < 1) {
       return NextResponse.json({ error: 'Please enter the number of guests' }, { status: 400 });
     }
-    if (guests > maxCapacity) {
-      return NextResponse.json({ error: `This class takes at most ${maxCapacity} guests` }, { status: 400 });
-    }
 
-    // A class runs at the course's fixed hour. Dinner guests write the time
-    // they'd like, which Cátia confirms or reschedules; manual admin entries
-    // may set any time. reservations.time is VARCHAR(100).
+    // Every booking is a pending request: availability (time, group size,
+    // how full the date is) is never grounds to refuse it — Cátia confirms,
+    // reschedules or contacts the guest from the admin panel. A class runs at
+    // the course's fixed hour; dinner guests may suggest a time or leave it
+    // blank. reservations.time is VARCHAR(100).
     let time: string = course.timeSlot || '';
     const requestedTime = typeof body.time === 'string' ? body.time.trim() : '';
     if (requestedTime.length > 50) {
       return NextResponse.json({ error: 'Please write the time in a short form, e.g. 19:30.' }, { status: 400 });
     }
-    if (isAdmin && requestedTime) {
-      time = requestedTime;
-    } else if (isDinner) {
-      if (!requestedTime) {
-        return NextResponse.json({ error: 'Please tell us what time you would like to have dinner.' }, { status: 400 });
-      }
-      time = requestedTime;
+    if (isAdmin || isDinner) {
+      time = requestedTime || time;
     }
 
     // Visitors can't book past or blocked days; the admin may (manual entries).
@@ -211,26 +204,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'This date is no longer available. Please choose another date.' }, { status: 409 });
       }
 
-      if (!isDinner) {
-        // Classes: total guests for the date can't exceed the class capacity.
-        const existing: any = await query(
-          `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
-           WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
-          [String(courseId), date]
-        );
-        const alreadyBooked = Number(existing?.[0]?.total) || 0;
-        if (alreadyBooked + guests > maxCapacity) {
-          const remaining = Math.max(0, maxCapacity - alreadyBooked);
-          return NextResponse.json(
-            {
-              error: remaining > 0
-                ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
-                : `This date is fully booked. Please choose another date.`,
-            },
-            { status: 409 }
-          );
-        }
-      }
     }
 
     const courseTitle: string = course.title;

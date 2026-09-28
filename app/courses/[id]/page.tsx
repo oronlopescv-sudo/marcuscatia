@@ -22,10 +22,7 @@ import { unitPriceOf } from '@/lib/pricing';
 const reservationSchema = z.object({
   name: z.string().min(2, 'Name must have at least 2 characters').trim(),
   email: z.string().email('Invalid email address').trim(),
-  phone: z.string()
-    .min(8, 'Phone number must have at least 8 digits')
-    .regex(/^[\d\s+().-]+$/, 'Phone number contains invalid characters')
-    .trim(),
+  phone: z.string().trim().min(1, 'Please enter your phone / WhatsApp number'),
   guests: z.number({ message: 'Enter the number of guests' }).int().min(1, 'Minimum 1 person'),
   notes: z.string().optional(),
 });
@@ -94,15 +91,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [dateError, setDateError] = useState<string | null>(null);
-  const [timeError, setTimeError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [submittedData, setSubmittedData] = useState<{ name: string; date: string; time: string; guests: number } | null>(null);
-  const [lastSubmitTime, setLastSubmitTime] = useState(0);
-  
-  // Rate limit: max 1 submission per 30 seconds
-  const RATE_LIMIT_MS = 30000;
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
@@ -113,28 +105,8 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
   const onSubmit = async (data: ReservationFormValues) => {
     if (!course) return;
-    // Rate limiting check
-    const now = Date.now();
-    if (now - lastSubmitTime < RATE_LIMIT_MS) {
-      setSubmitErrorMessage('Please wait 30 seconds before submitting another booking request.');
-      setSubmitStatus('error');
-      setTimeout(() => setSubmitStatus('idle'), 3000);
-      return;
-    }
-
     if (!selectedDate) {
-      setDateError('Please select a date on the calendar for your class.');
-      return;
-    }
-
-    if (isDinner && !selectedTime.trim()) {
-      setTimeError('Please choose the time you would like to have dinner.');
-      return;
-    }
-
-    // FIX #2: Validate capacity
-    if (data.guests > course.maxCapacity) {
-      setDateError(`Max capacity for this course is ${course.maxCapacity} guests. You selected ${data.guests}.`);
+      setDateError('Please select a date on the calendar.');
       return;
     }
 
@@ -146,9 +118,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     }
 
     setDateError(null);
-    setTimeError(null);
     setIsSubmitting(true);
-    setLastSubmitTime(now);
     
     // Only the classes have a price; the dinner totals 0 and is settled in
     // person, so nothing here may invent a figure.
@@ -184,7 +154,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
     setIsSubmitting(false);
 
     if (!saved.ok) {
-      setLastSubmitTime(0);
       setSubmitErrorMessage(`${saved.error.replace(/\.$/, '')}. If the problem continues, contact Cátia directly via WhatsApp.`);
       setSubmitStatus('error');
       return;
@@ -352,7 +321,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     </div>
                     <h3 className="text-xl font-bold text-mindelo-dark mb-2">Booking Error</h3>
                     <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                      {submitErrorMessage || 'Please wait 30 seconds before submitting another booking request. You can also contact Cátia directly via WhatsApp for faster confirmation.'}
+                      {submitErrorMessage || 'Something went wrong. You can also contact Cátia directly via WhatsApp.'}
                     </p>
                     <Link
                       href={whatsappLink(site.site_whatsapp)}
@@ -442,26 +411,17 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
                     {isDinner && (
                       <div>
-                        <label htmlFor="dinner-time" className="block text-sm font-bold text-mindelo-dark mb-2">2. Preferred Time</label>
+                        <label htmlFor="dinner-time" className="block text-sm font-bold text-mindelo-dark mb-2">2. Preferred Time <span className="font-normal text-gray-500">(optional)</span></label>
                         <input
                           id="dinner-time"
                           type="text"
                           value={selectedTime}
-                          onChange={(e) => {
-                            setSelectedTime(e.target.value);
-                            setTimeError(null);
-                          }}
+                          onChange={(e) => setSelectedTime(e.target.value)}
                           placeholder="e.g., 19:30 or 20:00"
                           maxLength={50}
                           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
                         />
-                        {timeError ? (
-                          <p className="text-red-500 font-medium text-xs mt-2 flex items-center gap-1">
-                            <AlertCircle size={14} /> {timeError}
-                          </p>
-                        ) : (
-                          <p className="text-gray-500 text-xs mt-2">Cátia will confirm if your preferred time is available.</p>
-                        )}
+                        <p className="text-gray-500 text-xs mt-2">Cátia will confirm the time with you.</p>
                       </div>
                     )}
 
@@ -522,11 +482,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                               {...register('guests', { valueAsNumber: true })}
                               className="w-12 h-10 text-center text-lg font-bold outline-none text-mindelo-dark"
                               min={1}
-                              max={isDinner ? undefined : course.maxCapacity}
                             />
                             <button
                               type="button"
-                              onClick={() => setValue('guests', Math.min(course.maxCapacity, (Number(watch('guests')) || 1) + 1), { shouldValidate: true })}
+                              onClick={() => setValue('guests', (Number(watch('guests')) || 1) + 1, { shouldValidate: true })}
                               className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-mindelo-dark flex items-center justify-center transition-colors"
                               aria-label="More guests"
                             >

@@ -66,7 +66,7 @@ Olá ${message.studentName}!
 
 📍 Class: ${message.courseTitle}
 📅 Date: ${message.date}
-🕐 Time: ${message.time}
+🕐 Time: ${message.time || 'to be arranged'}
 👥 Guests: ${message.guests}${Number(message.totalPrice) > 0 ? `
 💰 Total: €${message.totalPrice}` : ''}
 
@@ -101,7 +101,7 @@ export async function sendWhatsAppNewReservation(
 📱 WhatsApp: ${r.phone}
 📍 Curso: ${r.courseTitle}
 📅 Data: ${r.date}
-🕐 Horário: ${r.time}
+🕐 Horário: ${r.time || 'a combinar'}
 👥 Convidados: ${r.guests}${Number(r.totalPrice) > 0 ? `
 💰 Total: €${r.totalPrice}` : ''}
 
