@@ -5,7 +5,7 @@ import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/l
 import { sendEmail, esc } from '@/lib/email';
 import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
-import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
+import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 import { clientIp, isRateLimited } from '@/lib/rateLimit';
 import { unitPriceOf } from '@/lib/pricing';
 
@@ -182,24 +182,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Guests must be between ${minGuests} and ${maxCapacity}` }, { status: 400 });
     }
 
-    // A class runs at one fixed hour, so its time comes from the course. The
-    // dinner has several seatings the guest picks from (configured in Admin →
-    // Settings), so the chosen one is validated against that list here — a
-    // visitor must not be able to invent a seating that isn't offered. For
-    // manual entries the admin may type any schedule.
+    // A class runs at one fixed hour from the course. The dinner has no fixed
+    // times — the guest chooses their preferred time, which Cátia will confirm
+    // or reschedule when she reviews the booking.
     let time: string = course.timeSlot || '';
-    if (isAdmin && typeof body.time === 'string' && body.time) {
-      time = body.time;
-    } else if (isDinner) {
-      const slots = parseTimeSlots(await getSetting('restaurant_time_slots'));
-      const picked = typeof body.time === 'string' ? body.time.trim() : '';
-      if (picked && !slots.includes(picked)) {
-        return NextResponse.json(
-          { error: 'That dinner seating is not available. Please choose one of the times offered.' },
-          { status: 400 }
-        );
-      }
-      time = picked || slots[0];
+    if (isDinner) {
+      time = typeof body.time === 'string' ? body.time.trim() : '';
     }
 
     // Visitors can't book past or blocked days; the admin may (manual entries).
@@ -212,33 +200,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'This date is no longer available. Please choose another date.' }, { status: 409 });
       }
 
-      // maxCapacity above only checked THIS booking's own guest count; without
-      // this, two separate bookings of e.g. 8 guests each could both go
-      // through for the same 8-person class/date, silently double-booking it.
-      // Each dinner seating (e.g. 18:00 and 21:00) is a separate sitting with
-      // its own table capacity, so they are counted apart; a class has a
-      // single time per date, so it is counted per date.
-      const existing: any = isDinner
-        ? await query(
-            `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
-             WHERE courseId = ? AND date = ? AND time = ? AND status NOT IN ('cancelled', 'cancelada')`,
-            [String(courseId), date, time]
-          )
-        : await query(
-            `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
-             WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
-            [String(courseId), date]
-          );
+      // Validate that total guests for this date don't exceed capacity.
+      const existing: any = await query(
+        `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
+         WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
+        [String(courseId), date]
+      );
       const alreadyBooked = Number(existing?.[0]?.total) || 0;
       if (alreadyBooked + guests > maxCapacity) {
         const remaining = Math.max(0, maxCapacity - alreadyBooked);
-        const slot = isDinner ? 'seating' : 'date';
-        const alternative = isDinner ? 'another time or date' : 'another date';
         return NextResponse.json(
           {
             error: remaining > 0
-              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this ${slot}. Please choose fewer guests or ${alternative}.`
-              : `This ${slot} is fully booked. Please choose ${alternative}.`,
+              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
+              : `This date is fully booked. Please choose another date.`,
           },
           { status: 409 }
         );

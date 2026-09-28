@@ -16,7 +16,7 @@ import { useAdminStore } from '@/lib/store';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { useSiteInfo } from '@/lib/useSiteInfo';
 import { whatsappLink } from '@/lib/siteInfo';
-import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking, parseTimeSlots } from '@/lib/restaurant';
+import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
 import { unitPriceOf } from '@/lib/pricing';
 
 const reservationSchema = z.object({
@@ -92,10 +92,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const course = isDinner ? RESTAURANT_DINNER : courses.find((c) => c.id === unwrappedParams.id);
   const minGuests = isDinner ? RESTAURANT_MIN_GUESTS : 1;
   
-  // The dinner runs in seatings the guest picks from (editable in Admin →
-  // Settings); a class has the single fixed hour stored on the course.
-  const timeSlots = parseTimeSlots(site.restaurant_time_slots);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [dateError, setDateError] = useState<string | null>(null);
   const [timeError, setTimeError] = useState<string | null>(null);
@@ -267,7 +263,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base font-medium">
               <div className="flex items-center gap-2">
                 <Clock size={20} className="text-mindelo-gold" />
-                <span>{isDinner ? timeSlots.join(' or ') : course.duration}</span>
+                <span>{isDinner ? "Your chosen time" : course.duration}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={20} className="text-mindelo-gold" />
@@ -451,33 +447,24 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
                     {isDinner && (
                       <div>
-                        <label className="block text-sm font-bold text-mindelo-dark mb-2">2. Choose Your Time</label>
-                        <div className="flex flex-wrap gap-2">
-                          {timeSlots.map((slot) => (
-                            <button
-                              key={slot}
-                              type="button"
-                              onClick={() => {
-                                setSelectedTime(slot);
-                                setTimeError(null);
-                              }}
-                              aria-pressed={selectedTime === slot}
-                              className={`px-5 py-3 rounded-xl border font-bold text-sm transition-all ${
-                                selectedTime === slot
-                                  ? 'bg-mindelo-red border-mindelo-red text-white shadow-md'
-                                  : 'bg-white border-gray-200 text-mindelo-dark hover:border-mindelo-red'
-                              }`}
-                            >
-                              {slot}
-                            </button>
-                          ))}
-                        </div>
+                        <label htmlFor="dinner-time" className="block text-sm font-bold text-mindelo-dark mb-2">2. Preferred Time</label>
+                        <input
+                          id="dinner-time"
+                          type="text"
+                          value={selectedTime}
+                          onChange={(e) => {
+                            setSelectedTime(e.target.value);
+                            setTimeError(null);
+                          }}
+                          placeholder="e.g., 19:30 or 20:00"
+                          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-mindelo-blue focus:ring-1 focus:ring-mindelo-blue outline-none transition-all"
+                        />
                         {timeError ? (
                           <p className="text-red-500 font-medium text-xs mt-2 flex items-center gap-1">
                             <AlertCircle size={14} /> {timeError}
                           </p>
                         ) : (
-                          <p className="text-gray-500 text-xs mt-2">Each seating is served at Cátia&apos;s family table.</p>
+                          <p className="text-gray-500 text-xs mt-2">Cátia will confirm if your preferred time is available.</p>
                         )}
                       </div>
                     )}
