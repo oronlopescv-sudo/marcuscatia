@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, Users, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
-import { RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { isRestaurantBooking } from '@/lib/restaurant';
 
 export interface CourseProps {
   id: string;
@@ -58,7 +58,7 @@ export function CourseCard({ course, index = 0 }: { course: CourseProps; index?:
             </div>
             <div className="flex items-center gap-1.5">
               <Users size={16} className="text-mindelo-blue" />
-              <span>{isRestaurantBooking(course.id) ? `From ${RESTAURANT_MIN_GUESTS} guests` : `Max. ${course.maxCapacity} guests`}</span>
+              <span>{isRestaurantBooking(course.id) ? 'Any group size' : `Max. ${course.maxCapacity} guests`}</span>
             </div>
           </div>
           

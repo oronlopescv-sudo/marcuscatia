@@ -444,8 +444,8 @@ export default function AdminPage() {
 
     // Validation: Check guests is valid
     const guestNum = Number(newRes.guests);
-    if (guestNum < 1 || guestNum > 20 || isNaN(guestNum)) {
-      alert('Please select a valid number of guests (1-20)');
+    if (guestNum < 1 || isNaN(guestNum)) {
+      alert('Please enter a valid number of guests');
       return;
     }
 
@@ -2087,7 +2087,6 @@ export default function AdminPage() {
                   <input
                     type="number"
                     min="1"
-                    max="20"
                     required
                     value={newRes.guests}
                     onChange={(e) => setNewRes({ ...newRes, guests: Number(e.target.value) })}
@@ -2387,8 +2386,8 @@ function EditReservationModal({
 
     // Validation: Check guests is valid
     const guestNum = Number(guests);
-    if (guestNum < 1 || guestNum > 20 || isNaN(guestNum)) {
-      alert('Please select a valid number of guests (1-20)');
+    if (guestNum < 1 || isNaN(guestNum)) {
+      alert('Please enter a valid number of guests');
       return;
     }
 
@@ -2525,7 +2524,6 @@ function EditReservationModal({
               <input
                 type="number"
                 min="1"
-                max="20"
                 required
                 value={guests}
                 onChange={(e) => handleGuestsChange(Number(e.target.value))}

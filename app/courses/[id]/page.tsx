@@ -16,7 +16,7 @@ import { useAdminStore } from '@/lib/store';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { useSiteInfo } from '@/lib/useSiteInfo';
 import { whatsappLink } from '@/lib/siteInfo';
-import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { DEFAULT_MENU, RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
 import { unitPriceOf } from '@/lib/pricing';
 
 const reservationSchema = z.object({
@@ -26,7 +26,7 @@ const reservationSchema = z.object({
     .min(8, 'Phone number must have at least 8 digits')
     .regex(/^[\d\s+().-]+$/, 'Phone number contains invalid characters')
     .trim(),
-  guests: z.number({ message: 'Enter the number of guests' }).int().min(1, 'Minimum 1 person').max(20, 'Maximum 20 people'),
+  guests: z.number({ message: 'Enter the number of guests' }).int().min(1, 'Minimum 1 person'),
   notes: z.string().optional(),
 });
 
@@ -90,7 +90,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   
   // Encontra o curso apenas no banco (sem fallback hardcoded).
   const course = isDinner ? RESTAURANT_DINNER : courses.find((c) => c.id === unwrappedParams.id);
-  const minGuests = isDinner ? RESTAURANT_MIN_GUESTS : 1;
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -108,7 +107,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      guests: isRestaurantBooking(unwrappedParams.id) ? RESTAURANT_MIN_GUESTS : 1
+      guests: 1
     }
   });
 
@@ -130,11 +129,6 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
     if (isDinner && !selectedTime.trim()) {
       setTimeError('Please choose the time you would like to have dinner.');
-      return;
-    }
-
-    if (data.guests < minGuests) {
-      setDateError(`Dinner bookings are for groups of at least ${minGuests} guests.`);
       return;
     }
 
@@ -268,7 +262,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
               </div>
               <div className="flex items-center gap-2">
                 <Users size={20} className="text-mindelo-gold" />
-                <span>{isDinner ? `Groups from ${minGuests} guests` : `Max ${course.maxCapacity} guests`}</span>
+                <span>{isDinner ? 'Any group size' : `Max ${course.maxCapacity} guests`}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={20} className="text-mindelo-gold" />
@@ -314,7 +308,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     ))}
                   </ol>
                   <p className="mt-6 text-gray-600">
-                    Groups from {minGuests} guests · choose your preferred time · the price follows the menu of the day and is settled with Cátia.
+                    Any group size · choose your preferred time · the price follows the menu of the day and is settled with Cátia.
                   </p>
                 </section>
               ) : (
@@ -515,7 +509,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
-                              onClick={() => setValue('guests', Math.max(minGuests, (Number(watch('guests')) || minGuests) - 1), { shouldValidate: true })}
+                              onClick={() => setValue('guests', Math.max(1, (Number(watch('guests')) || 1) - 1), { shouldValidate: true })}
                               className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-mindelo-dark flex items-center justify-center transition-colors"
                               aria-label="Fewer guests"
                             >
@@ -527,12 +521,12 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                               inputMode="numeric"
                               {...register('guests', { valueAsNumber: true })}
                               className="w-12 h-10 text-center text-lg font-bold outline-none text-mindelo-dark"
-                              min={minGuests}
-                              max={course.maxCapacity}
+                              min={1}
+                              max={isDinner ? undefined : course.maxCapacity}
                             />
                             <button
                               type="button"
-                              onClick={() => setValue('guests', Math.min(course.maxCapacity, (Number(watch('guests')) || minGuests) + 1), { shouldValidate: true })}
+                              onClick={() => setValue('guests', Math.min(course.maxCapacity, (Number(watch('guests')) || 1) + 1), { shouldValidate: true })}
                               className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-mindelo-dark flex items-center justify-center transition-colors"
                               aria-label="More guests"
                             >

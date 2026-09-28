@@ -11,7 +11,7 @@ import { CourseCard } from '@/components/CourseCard';
 import { Watermark } from '@/components/Watermark';
 import { useAdminStore } from '@/lib/store';
 import { useSiteContent } from '@/lib/useSiteContent';
-import { DEFAULT_MENU, RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS } from '@/lib/restaurant';
+import { DEFAULT_MENU, RESTAURANT_DINNER } from '@/lib/restaurant';
 
 type BookingType = 'classes' | 'restaurant';
 
@@ -48,7 +48,7 @@ function RestaurantOffer() {
         </ol>
 
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-100">
-          <span className="flex items-center gap-1.5"><Users size={16} className="text-mindelo-blue" /> Groups from {RESTAURANT_MIN_GUESTS} guests</span>
+          <span className="flex items-center gap-1.5"><Users size={16} className="text-mindelo-blue" /> Any group size</span>
           <span className="flex items-center gap-1.5"><Clock size={16} className="text-mindelo-blue" /> Time of your choice</span>
         </div>
 

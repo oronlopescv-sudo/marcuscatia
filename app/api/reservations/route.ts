@@ -5,7 +5,7 @@ import { sendWhatsAppBookingConfirmation, sendWhatsAppNewReservation } from '@/l
 import { sendEmail, esc } from '@/lib/email';
 import { isAdminRequest } from '@/lib/auth';
 import { randomBytes } from 'crypto';
-import { RESTAURANT_DINNER, RESTAURANT_MIN_GUESTS, isRestaurantBooking } from '@/lib/restaurant';
+import { RESTAURANT_DINNER, isRestaurantBooking } from '@/lib/restaurant';
 import { clientIp, isRateLimited } from '@/lib/rateLimit';
 import { unitPriceOf } from '@/lib/pricing';
 
@@ -177,9 +177,11 @@ export async function POST(request: Request) {
       }
     }
     const maxCapacity = Number(course.maxCapacity) || 8;
-    const minGuests = isDinner && !isAdmin ? RESTAURANT_MIN_GUESTS : 1;
-    if (guests < minGuests || guests > maxCapacity) {
-      return NextResponse.json({ error: `Guests must be between ${minGuests} and ${maxCapacity}` }, { status: 400 });
+    if (guests < 1) {
+      return NextResponse.json({ error: 'Please enter the number of guests' }, { status: 400 });
+    }
+    if (guests > maxCapacity) {
+      return NextResponse.json({ error: `This class takes at most ${maxCapacity} guests` }, { status: 400 });
     }
 
     // A class runs at the course's fixed hour. Dinner guests write the time
@@ -209,23 +211,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'This date is no longer available. Please choose another date.' }, { status: 409 });
       }
 
-      // Validate that total guests for this date don't exceed capacity.
-      const existing: any = await query(
-        `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
-         WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
-        [String(courseId), date]
-      );
-      const alreadyBooked = Number(existing?.[0]?.total) || 0;
-      if (alreadyBooked + guests > maxCapacity) {
-        const remaining = Math.max(0, maxCapacity - alreadyBooked);
-        return NextResponse.json(
-          {
-            error: remaining > 0
-              ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
-              : `This date is fully booked. Please choose another date.`,
-          },
-          { status: 409 }
+      if (!isDinner) {
+        // Classes: total guests for the date can't exceed the class capacity.
+        const existing: any = await query(
+          `SELECT COALESCE(SUM(guests), 0) AS total FROM reservations
+           WHERE courseId = ? AND date = ? AND status NOT IN ('cancelled', 'cancelada')`,
+          [String(courseId), date]
         );
+        const alreadyBooked = Number(existing?.[0]?.total) || 0;
+        if (alreadyBooked + guests > maxCapacity) {
+          const remaining = Math.max(0, maxCapacity - alreadyBooked);
+          return NextResponse.json(
+            {
+              error: remaining > 0
+                ? `Only ${remaining} spot${remaining === 1 ? '' : 's'} left for this date. Please choose fewer guests or another date.`
+                : `This date is fully booked. Please choose another date.`,
+            },
+            { status: 409 }
+          );
+        }
       }
     }
 

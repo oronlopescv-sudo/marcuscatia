@@ -2,9 +2,6 @@ import type { Course } from '@/lib/store';
 
 // The restaurant dinner is booked through the same reservations table as the
 // classes, using this fixed "course" instead of a row in the courses table.
-export const RESTAURANT_MIN_GUESTS = 4;
-export const RESTAURANT_MAX_GUESTS = 20;
-
 export const RESTAURANT_DINNER: Course = {
   id: 'restaurant-dinner',
   title: 'Restaurant Dinner',
@@ -12,7 +9,8 @@ export const RESTAURANT_DINNER: Course = {
     'A three-course Cape Verdean dinner at Cátia’s family table in Fonte Francês: starter, main course and dessert, cooked with fresh produce from the Mindelo market.',
   image: '/catia-cutting-fish.jpg',
   duration: 'Time of your choice',
-  maxCapacity: RESTAURANT_MAX_GUESTS,
+  // No guest limit on the dinner, per booking or per date.
+  maxCapacity: Infinity,
   // No price on the site: the dinner follows the menu of the day and is
   // settled with Cátia in person. An empty price makes the price tags and
   // totals disappear (see lib/pricing.ts) instead of showing €0.
